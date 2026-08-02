@@ -66,6 +66,16 @@ class HiPSDownloader(private val context: Context) {
                 } catch (e: Exception) {}
             }
             
+            val actualFormat = if (propertiesFile.exists()) {
+                try {
+                    HiPSPropertiesParser.parse(survey.baseUrl, propertiesFile.readText()).ext
+                } catch (e: Exception) {
+                    format
+                }
+            } else {
+                format
+            }
+
             val semaphore = Semaphore(maxThreads)
 
             data class TileTask(val order: Int, val npix: Long)
@@ -84,11 +94,11 @@ class HiPSDownloader(private val context: Context) {
                 _state.update { it.copy(activeThreads = activeTasksCount.get()) }
 
                 try {
-                    val url = survey.tileUrl(task.order, task.npix, format)
+                    val url = survey.tileUrl(task.order, task.npix, actualFormat)
                     val dir = (task.npix / 10000L) * 10000L
                     
                     val fileDir = File(baseDir, "Norder${task.order}/Dir$dir")
-                    val file = File(fileDir, "Npix${task.npix}.$format")
+                    val file = File(fileDir, "Npix${task.npix}.$actualFormat")
 
                     var success = false
 

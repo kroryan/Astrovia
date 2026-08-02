@@ -96,8 +96,7 @@ public class HiPSDownloader {
             File propFile = new File(targetDir, "properties");
             targetDir.mkdirs();
             try (InputStream is = conn.getInputStream();
-                 FileOutputStream fos = new FileOutputStream(propFile);
-                 BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(propFile)))) {
+                 FileOutputStream fos = new FileOutputStream(propFile)) {
                 
                 byte[] buffer = new byte[8192];
                 int n;
@@ -110,17 +109,21 @@ public class HiPSDownloader {
             try (BufferedReader reader = new BufferedReader(new FileReader(propFile))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    if (line.startsWith("hips_tile_format=")) {
-                        String format = line.substring("hips_tile_format=".length()).trim().toLowerCase();
-                        String[] formats = format.split(" ");
-                        if (formats.length > 0) {
-                            String f = formats[0];
-                            if (f.equals("jpeg")) ext = ".jpg";
-                            else if (f.equals("png")) ext = ".png";
-                            else if (f.equals("fits")) ext = ".fits";
-                            else ext = "." + f;
+                    int idx = line.indexOf('=');
+                    if (idx > 0) {
+                        String key = line.substring(0, idx).trim();
+                        if ("hips_tile_format".equalsIgnoreCase(key) || "format".equalsIgnoreCase(key)) {
+                            String format = line.substring(idx + 1).trim().toLowerCase();
+                            String[] formats = format.split("[,; ]+");
+                            if (formats.length > 0 && !formats[0].isEmpty()) {
+                                String f = formats[0];
+                                if (f.equals("jpeg") || f.equals("jpg")) ext = ".jpg";
+                                else if (f.equals("png")) ext = ".png";
+                                else if (f.equals("fits")) ext = ".fits";
+                                else ext = "." + f;
+                            }
+                            break;
                         }
-                        break;
                     }
                 }
             }

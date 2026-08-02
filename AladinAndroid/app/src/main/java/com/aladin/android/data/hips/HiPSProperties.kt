@@ -35,7 +35,7 @@ object HiPSPropertiesParser {
             }
         }
         val fmt = (map["hips_tile_format"] ?: map["format"] ?: "jpg")
-            .split(',', ';').first().trim().lowercase()
+            .split(',', ';', ' ').firstOrNull { it.isNotBlank() }?.lowercase() ?: "jpg"
         return HiPSProperties(
             baseUrl = baseUrl,
             title = map["obs_title"] ?: map["title"] ?: "",
