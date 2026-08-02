@@ -96,7 +96,7 @@ class TileRepository(
     // With 12 slots, the coarse base (few tiles) arrives in the first batch and
     // fine refinement completes much earlier than with 4-8 slots. Adjustable
     // from Settings (see setConcurrency).
-    private var permits = Semaphore(concurrency.coerceIn(2, 24))
+    @Volatile private var permits = Semaphore(concurrency.coerceIn(2, 24))
 
     // In-memory cache adjustable from Settings (see setMemCacheMb). It is `var`
     // to allow hot resizing: we clear the old one and create a new one with the
@@ -105,7 +105,7 @@ class TileRepository(
     // the user can enter any MB figure (see LongLruCache, which uses Long to
     // avoid Int overflow that crashed above ~2048 MB).
     private var memCacheMbCurrent = memCacheMb.coerceAtLeast(8)
-    private var memCache: LongLruCache<String, Bitmap> = newMemCache(memCacheMbCurrent)
+    @Volatile private var memCache: LongLruCache<String, Bitmap> = newMemCache(memCacheMbCurrent)
 
     private fun newMemCache(mb: Int) =
         LongLruCache<String, Bitmap>(mb.toLong().coerceAtLeast(8L) * 1024L * 1024L) { it.byteCount.toLong() }
@@ -193,7 +193,7 @@ class TileRepository(
                 inSampleSize = sampleSize
             }
             if (url.startsWith("file://")) {
-                val file = java.io.File(java.net.URI(url))
+                val file = try { java.io.File(java.net.URI(url)) } catch (e: Exception) { java.io.File(url.removePrefix("file://")) }
                 if (file.exists()) {
                     return@withContext BitmapFactory.decodeFile(file.absolutePath, opts)
                 }
