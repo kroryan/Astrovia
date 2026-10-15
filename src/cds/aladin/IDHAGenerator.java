@@ -216,7 +216,7 @@ public class IDHAGenerator extends JFrame {
 
 
 	// nom du fichier dans lequel on sauvegardera (et cherchera) les fichiers de description
-	static final String SAVE_DIR_FILE = ".aladin_idha";
+	static final String SAVE_DIR_FILE = ".astrovia_idha";
 
 
 

@@ -29,21 +29,23 @@
           <pathelement path="${lib}/kxml2-2.3.0.jar"/>
           <pathelement path="${lib}/cdshealpix.0.28_1.jar"/>
           <pathelement path="${lib}/Moc.jar"/>
+          <pathelement path="${lib}/flatlaf-3.5.4.jar"/>
       </classpath>
      </javac>
    </target>
    
    <target name="main" depends="compil" description="jar generation" >
-      <jar destfile="Aladin.jar" duplicate="preserve">
+      <jar destfile="Astrovia.jar" duplicate="preserve">
         <fileset dir="${bin}"/>
 	    <zipfileset src="${lib}/adql1.3.jar"/>
 	    <zipfileset src="${lib}/jsamp-1.3.7.jar"/>
 	    <zipfileset src="${lib}/kxml2-2.3.0.jar"/>
 	    <zipfileset src="${lib}/cdshealpix.0.28_1.jar"/>
 	    <zipfileset src="${lib}/Moc.jar"/>
-	    <fileset dir="${src}" includes="*.gif,*.jpg,*.png,Ala*.*,Constellation.txt,viewConfiguration.properties,StandardForms.dic" excludes="Aladin.jar"/>
+	    <zipfileset src="${lib}/flatlaf-3.5.4.jar"/>
+	    <fileset dir="${src}" includes="*.gif,*.jpg,*.png,Ala*.*,Constellation.txt,viewConfiguration.properties,StandardForms.dic" excludes="Astrovia.jar"/>
         <manifest>
-           <attribute name="Main-Class" value="cds.aladin.Aladin" />
+           <attribute name="Main-Class" value="cds.astrovia.Astrovia" />
         </manifest>
       </jar>
    </target>

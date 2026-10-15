@@ -25,3 +25,6 @@ local.properties
 
 # Artefactos de release (AAB/APK firmados)
 release/
+
+build/
+!lib/*.jar

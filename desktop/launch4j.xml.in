@@ -1,0 +1,41 @@
+<launch4jConfig>
+  <headerType>gui</headerType>
+  <outfile>@OUT@</outfile>
+  <jar>@JAR@</jar>
+  <dontWrapJar>false</dontWrapJar>
+  <errTitle>Astrovia</errTitle>
+  <cmdLine></cmdLine>
+  <chdir>.</chdir>
+  <priority>normal</priority>
+  <downloadUrl>https://adoptium.net/</downloadUrl>
+  <supportUrl>https://github.com/kroryan/Astrovia</supportUrl>
+  <stayAlive>false</stayAlive>
+  <restartOnCrash>false</restartOnCrash>
+  <icon>@ICON@</icon>
+  <singleInstance>
+    <mutexName>AstroviaDesktop</mutexName>
+    <windowTitle>Astrovia</windowTitle>
+  </singleInstance>
+  <jre>
+    <path>jre</path>
+    <bundledJre64Bit>true</bundledJre64Bit>
+    <bundledJreAsFallback>false</bundledJreAsFallback>
+    <minVersion>1.8.0</minVersion>
+    <jdkPreference>preferJre</jdkPreference>
+    <runtimeBits>64/32</runtimeBits>
+    <opt>-Xmx2g</opt>
+  </jre>
+  <versionInfo>
+    <fileVersion>@WINVER@</fileVersion>
+    <txtFileVersion>@VER@</txtFileVersion>
+    <fileDescription>Astrovia - Open-source sky atlas</fileDescription>
+    <copyright>(c) CDS/Universite de Strasbourg (GPL v3) - Astrovia community project</copyright>
+    <productVersion>@WINVER@</productVersion>
+    <txtProductVersion>@VER@</txtProductVersion>
+    <productName>Astrovia</productName>
+    <companyName>kroryan</companyName>
+    <internalName>Astrovia</internalName>
+    <originalFilename>Astrovia.exe</originalFilename>
+    <language>ENGLISH_US</language>
+  </versionInfo>
+</launch4jConfig>

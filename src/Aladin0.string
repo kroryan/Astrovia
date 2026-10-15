@@ -311,21 +311,21 @@ TIMETOOL Time calculator...
 COOTOOL Coordinate calculator...
 PIXELTOOL Pixel calculator...
 CALCULATOR Calculator...
-NEW	New Aladin window...
+NEW	New Astrovia window...
 PREF	User preferences...
 CEA_TOOLS	PROTO:AstroGrid CEA applications
 MACRO	Macro controller...
 TUTO	Show me how to...
-HELP	Aladin guided tour...
+HELP	Astrovia guided tour...
 HELPSCRIPT	Help on script commands...
-FAQ	The Aladin FAQ
-MAN	The Aladin Manual
-TUTORIAL	The Aladin Science Case Tutorials
+FAQ	The Astrovia FAQ
+MAN	The Astrovia Manual
+TUTORIAL	The Astrovia Science Case Tutorials
 SENDBUG	Send a bug report or a question
 PLUGINFO	Plugin controller...
 VOTOOLINFO	VO tool controller...
-NEWS	What's new in this Aladin release ?...
-ABOUT	About Aladin...
+NEWS	What's new in this Astrovia release ?...
+ABOUT	About Astrovia...
 ACCESSTAP Access TAP...
 OPENTAPJOBCONTROLLER Job controller...
 
@@ -348,21 +348,21 @@ AUTODIST.fr Mesure de distance automatique
 FULLSCREEN.fr	Plein écran
 PREVIEWSCREEN.fr	Simple fenêtre
 SESAME.fr	Résolution de nom d'objet
-NEW.fr	Nouvelle fenêtre Aladin...
+NEW.fr	Nouvelle fenêtre Astrovia...
 PREF.fr	Préférences utilisateurs...
 CEA_TOOLS.fr	PROTO:Applications CEA AstroGrid
 MACRO.fr	Macros...
 TUTO.fr	Montre-moi comment faire...
-HELP.fr	Visite guidée d'Aladin...
-HELPSCRIPT.fr	Aide sur les commandes en ligne d'Aladin...
-FAQ.fr	La FAQ Aladin
-MAN.fr	Le manuel Aladin
-TUTORIAL.fr	Les tutoriels scientifiques d'Aladin
+HELP.fr	Visite guidée d'Astrovia...
+HELPSCRIPT.fr	Aide sur les commandes en ligne d'Astrovia...
+FAQ.fr	La FAQ Astrovia
+MAN.fr	Le manuel Astrovia
+TUTORIAL.fr	Les tutoriels scientifiques d'Astrovia
 SENDBUG.fr	Envoyer un rapport de bug ou une question
 PLUGINFO.fr	Gestionnaire de Plugins...
 VOTOOLINFO.fr	Gestionnaire des applications VO...
-NEWS.fr	Quoi de neuf dans cette version d'Aladin ?...
-ABOUT.fr	A propos d'Aladin...
+NEWS.fr	Quoi de neuf dans cette version d'Astrovia ?...
+ABOUT.fr	A propos d'Astrovia...
 ACCESSTAP.fr Accès TAP...
 OPENTAPJOBCONTROLLER.fr Controleur de tâches...
 
@@ -371,60 +371,60 @@ HLOAD	Access to the images, catalogs, FoV
 HSAVE	Save images and data on the local disk
 HLINK	HTML page to access original data/images
 HTOOLS	Tools (console, x-match and recalibration tools, preferences,...)
-HPLUGS	Aladin compatible plugins
+HPLUGS	Astrovia compatible plugins
 HPRINT	Print the current view
 HHELP	Help information
 HDCH	Create windows outside the web browser
-HQUIT	Quit Aladin
-HCLOSE	Close this Aladin window
+HQUIT	Quit Astrovia
+HCLOSE	Close this Astrovia window
 
 HLOAD.fr	Accès aux images, catalogues, champs instrumentals
 HSAVE.fr	Sauvegarder des images et autres données sur le disque local
 HLINK.fr	Liens sur les données images/catalogues originales
 HTOOLS.fr	Outils (console, cross-corrélateur et outils de recalibration, préférences,...)
-HPLUGS.fr	"Plugins" compatibles avec Aladin 
+HPLUGS.fr	"Plugins" compatibles avec Astrovia 
 HPRINT.fr	Imprimer la vue courante
 HHELP.fr	Aide
-HDCH.fr	Détacher Aladin dans une fenêtre séparée
-HQUIT.fr	Quitter Aladin
-HCLOSE.fr	Fermer cette fenêtre Aladin
+HDCH.fr	Détacher Astrovia dans une fenêtre séparée
+HQUIT.fr	Quitter Astrovia
+HCLOSE.fr	Fermer cette fenêtre Astrovia
 
 # Aladin.java - Paragraph menu help
 HHLOAD	By clicking on this menu, you open a new window allowing you to choose a specific server, either for images or for data.\n \n- ALADIN image server: these images come from several surveys (POSSI, POSSII, SERC, ESO, 2MASS, IRAS, WENSS).\n \n- VZ : gives you access to more than 5000 astronomical catalogs and tables, logs of missions with images and spectra.\n \n- SIMBAD : the well--known astronomical database.\n \n- NED : the well--known extragalactic database.\n \n- FOV : Fields of View of several instruments\n \n
 HHEXT	- File : access to your own data. Images has to be FITS (possibly with the WCS field), JPEG, GIF ou PNG. Tables has to be in ASCII, either in Tab-Separated-Value with the two first column with RA and DEC in J2000 decimal degrees, or in XML VOTable. See the FAQ to have more detail
-HHSAVE	By clicking this menu you can store data and images on your local disk.\nYou have four possibilities:\n \n- Backup the stack: generate a unique file containing all current data, graphics and images. The format is Aladin proprietary (AJ format). This feature is typically used to work without network, or to continue a previous work.\n \n- Export some planes: to allow you to choose individually the planes of the stack that you want to export in order to reuse them in other applications. The tables and catalogs are exported in ASCII Tab-Separated-Value format ou VOTable). The images are exported in FITS.\n \n- Export the current view: to allow you to export the current view with the overlays to an image file in BMP 24bits format.\n \n- Get image URLs: to allow you to retrieve the original images directly from the image servers.
+HHSAVE	By clicking this menu you can store data and images on your local disk.\nYou have four possibilities:\n \n- Backup the stack: generate a unique file containing all current data, graphics and images. The format is Astrovia proprietary (AJ format). This feature is typically used to work without network, or to continue a previous work.\n \n- Export some planes: to allow you to choose individually the planes of the stack that you want to export in order to reuse them in other applications. The tables and catalogs are exported in ASCII Tab-Separated-Value format ou VOTable). The images are exported in FITS.\n \n- Export the current view: to allow you to export the current view with the overlays to an image file in BMP 24bits format.\n \n- Get image URLs: to allow you to retrieve the original images directly from the image servers.
 HHLINK	Produce a HTML page with the list of image urls in order to allow you to retrieve the original images directly from the image servers.
-HHTOOLS	Give access to specific tools:\n- Console: allowing you to control Aladin by command lines;\n- Cross match tool: to crossmatch two catalogues;\n- Image (re)calibration: to specify or adjust an astrometrical image calibration;\n- Catalog (Re)calibration: to specify or adjust an astrometrical catalog calibration;\n- Catalog column calculator: to compute a new column for a catalogue;\n- ROI extractor: to generate postage stamp images around interested objects;\n- VOplot: to launch the VO-India 2D plotter for selected objects;\n- Simbad pointer: to query automatically Simbad for the current position under the mouse;\n- User preferences: allowing you to set your preferences
+HHTOOLS	Give access to specific tools:\n- Console: allowing you to control Astrovia by command lines;\n- Cross match tool: to crossmatch two catalogues;\n- Image (re)calibration: to specify or adjust an astrometrical image calibration;\n- Catalog (Re)calibration: to specify or adjust an astrometrical catalog calibration;\n- Catalog column calculator: to compute a new column for a catalogue;\n- ROI extractor: to generate postage stamp images around interested objects;\n- VOplot: to launch the VO-India 2D plotter for selected objects;\n- Simbad pointer: to query automatically Simbad for the current position under the mouse;\n- User preferences: allowing you to set your preferences
 HHPLUGS	Give access to plugins
 HHPRINT	Allows you to print the current view (or the current views in multiview mode)
-HHDCH	Allows you to run Aladin outside the Web browser window. In this way the size of the Aladin window can be adjusted to the size of the screen.
-HHQUIT	Allows you to quit Aladin
-HHCLOSE	Allows you to close just this Aladin window
+HHDCH	Allows you to run Astrovia outside the Web browser window. In this way the size of the Astrovia window can be adjusted to the size of the screen.
+HHQUIT	Allows you to quit Astrovia
+HHCLOSE	Allows you to close just this Astrovia window
 
 HHLOAD.fr	Par ce menu, vous ouvrez une fenêtre vous permettant de sélectionner votre serveur de données : images ou catalogues\n \n- Le serveur d'images ALADIN : fournit des images issues de plusieurs relevés (POSSI, POSSII, SERC, ESO, 2MASS, IRAS, WENSS).\n \n- VZ : vous donne accès à plus de 5000 tables et catalogues astronomiques, suivi de missions.\n \n- SIMBAD : LA base de données d'objets astronomiques.\n \n- NED :  LA base de données extragalactiques.\n \n- FOV : Champs de vues de plusieurs instruments\n \n
 HHEXT.fr	- File : Accès à vos propres données. Les images peuvent être en FITS (avec éventuellement une entête WCS), JPEG, GIF ou PNG. Les tables doivent être en ASCII, soit en CSV (données séparées un caractère (TABULATION par défaut)), soit en simple ASCII séparés par des blancs, soit en XML VOTable. Voir la FAQ pour plus de détail
-HHSAVE.fr	Par ce menu vous pouvez enregistrer vos catalogues et images sur votre disque local.\nVous avez quatre possibilités : \n \n-Sauvegarde de la pile : génère un fichier unique contenant toutes les données. Son format est spécifique à Aladin (format AJ). Cette fonctionnalité est typiquement utilisée pour travailler sans réseau, ou pour poursuivre un travail interrompu.\n \n-Exportation de certains plans : vous permet de choisir individuellement les plans de la piles que vous désirez exporter afin de réutiliser ces données dans d'autres applications. Les tables et catalogues sont exportés en ASCII (TSV ou VOTable). Les images en FITS.\n \n- Exportation de la vue courante : vous permet d'exporter la vue courante avec toutes ses surcharges graphiques dans un fichier au format BMP 24 bits.\n \n- Obtenir les URLs des images:  Vous permet d'accéder directement aux images originales telles qu'elles ont été fournies par les serveurs.
+HHSAVE.fr	Par ce menu vous pouvez enregistrer vos catalogues et images sur votre disque local.\nVous avez quatre possibilités : \n \n-Sauvegarde de la pile : génère un fichier unique contenant toutes les données. Son format est spécifique à Astrovia (format AJ). Cette fonctionnalité est typiquement utilisée pour travailler sans réseau, ou pour poursuivre un travail interrompu.\n \n-Exportation de certains plans : vous permet de choisir individuellement les plans de la piles que vous désirez exporter afin de réutiliser ces données dans d'autres applications. Les tables et catalogues sont exportés en ASCII (TSV ou VOTable). Les images en FITS.\n \n- Exportation de la vue courante : vous permet d'exporter la vue courante avec toutes ses surcharges graphiques dans un fichier au format BMP 24 bits.\n \n- Obtenir les URLs des images:  Vous permet d'accéder directement aux images originales telles qu'elles ont été fournies par les serveurs.
 HHLINK.fr	Génère une page Web dans votre navigateur avec la liste des URLs vers les images originales afin que vous puissez les décharger directement depuis les serveurs originaux.
-HHTOOLS.fr	Donne accès à des outils spécifiques :\n- Console : permet le contrôle d'Aladin par des commandes en lignes;\n- Cross corrélateur : pour corréler deux catalogues;\n- (Re)calibration d'images : création ou ajustement de la solution astrométrique associée à l'image;\n- (Re)calibration de catalogues : création ou ajustement de la solution astrométrique d'un catalogue;\n Calculateur de nouvelles colonnes : pour générer de nouvelles colonnes à un catalogue;\n- Générateur de "Régions d'intérêts" : permet la creéation d'images vignettes autour de objets sélectionnés;\n- VOPlot : démarre VOPlot (par VO-India) un traceur 2D sur les objets sélectionnés;\n- Pointeur Simbad : outil de découverte automatique de l'objet sous la souris;\n- Préférences utilisateurs : pour positionner et mémoriser vos préférences
+HHTOOLS.fr	Donne accès à des outils spécifiques :\n- Console : permet le contrôle d'Astrovia par des commandes en lignes;\n- Cross corrélateur : pour corréler deux catalogues;\n- (Re)calibration d'images : création ou ajustement de la solution astrométrique associée à l'image;\n- (Re)calibration de catalogues : création ou ajustement de la solution astrométrique d'un catalogue;\n Calculateur de nouvelles colonnes : pour générer de nouvelles colonnes à un catalogue;\n- Générateur de "Régions d'intérêts" : permet la creéation d'images vignettes autour de objets sélectionnés;\n- VOPlot : démarre VOPlot (par VO-India) un traceur 2D sur les objets sélectionnés;\n- Pointeur Simbad : outil de découverte automatique de l'objet sous la souris;\n- Préférences utilisateurs : pour positionner et mémoriser vos préférences
 HHPLUGS.fr	Donne accès aux plugins
 HHPRINT.fr	Vous permet d'imprimer la vue courante (ou les vues courantes en mode multivues)
-HHDCH.fr	Vous permet de détacher la fenêtre Aladin de votre navigateur. Ainsi, vous pouvez disposer d'une plus grande taille de la fenêtre Aladin.
-HHQUIT.fr	Vous permet de quitter Aladin.
-HHCLOSE.fr	Vous permet de ne fermer que cette fenêtre Aladin
+HHDCH.fr	Vous permet de détacher la fenêtre Astrovia de votre navigateur. Ainsi, vous pouvez disposer d'une plus grande taille de la fenêtre Astrovia.
+HHQUIT.fr	Vous permet de quitter Astrovia.
+HHCLOSE.fr	Vous permet de ne fermer que cette fenêtre Astrovia
 
 # Miscellaneous (mainly in Aladin.java)
-RESTART	You have to restart Aladin to validate this configuration modification
-RESTART.fr	Vous devez redémarrer Aladin pour que cette modification de configuration soit prise en compte
-UNSIGNED	Unsigned applet not supported for this HTTP Aladin site\n => redirection in progress...
-UNSIGNED.fr	Le mode applet non signé n'est pas supporté par ce site Aladin HTTP\n => Redirection automatique en cours...
-BANNER	Aladin is developed by Pierre Fernique, Thomas Boch, Anaïs Oberto, François Bonnarel and Chaitra
-BANNER.fr	Aladin est développé par Pierre Fernique, Thomas Boch, Anaïs Oberto, François Bonnarel et Chaitra
+RESTART	You have to restart Astrovia to validate this configuration modification
+RESTART.fr	Vous devez redémarrer Astrovia pour que cette modification de configuration soit prise en compte
+UNSIGNED	Unsigned applet not supported for this HTTP Astrovia site\n => redirection in progress...
+UNSIGNED.fr	Le mode applet non signé n'est pas supporté par ce site Astrovia HTTP\n => Redirection automatique en cours...
+BANNER	Astrovia is developed by Pierre Fernique, Thomas Boch, Anaïs Oberto, François Bonnarel and Chaitra
+BANNER.fr	Astrovia est développé par Pierre Fernique, Thomas Boch, Anaïs Oberto, François Bonnarel et Chaitra
 STARTING	is starting
 STARTING.fr	en cours de lancement
 YOURJVM	Your JVM release is java
 YOURJVM.fr	Le numéro de version de votre JVM est java
-RESTRICTED	You are running Aladin in RESTRICTED applet mode\nas you refused our certification.\n \nIn this restricted mode, Aladin cannot access to\nyour machine. It means that you will not be able\nto load your own data, neither save or print your work.\n \nIf you want to accept our certification you have to\nrestart your browser and reload Aladin applet
-RESTRICTED.fr Vous utilisez Aladin en mode applet RESTREINT\ncar vous avez refusez notre certification.\n \nDans ce mode, Aladin ne peut accéder à\nvotre machine. Cela signifie que vous ne pourrez\ncharger votre propre données, ni les sauvegarder ou encore\nimprimer votre travail.\n \nSi vous désirez accepter notre certification, vous devez\nredémarrer votre navigateur et recharger l'applet Aladin.
+RESTRICTED	You are running Astrovia in RESTRICTED applet mode\nas you refused our certification.\n \nIn this restricted mode, Astrovia cannot access to\nyour machine. It means that you will not be able\nto load your own data, neither save or print your work.\n \nIf you want to accept our certification you have to\nrestart your browser and reload Astrovia applet
+RESTRICTED.fr Vous utilisez Astrovia en mode applet RESTREINT\ncar vous avez refusez notre certification.\n \nDans ce mode, Astrovia ne peut accéder à\nvotre machine. Cela signifie que vous ne pourrez\ncharger votre propre données, ni les sauvegarder ou encore\nimprimer votre travail.\n \nSi vous désirez accepter notre certification, vous devez\nredémarrer votre navigateur et recharger l'applet Astrovia.
 MAJOR	A new major release\nis available at CDS\n \n
 MAJOR1	\n \nDo you want to open the download page in your browser ?
 MAJOR.fr	Une nouvelle version majeure\nest disponible au CDS\n \n
@@ -437,34 +437,34 @@ NOTYET	Form not yet ready\nPlease try again in few seconds
 NOTYET.fr	Formulaire non encore disponible\nRé-essayer dans quelques secondes
 NOTVISIBLE No collection of this type is presently visible is the data discovery tree.\n \nDo you have a filter activated ?
 NOTVISIBLE.fr Aucune collection de ce type n'est actuellement visible dans l'arbre de découverte.\n \nVous avez probablement un filtre actif qu'il faudrait désactiver. 
-SCRIPT	Execute these script commands through the Aladin console (Tools->Aladin Console)
+SCRIPT	Execute these script commands through the Astrovia console (Tools->Astrovia Console)
 SCRIPT1	\nor via the standard input (files for batch mode).
-SCRIPT.fr	Exécutez ces commandes en lignes via la console Aladin (Outils -> Console Aladin)
+SCRIPT.fr	Exécutez ces commandes en lignes via la console Astrovia (Outils -> Console Astrovia)
 SCRIPT1.fr	\nou via "l'entrée standard" (pour des fichiers de commandes)
-PRINTING	You are printing\nwait a few seconds before exiting Aladin !
-PRINTING.fr	Vous avez un travail d'impression en cours\nVeuillez patientez quelques instants avant de quitter Aladin !
+PRINTING	You are printing\nwait a few seconds before exiting Astrovia !
+PRINTING.fr	Vous avez un travail d'impression en cours\nVeuillez patientez quelques instants avant de quitter Astrovia !
 DEMO	The demonstration
-DEMO1	has to reset your Aladin session !\n\nDo you want to start the demonstration ?
+DEMO1	has to reset your Astrovia session !\n\nDo you want to start the demonstration ?
 DEMO.fr	La démonstration
-DEMO1.fr	doit ré-initialiser votre session Aladin !\n\nDésirez-vous lancer la démonstration ?
+DEMO1.fr	doit ré-initialiser votre session Astrovia !\n\nDésirez-vous lancer la démonstration ?
 NEEDCAT	You must load and select a catalog before !
 NEEDCAT.fr	Vous devez au préalable charger et sélectionner un catalogue !
 NEEDIMG	You must load a image before !
 NEEDIMG.fr	Vous devez au préalable charger une image !
-HELPMOVE	Move your mouse pointer through the Aladin window\nto display a brief explanation about each Aladin component.\n \nClick anywhere to quit the interactive help mode
-HELPMOVE.fr	Déplacer le pointeur de votre souris sur la fenêtre d'Aladin\npour visualiser de brêves descriptions des composantes pointées.\n \nCliquez n'importe où pour quitter le mode d'aide interactif
+HELPMOVE	Move your mouse pointer through the Astrovia window\nto display a brief explanation about each Astrovia component.\n \nClick anywhere to quit the interactive help mode
+HELPMOVE.fr	Déplacer le pointeur de votre souris sur la fenêtre d'Astrovia\npour visualiser de brêves descriptions des composantes pointées.\n \nCliquez n'importe où pour quitter le mode d'aide interactif
 STOPDEMO	Do you want to stop the demonstration ?\nClick NO to resume
 STOPDEMO.fr	Désirez-vous interrompre la démonstration ?\nCliquez NON pour poursuivre
 MB	Mb
 MB.fr	Mo
-PUB	*ALADIN is an interactive software sky atlas.\n* It allows one to visualize digitized images of any part of the sky,\n*to superimpose entries from astronomical catalogs,\n*and to interactively access related data and information.\n \n \n*%Aladin.png\n \n \n*%CDSLogo.png\n*Aladin is developed by Pierre Fernique,\n*Thomas Boch,  Anaïs Oberto, François Bonnarel and Chaitra.
-PUB.fr	*ALADIN est un atlas du ciel interactif.\n*Il permet de visualiser des images digitalisées de n'importe\n*quelle partie du ciel, d'y superposer des objets issus de catalogues\n*astronomiques, et, interactivement, d'accéder aux informations relatives.\n \n \n*%Aladin.png\n \n \n*%CDSLogo.png\n*Aladin est développé par Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel et Chaitra.
-PUBBETA	*ALADIN is an interactive software sky atlas\n*allowing one to visualize digitized images of any part of the sky,\n*to superimpose entries from astronomical catalogs,\n*and to interactively access related data and information.\n \n \n!WARNING: THIS VERSION IS A BETA RELEASE\n*Send bug report and comments to cds-question@unistra.fr\n*Or take the official version for a secure usage.\n \n \n*%Aladin.png\n \n \n*%CDSLogo.png\n*Aladin is developed by Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel and Chaitra.
-PUBBETA.fr	*ALADIN est un atlas du ciel interactif.\n*Il permet de visualiser des images digitalisées de n'importe quelle\n*partie du ciel, d'y superposer des objets issus de catalogues astronomiques,\n*et, interactivement, d'accéder aux informations associées.\n \n \n!CETTE VERSION EST EN BETA TEST\n*Envoyez vos commentaires et bogues à cds-question@unistra.fr\n*Ou télécharger la dernière version officielle pour un usage réel\n*(à partir de http://aladin.u-strasbg.fr).\n \n \n*%Aladin.png\n \n \n*%CDSLogo.png\n*Aladin est développé par Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel et Chaitra.
-PUBPROTO	ALADIN is an interactive software sky atlas developed by the CDS,\n*allowing one to visualize digitized images of any part of the sky,\n*to superimpose entries from astronomical catalogs,\n*and to interactively access related data and information.\n \n \n!WARNING: THIS VERSION IS A PROTOTYPE RELEASE\n*SOME FEATURES HAVE BEEN ADDED FOR DEMONSTRATION PURPOSES.\n*USE IT AT YOUR OWN RISKS\n \n*Or take the official version for a secure usage.\n \n \n*%Aladin.png\n \n \n*%CDSLogo.png\n*Aladin is developed by Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel and Chaitra.
-PUBPROTO.fr	ALADIN est un atlas du ciel interactif développé par le CDS.\n*Il permet de visualiser des images digitalisées de n'importe quelle\n*partie du ciel, d'y superposer des objets issus de catalogues astronomiques,\n*et, interactivement, d'accéder aux informations associées.\n \n \n!CETTE MISE-A-JOUR EST UNE VERSION PROTOTYPE\n*CERTAINES FONCTIONNALITES QUI ONT ETE AJOUTEES\n*EN DEMONSTRATION SONT SANS GARANTIE\n \n*Vous pouvez télécharger la dernière version officielle pour un usage réel\n*(à partir de http://aladin.u-strasbg.fr).\n \n \n*%Aladin.png\n \n \n*%CDSLogo.png\n*Aladin est développé par Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel et Chaitra.\n
-PUBINPROG	*ALADIN is an interactive software sky atlas developed by the CDS,\n*allowing one to visualize digitized images of any part of\n*the sky, to superimpose entries from astronomical catalogs,\n*and to interactively access related data and information.\n \n \n \n!YOUR DATA ARE BEING DOWNLOADED...\n!Please wait...\n \n*%CDSLogo.png\n \n*Aladin is developed by Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel and Chaitra.
-PUBINPROG.fr	*ALADIN est un atlas du ciel interactif développé par le CDS.\n*Il permet de visualiser des images digitalisées de n'importe quelle\n*partie du ciel, d'y superposer des objets issus de catalogues astronomiques,\n*et, interactivement, d'accéder aux informations associées.\n \n \n \n!VOS DONNEES SONT EN COURS DE CHARGEMENT\n!Veuillez patienter...\n \n*%CDSLogo.png\n \n*Aladin est développé par Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel et Chaitra.
+PUB	*ASTROVIA is an interactive software sky atlas\n*allowing one to visualize digitized images of any part of the sky,\n*to superimpose entries from astronomical catalogs,\n*and to interactively access related data and information.\n \n \n*%Aladin.png\n \n \n*Astrovia is an independent open-source project based on\n*the Aladin Sky Atlas developed by the CDS (Strasbourg).\n*Not affiliated with the CDS. Original authors: Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel and Chaitra.
+PUB.fr	*ASTROVIA is an interactive software sky atlas\n*allowing one to visualize digitized images of any part of the sky,\n*to superimpose entries from astronomical catalogs,\n*and to interactively access related data and information.\n \n \n*%Aladin.png\n \n \n*Astrovia is an independent open-source project based on\n*the Aladin Sky Atlas developed by the CDS (Strasbourg).\n*Not affiliated with the CDS. Original authors: Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel and Chaitra.
+PUBBETA	*ASTROVIA is an interactive software sky atlas\n*allowing one to visualize digitized images of any part of the sky,\n*to superimpose entries from astronomical catalogs,\n*and to interactively access related data and information.\n \n \n*%Aladin.png\n \n \n*Astrovia is an independent open-source project based on\n*the Aladin Sky Atlas developed by the CDS (Strasbourg).\n*Not affiliated with the CDS. Original authors: Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel and Chaitra.
+PUBBETA.fr	*ASTROVIA is an interactive software sky atlas\n*allowing one to visualize digitized images of any part of the sky,\n*to superimpose entries from astronomical catalogs,\n*and to interactively access related data and information.\n \n \n*%Aladin.png\n \n \n*Astrovia is an independent open-source project based on\n*the Aladin Sky Atlas developed by the CDS (Strasbourg).\n*Not affiliated with the CDS. Original authors: Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel and Chaitra.
+PUBPROTO	*ASTROVIA is an interactive software sky atlas\n*allowing one to visualize digitized images of any part of the sky,\n*to superimpose entries from astronomical catalogs,\n*and to interactively access related data and information.\n \n \n*%Aladin.png\n \n \n*Astrovia is an independent open-source project based on\n*the Aladin Sky Atlas developed by the CDS (Strasbourg).\n*Not affiliated with the CDS. Original authors: Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel and Chaitra.
+PUBPROTO.fr	*ASTROVIA is an interactive software sky atlas\n*allowing one to visualize digitized images of any part of the sky,\n*to superimpose entries from astronomical catalogs,\n*and to interactively access related data and information.\n \n \n*%Aladin.png\n \n \n*Astrovia is an independent open-source project based on\n*the Aladin Sky Atlas developed by the CDS (Strasbourg).\n*Not affiliated with the CDS. Original authors: Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel and Chaitra.
+PUBINPROG	*ASTROVIA is an interactive software sky atlas developed by the CDS,\n*allowing one to visualize digitized images of any part of\n*the sky, to superimpose entries from astronomical catalogs,\n*and to interactively access related data and information.\n \n \n \n!YOUR DATA ARE BEING DOWNLOADED...\n!Please wait...\n \n*%CDSLogo.png\n \n*Astrovia is developed by Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel and Chaitra.
+PUBINPROG.fr	*ASTROVIA est un atlas du ciel interactif développé par le CDS.\n*Il permet de visualiser des images digitalisées de n'importe quelle\n*partie du ciel, d'y superposer des objets issus de catalogues astronomiques,\n*et, interactivement, d'accéder aux informations associées.\n \n \n \n!VOS DONNEES SONT EN COURS DE CHARGEMENT\n!Veuillez patienter...\n \n*%CDSLogo.png\n \n*Astrovia est développé par Pierre Fernique,\n*Thomas Boch, Anaïs Oberto, François Bonnarel et Chaitra.
 MVIEWDESC	Split the main window into 2, 4, 9 or 16 panels
 MVIEWDESC.fr	Découpe la fenêtre principale en 2, 4, 9 ou 16 écrans
 MVIEWSYNC	Match views (unify scale / orientation)
@@ -487,8 +487,8 @@ NOCOOR	Coordinates columns not found for plane
 NOCOOR.fr	Aucune colonne de coordonnées trouvée pour le plan
 NOYET	not yet used
 NOYET.fr	pas encore utilisé
-NOSUCHIMG	No such Aladin image for this target
-NOSUCHIMG.fr	Aucune image Aladin ne correspond pour cette position
+NOSUCHIMG	No such Astrovia image for this target
+NOSUCHIMG.fr	Aucune image Astrovia ne correspond pour cette position
 COORDERR Coordinate error
 COORDERR.fr	Erreur de coordonnées
 #SHIFTSYNC	SHIFT => sync. all views
@@ -676,7 +676,7 @@ NOINPUTITEM	--- no input ---
 TARGET	Target
 RADIUS	Radius
 #YTARGET	Specify a target here
-SSHELP  This windows provides a simple and homogeneous access to most of astronomical data bases.\n   .The left tabs are dedicated to the image servers;\n    . The right tabs are dedicated to the catalog and table servers;\n   .The top tabs give you an access to your local data [File], or allows you to query simultaneously all "virtual observatory" compatible servers [all VO], or provides a list of instrument field of view,...\n \nSelect a server, fill in the form fields - especially the target (coordinates or an usual astronomical object identifier) and the radius - and press "SUBMIT". For some servers, you will have to designate specifically which data have to be downloaded. The results of your requests (images, catalogues...) will save in the Aladin "stack" and displayed consequently.\n \nThe "Reset" button re-sets some fields (target, radius, epoch) according to the current view. The "Clear" button just clears the fields.\n \nThe "Grab coord" button, on some forms, allows you to pick up a target and a radius directly in the main Aladin view by clicking and dragging an area.
+SSHELP  This windows provides a simple and homogeneous access to most of astronomical data bases.\n   .The left tabs are dedicated to the image servers;\n    . The right tabs are dedicated to the catalog and table servers;\n   .The top tabs give you an access to your local data [File], or allows you to query simultaneously all "virtual observatory" compatible servers [all VO], or provides a list of instrument field of view,...\n \nSelect a server, fill in the form fields - especially the target (coordinates or an usual astronomical object identifier) and the radius - and press "SUBMIT". For some servers, you will have to designate specifically which data have to be downloaded. The results of your requests (images, catalogues...) will save in the Aladin "stack" and displayed consequently.\n \nThe "Reset" button re-sets some fields (target, radius, epoch) according to the current view. The "Clear" button just clears the fields.\n \nThe "Grab coord" button, on some forms, allows you to pick up a target and a radius directly in the main Astrovia view by clicking and dragging an area.
 NOSESAME	There is no current access to CDS Sesame object name resolver.\nUse directly the corresponding J2000 coordinates.
 
 SERVERTITLE.fr	Sélecteur de serveurs
@@ -709,7 +709,7 @@ NOINPUTITEM.fr	--- pas d'entrée ---
 TARGET.fr	Position
 RADIUS.fr	Rayon
 #YTARGET.fr	Indiquez ici une position
-SSHELP.fr  Cette fenêtre fournit un accès simple et homogène à la plupart des bases de données astronomique accessibles par Internet.\n   .Les onglets à gauche concernent les serveurs d'images ;\n   .Les onglets de droite concernent les serveurs de catalogues ou de tables.\n   .Les onglets du haut donnent accès à vos données locales [File], à tous les serveurs compatibles "Observatoire virtuel" [all VO] pour une interrogation simultanée, à une liste de champs instrumentaux [FOV] et enfin à d'autres services particuliers.\n \nSélectionnez le serveur de votre choix, renseignez son formulaire - notamment en désignant une position (coordonnées ou identificateur usuel) et un rayon de recherche - et appuyez "CHERCHER". Pour certains serveurs, vous devrez désigner explicitement quelles données vous désirez charger. Les résultats de vos requêtes (images, catalogues,...) seront enregistrés dans la "pile" d'Aladin et visualisés en conséquence.\n \nLe bouton "Réinit." réinitialise les champs de saisie, notamment la cible et le rayon par défaut (voire l'époque) afin qu'ils correspondent au champ en cours de visualisation. En revanche, le bouton "Effacer" efface simplement tous les champs de saisie.\n \nLe bouton "Pointer" qui apparait dans certains formulaires vous permet de remplir les champs "Position" et "Rayon" en cliquant/étirant dans la vue principale d'Aladin.
+SSHELP.fr  Cette fenêtre fournit un accès simple et homogène à la plupart des bases de données astronomique accessibles par Internet.\n   .Les onglets à gauche concernent les serveurs d'images ;\n   .Les onglets de droite concernent les serveurs de catalogues ou de tables.\n   .Les onglets du haut donnent accès à vos données locales [File], à tous les serveurs compatibles "Observatoire virtuel" [all VO] pour une interrogation simultanée, à une liste de champs instrumentaux [FOV] et enfin à d'autres services particuliers.\n \nSélectionnez le serveur de votre choix, renseignez son formulaire - notamment en désignant une position (coordonnées ou identificateur usuel) et un rayon de recherche - et appuyez "CHERCHER". Pour certains serveurs, vous devrez désigner explicitement quelles données vous désirez charger. Les résultats de vos requêtes (images, catalogues,...) seront enregistrés dans la "pile" d'Astrovia et visualisés en conséquence.\n \nLe bouton "Réinit." réinitialise les champs de saisie, notamment la cible et le rayon par défaut (voire l'époque) afin qu'ils correspondent au champ en cours de visualisation. En revanche, le bouton "Effacer" efface simplement tous les champs de saisie.\n \nLe bouton "Pointer" qui apparait dans certains formulaires vous permet de remplir les champs "Position" et "Rayon" en cliquant/étirant dans la vue principale d'Astrovia.
 NOSESAME.fr	Le résolveur de nom d'objet CDS Sésame est inatteignable actuellement.\nVous devez utiliser directement les coordonnées J2000 correspondantes.
 
 
@@ -724,25 +724,25 @@ ALLSKYSWFITS Get full pixel dynamic (fits)
 ALLSKYSWFITS.fr Mode dynamique complète  (fits)
 
 # AladinServer.java strings
-ALADINTITLE	Legacy Aladin image server
-ALADINNAME	Aladin\nimage\nserver
+ALADINTITLE	Legacy Astrovia image server
+ALADINNAME	Astrovia\nimage\nserver
 ALADINBYTREE	Hierarchical view
 ALADINDEFFMT	Default format:
-ALADININFO	The legacy Aladin image server (CDS/Strasbourg) - DSS/MAMA/2MASS/IRAS
+ALADININFO	The legacy Astrovia image server (CDS/Strasbourg) - DSS/MAMA/2MASS/IRAS
 ALADINSTEP1	Step 1: Specify a target/radius and press SUBMIT
 ALADINSTEP2	Step 2: load one or several images
-ALADINDESC	This Legacy Aladin server is the historical dedicated image server to Aladin. It provides images from a few reference surveys DSS1,DSS2,2MASS,IRAS(IRIS).\n \nAlternatively, you can access the Legacy Aladin image server via un "get" command line (menu "Tools -> Aladin console"). It follows these syntax:\n   get Aladin[(keywords,...)] [target] [radiusUnit]\n \nThe keywords can be:\n   .a survey: DSS1,DSS2,SERC,2MASS,POSSI,POSSII,IRAS,...\n   .a color code: O,J,F,N,K,E,...\n   .a resolution: FULL,LOW,PLATE\n   .a format: FITS,JPEG
-ALADINSERVERR	!Aladin image server error !
+ALADINDESC	This Legacy Astrovia server is the historical dedicated image server to Astrovia. It provides images from a few reference surveys DSS1,DSS2,2MASS,IRAS(IRIS).\n \nAlternatively, you can access the Legacy Astrovia image server via un "get" command line (menu "Tools -> Astrovia console"). It follows these syntax:\n   get Astrovia[(keywords,...)] [target] [radiusUnit]\n \nThe keywords can be:\n   .a survey: DSS1,DSS2,SERC,2MASS,POSSI,POSSII,IRAS,...\n   .a color code: O,J,F,N,K,E,...\n   .a resolution: FULL,LOW,PLATE\n   .a format: FITS,JPEG
+ALADINSERVERR	!Astrovia image server error !
 
-ALADINTITLE.fr	Serveur d'images Aladin (legacy)
+ALADINTITLE.fr	Serveur d'images Astrovia (legacy)
 ALADINNAME.fr	Serveur\nAladin
 ALADINBYTREE.fr	Vue hiérarchique
 ALADINDEFFMT.fr	Format par défaut:
-ALADININFO.fr	Le serveur d'images "Legacy Aladin" (CDS/Strasbourg) - DSS/MAMA/2MASS/IRAS
+ALADININFO.fr	Le serveur d'images "Legacy Astrovia" (CDS/Strasbourg) - DSS/MAMA/2MASS/IRAS
 ALADINSTEP1.fr	Etape 1: Indiquez une position et appuyez CHERCHER
 ALADINSTEP2.fr	Etape 2: Sélectionnez une ou plusieurs images
-ALADINDESC.fr	Le serveur d'images Legacy Aladin est le serveur historique dédié à Aladin. Il fournit des images de quelques relevés de référence DSS1,DSS2,2MASS,IRAS(IRIS).\n \nVous pouvez également accéder au serveur Legacy Aladin par une commande en ligne "get" (menu "Outils -> Console Aladin"). Elle doit suivre la syntaxe suivante;\n   get Aladin[(keywords,...)] [target] [radiusUnit]\n \nLes mots-clés peuvent être:\n   .un nom de relevé : DSS1,DSS2,SERC,2MASS,POSSI,POSSII,IRAS,...;\n   .un code couleur : O,J,F,N,K,E,...\n   .une résolution : FULL,LOW,PLATE\n   .un format : FITS,JPEG
-ALADINSERVERR.fr	!Erreur du serveur d'images Aladin !
+ALADINDESC.fr	Le serveur d'images Legacy Astrovia est le serveur historique dédié à Astrovia. Il fournit des images de quelques relevés de référence DSS1,DSS2,2MASS,IRAS(IRIS).\n \nVous pouvez également accéder au serveur Legacy Astrovia par une commande en ligne "get" (menu "Outils -> Console Astrovia"). Elle doit suivre la syntaxe suivante;\n   get Astrovia[(keywords,...)] [target] [radiusUnit]\n \nLes mots-clés peuvent être:\n   .un nom de relevé : DSS1,DSS2,SERC,2MASS,POSSI,POSSII,IRAS,...;\n   .un code couleur : O,J,F,N,K,E,...\n   .une résolution : FULL,LOW,PLATE\n   .un format : FITS,JPEG
+ALADINSERVERR.fr	!Erreur du serveur d'images Astrovia !
 
 # VizieRServer.java strings
 VZTITLE	VizieR catalog service
@@ -752,7 +752,7 @@ VZCATDESC	Info.
 VZCATMOC	Coverage (MOC)
 VZCATDMAP	Density map
 VZFROM	Provided by CDS VizieR catalog service
-VZDESC	VizieR provides access to the most complete library of published astronomical catalogues and data tables available on line.\n \nYou can access VizieR catalog service by a "get" command line (use the Aladin console, menu "Tools -> Aladin console"). For VizieR, the "get" syntax follows these conventions:\nget VizieR(catID1[,catID2]...[,allcolumns]) [target] [radiusUnit]\n   - catIDn : is a VizieR catalog identifier\n   - allcolumns : to get all columns
+VZDESC	VizieR provides access to the most complete library of published astronomical catalogues and data tables available on line.\n \nYou can access VizieR catalog service by a "get" command line (use the Astrovia console, menu "Tools -> Astrovia console"). For VizieR, the "get" syntax follows these conventions:\nget VizieR(catID1[,catID2]...[,allcolumns]) [target] [radiusUnit]\n   - catIDn : is a VizieR catalog identifier\n   - allcolumns : to get all columns
 VZINFO1	Specify a target, and a catalog name or identification...
 VZINFO2	... don't know which catalog ? Select the \npotentially interesting ones with words/keywords !
 VZGETALL2	All columns
@@ -768,7 +768,7 @@ VZCATDESC.fr	Info
 VZCATMOC.fr	Couverture (MOC)
 VZCATDMAP.fr	Carte densité
 VZFROM.fr	Fournit par le service des catalogues VizieR du CDS
-VZDESC.fr	VizieR offre l'accès à la plus complète des bibliothèques de catalogues et tables astronomiques accessibles en ligne.\n \nVous pouvez accéder à VizieR également par une commande en ligne "get" (ouvrir la console Aladin, menu "Outils -> Console Aladin). Dans le cas de VizieR, la commande "get" suit les conventions suivantes :\nget VizieR(catID1[,catID2]...[,allcolumns]) [target] [radiusUnit]\n   - catIDn : est un identificateur de catalogue\n   - allcolumns : pour récupérer toutes les colonnes des catalogues
+VZDESC.fr	VizieR offre l'accès à la plus complète des bibliothèques de catalogues et tables astronomiques accessibles en ligne.\n \nVous pouvez accéder à VizieR également par une commande en ligne "get" (ouvrir la console Astrovia, menu "Outils -> Console Astrovia). Dans le cas de VizieR, la commande "get" suit les conventions suivantes :\nget VizieR(catID1[,catID2]...[,allcolumns]) [target] [radiusUnit]\n   - catIDn : est un identificateur de catalogue\n   - allcolumns : pour récupérer toutes les colonnes des catalogues
 VZINFO1.fr	Indiquez une position et l'identificateur d'un catalogue...
 VZINFO2.fr	... Vous ne connaissez pas l'identificateur ? Générez une liste\nde catalogues potentiels à partir de mots-clés !
 VZGETALL2.fr	Toutes col.
@@ -863,7 +863,7 @@ FILENAME	File
 FILETITLE	User data access (image/table/script/dir)
 FILEINFO	Access to user data by filename or URL
 FILEBROWSE	Browse...
-FILEDESC	Allows loading of a file containing either an image, tabular\ndata, Aladin script or Aladin backup or metadata files.\nThe file can be described either by its filename or by an URL (http://...).\n\nThe contents of the file is automatically detected by Aladin. The \nfile may be gzipped.\nIf the filename specifies a directory, Aladin automatically creates\na MetaData Tree describing all the data in the directory and its \nsub-directories.\nThe supported formats are:\n     -Images: FITS,JPEG,GIF,PNG\n     -Tabular data:CSV (Character-Separated-Value), XML/VOTable, XML/AstroRes, simple ASCII tables\n     -MetaData tree: SIA, IDHA\n     -Script: Aladin script (".ajs" extension)\n     -Backup: Aladin stack backup (".aj" extension)\n
+FILEDESC	Allows loading of a file containing either an image, tabular\ndata, Astrovia script or Astrovia backup or metadata files.\nThe file can be described either by its filename or by an URL (http://...).\n\nThe contents of the file is automatically detected by Astrovia. The \nfile may be gzipped.\nIf the filename specifies a directory, Astrovia automatically creates\na MetaData Tree describing all the data in the directory and its \nsub-directories.\nThe supported formats are:\n     -Images: FITS,JPEG,GIF,PNG\n     -Tabular data:CSV (Character-Separated-Value), XML/VOTable, XML/AstroRes, simple ASCII tables\n     -MetaData tree: SIA, IDHA\n     -Script: Astrovia script (".ajs" extension)\n     -Backup: Astrovia stack backup (".aj" extension)\n
 FILEINFO1	Specify
 FILEINFO2	filename(s), URL(s) or a directory
 FILEINFO3	and press the SUBMIT button
@@ -872,7 +872,7 @@ FILENAME.fr	Fichier
 FILETITLE.fr	Accès aux données utilisateurs (image/table/script/dir)
 FILEINFO.fr	Accès aux données utilisateurs par fichier ou URL
 FILEBROWSE.fr	Parcourir...
-FILEDESC.fr	Ce formulaire vous permet de charger des fichiers d'images, de tables, des scripts ou des sauvegarde ou encore de méta-données.\nCes fichiers peuvent être spécifiés soit par leur nom sur le disque local, soit par URL (http://...).\nLe type du fichier est automatiquement détecté par Aladin. Les fichiers peuvent être gzippés. Si le nom de fichier est en fait un répertoire, Aladin créera automatiquement un "arbre de méta-données" visualisant pour l'ensemble du répertoire et de ses sous-répertoires les fichiers accessibles.\nLes formats supportés sont\n      - Images: FITS,JPEG,FIG,PNG;\n      -Tables:CSV (Character-Separated-Value), XML/VOTable, XML/AstroRes, tables ASCII\n     -Méta-données: SIA, IDHA\n     -Script: liste de commandes Aladin (extension ".ajs")\n     -Sauvegarde: Sauvegarde de la pile (extension ".aj")\n
+FILEDESC.fr	Ce formulaire vous permet de charger des fichiers d'images, de tables, des scripts ou des sauvegarde ou encore de méta-données.\nCes fichiers peuvent être spécifiés soit par leur nom sur le disque local, soit par URL (http://...).\nLe type du fichier est automatiquement détecté par Astrovia. Les fichiers peuvent être gzippés. Si le nom de fichier est en fait un répertoire, Astrovia créera automatiquement un "arbre de méta-données" visualisant pour l'ensemble du répertoire et de ses sous-répertoires les fichiers accessibles.\nLes formats supportés sont\n      - Images: FITS,JPEG,FIG,PNG;\n      -Tables:CSV (Character-Separated-Value), XML/VOTable, XML/AstroRes, tables ASCII\n     -Méta-données: SIA, IDHA\n     -Script: liste de commandes Astrovia (extension ".ajs")\n     -Sauvegarde: Sauvegarde de la pile (extension ".aj")\n
 FILEINFO1.fr	Indiquez
 FILEINFO2.fr	un ou plusieurs fichiers, URLs ou un répertoire
 FILEINFO3.fr	puis appuyez sur CHERCHER
@@ -884,7 +884,7 @@ VOINFO	Discovery tool for any table/image/spectra available in the VO
 VOSTOP	Stop it
 VOHSTOP	Press it to stop the processing =>
 VOMORE	Detailed list...
-VODESC	The "All VO" discovery form allows you to automatically retrieve available\ndata (images, tables, catalogs, logs, spectra) found around a position.The list of tested servers is updated from the Virtual Observatory Registry.\nThe "Detailed list..." allows you to display this list.\n \nTake care about the fact that Aladin is not dedicated to spectra data. However, you can launch another VO tool compatible with this kind of data (see menu Tools -> VO tools) and send the spectra to this tool via the dedicated popup menu that you will find on each spectra line description.
+VODESC	The "All VO" discovery form allows you to automatically retrieve available\ndata (images, tables, catalogs, logs, spectra) found around a position.The list of tested servers is updated from the Virtual Observatory Registry.\nThe "Detailed list..." allows you to display this list.\n \nTake care about the fact that Astrovia is not dedicated to spectra data. However, you can launch another VO tool compatible with this kind of data (see menu Tools -> VO tools) and send the spectra to this tool via the dedicated popup menu that you will find on each spectra line description.
 VOSERV	Servers
 VOIMG	Images
 VOCAT	Catalogs
@@ -900,7 +900,7 @@ VOINFO.fr	Recherche automatique des données disposibles dans le VO
 VOSTOP.fr	Arrêter
 VOHSTOP.fr	Appuyez ici pour arrêter le processus  =>
 VOMORE.fr	Liste détaillée...
-VODESC.fr	Le formulaire "Tout le VO" vous permet d'explorer toutes les ressources disponibles (images,tables, catalogues, logs de missions, spectres) pour une position donnée. La liste des serveurs est automatiquement mise à jour à partir d'un dictionnaire distant de l'Observatoire Virtuel. Le bouton "Liste détaillée" vous permet de visualiser ces serveurs.\n \nNBotez qu'Aladin n'est pas dédié à la manipulation de spectres. Cependant, vous pouvez exécuter un autre outils VO compatible avec ce genre de données (voire menu "Outils -> outils VO") et lui envoyer les spectres via le menu contextuel associé à chaque ligne de description d'un spectre.
+VODESC.fr	Le formulaire "Tout le VO" vous permet d'explorer toutes les ressources disponibles (images,tables, catalogues, logs de missions, spectres) pour une position donnée. La liste des serveurs est automatiquement mise à jour à partir d'un dictionnaire distant de l'Observatoire Virtuel. Le bouton "Liste détaillée" vous permet de visualiser ces serveurs.\n \nNBotez qu'Astrovia n'est pas dédié à la manipulation de spectres. Cependant, vous pouvez exécuter un autre outils VO compatible avec ce genre de données (voire menu "Outils -> outils VO") et lui envoyer les spectres via le menu contextuel associé à chaque ligne de description d'un spectre.
 VOSERV.fr	Serveurs
 VOIMG.fr	Images
 VOCAT.fr	Catalogues
@@ -945,7 +945,7 @@ IMGCLOSE	Close
 IMGNONE	-- none --
 IMMISSING RRequired information is missing. Please complete the form.
 IMGBEST	best resolution
-IMGHELP1	The Aladin resampling is based on the nearest pixel. Each pixel of the sampling reference image is converted in coordinates according to its astrometric solution. These coordinates are converted in pixel coordinates in the others images using their respective astrometric solution. The corresponding pixel values are taken without any linear or others methods. It is typically the "winner takes all" algorithm.
+IMGHELP1	The Astrovia resampling is based on the nearest pixel. Each pixel of the sampling reference image is converted in coordinates according to its astrometric solution. These coordinates are converted in pixel coordinates in the others images using their respective astrometric solution. The corresponding pixel values are taken without any linear or others methods. It is typically the "winner takes all" algorithm.
 
 IMGCREATE.fr	CREE
 IMGRESET.fr	Réinit.
@@ -968,7 +968,7 @@ ARITHTITLE	Arithmetic image generator
 ARITHINFO	Specify two image planes or one image plane and a value,\n choose an arithmetic operation and\npress the CREATE button to generate the resulting image.\n
 ARITHPLANE	Plane
 ARITHPLANEVALUE Plane or Value
-ARITHHELP	Note 1: After computing the image, Aladin autocuts the pixels. So, the resulting image can be similar to the original, but not the pixel values.\n \nNote 2: Arithmetic operations are available only with images for which Aladin can have full pixel values (for instance : not JPEG 8bit images).
+ARITHHELP	Note 1: After computing the image, Astrovia autocuts the pixels. So, the resulting image can be similar to the original, but not the pixel values.\n \nNote 2: Arithmetic operations are available only with images for which Astrovia can have full pixel values (for instance : not JPEG 8bit images).
 
 ARITHOP.fr	Opération arithmétique:
 ARITHADD.fr	Addition
@@ -981,7 +981,7 @@ ARITHTITLE.fr	Générateur d'images arithmétiques
 ARITHINFO.fr	Désignez 2 plans images ou 1 plan image et une valeur\nainsi que l'opération arithmétique à effectuer puis\nappuyez sur le bouton CREER pour générer l'image résultante.
 ARITHPLANE.fr	Plan
 ARITHPLANEVALUE.fr Plan ou Valeur
-ARITHHELP.fr	Note 1: Après avoir effectué l'opération arithmétique, Aladin ajuste automatique le contraste de l'image résultante. Il n'est donc pas anormal que l'aspect de l'image puisse ne pas changer.\n \nNote 2: Les opérations arithmétiques ne peuvent s'appliquer sur les images pour lesquelles Aladin ne dispose pas des vraies valeurs de pixels, typiquement les images 8 bits JPEG.
+ARITHHELP.fr	Note 1: Après avoir effectué l'opération arithmétique, Astrovia ajuste automatique le contraste de l'image résultante. Il n'est donc pas anormal que l'aspect de l'image puisse ne pas changer.\n \nNote 2: Les opérations arithmétiques ne peuvent s'appliquer sur les images pour lesquelles Astrovia ne dispose pas des vraies valeurs de pixels, typiquement les images 8 bits JPEG.
 
 # FrameMocOperation.java strings
 MOCOP	MOC operation:
@@ -1057,19 +1057,19 @@ BITPIXINFO	Specify an image plane\n choose the new pixel encoded format and\npre
 BITPIXCUTLABEL	Method:
 BITPIXCUT	Adjust pixel dynamic
 BITPIXCAST	Simple cast
-BITPIXHELP	Note 1: After computing the image, Aladin autocuts the pixels.\n \nNote 2: Arithmetic operations are available only with images for which Aladin can have full pixel values (for instance : not JPEG 8bit images).
+BITPIXHELP	Note 1: After computing the image, Astrovia autocuts the pixels.\n \nNote 2: Arithmetic operations are available only with images for which Astrovia can have full pixel values (for instance : not JPEG 8bit images).
 
 BITPIXTITLE.fr	Bitpix image conversion
 BITPIXINFO.fr	Désignez un plan image\nainsi que le nouveau format d'encodage puis\nappuyez sur le bouton CREER pour générer l'image résultante.
 BITPIXCUTLABEL.fr	Méthode:
 BITPIXCUT.fr	Ajustement de la dynamique des pixels
 BITPIXCAST.fr	Cast simple
-BITPIXHELP.fr	Note 1: Après avoir effectué la conversion, Aladin ajuste automatique le contraste de l'image résultante. \n \nNote 2: L'opération de conversion ne peut s'appliquer que sur les images pour lesquelles Aladin ne dispose pas des vraies valeurs de pixels, typiquement les images 8 bits JPEG.
+BITPIXHELP.fr	Note 1: Après avoir effectué la conversion, Astrovia ajuste automatique le contraste de l'image résultante. \n \nNote 2: L'opération de conversion ne peut s'appliquer que sur les images pour lesquelles Astrovia ne dispose pas des vraies valeurs de pixels, typiquement les images 8 bits JPEG.
 
 # FrameConvolution.java strings
 CONVTITLE Convolution
 CONVINFO Specify one image plane and a convolution kernel.\nFor gaussian filter, adjust the parameters.\nPress the CREATE button to generate the resulting image.\n
-CONVHELP	Aladin uses the classical convolution method with pixel copy on edges. In case of gaussian convolution, you can specify either the FWHM or the sigma in angular value, with unit (default is arcmin). If you do not specify the radius, Aladin will automatically compute the matrix size.
+CONVHELP	Astrovia uses the classical convolution method with pixel copy on edges. In case of gaussian convolution, you can specify either the FWHM or the sigma in angular value, with unit (default is arcmin). If you do not specify the radius, Astrovia will automatically compute the matrix size.
 CONVPIXRES PixRes
 CONVGAUSSIAN Gaussian kernel
 CONVKERNEL Other kernels
@@ -1077,7 +1077,7 @@ CONVRADIUS	Matrix radius
 
 CONVTITLE.fr Convolution
 CONVINFO.fr Désignez le plan image et le noyau de convolution à applique.\nAjustez les paramètres le cas échéant puis\nappuyez sur le bouton CREER pour générer l'image résultante.
-CONVHELP.fr Aladin utilise la méthode classique de convolution avec replications des pixels au bord. Dans le cas d'une convolution gaussienne, il est possible d'indiquer soit la FWHM, soit le sigma en valeur angulaire en précisant éventuellement l'unité. Si le rayon est laissé vide, Aladin déduira automatiquement la taille de la matrice.
+CONVHELP.fr Astrovia utilise la méthode classique de convolution avec replications des pixels au bord. Dans le cas d'une convolution gaussienne, il est possible d'indiquer soit la FWHM, soit le sigma en valeur angulaire en précisant éventuellement l'unité. Si le rayon est laissé vide, Astrovia déduira automatiquement la taille de la matrice.
 CONVPIXRES.fr PixRes
 CONVGAUSSIAN.fr Noyau gaussien
 CONVKERNEL.fr Autres noyaux
@@ -1428,7 +1428,7 @@ VWMSEL	Select all views
 VWMDELV	Delete the selected views   
 VWMCROP1	Crop image area...
 VWVIEW	View
-VWROIINFO	Aladin will generate thumbnail views from the background image "locked" on the selected objects. If there is no selected object, Aladin will use the objects of the top stack plane.\n \nDo you want to do that ?
+VWROIINFO	Astrovia will generate thumbnail views from the background image "locked" on the selected objects. If there is no selected object, Astrovia will use the objects of the top stack plane.\n \nDo you want to do that ?
 VWROIWNG	Before launching thumbnail generation,\nyou must select astronomical objects\nby loading astronomical catalogs and selecting\nsome provided sources.
 VWHCLIC	   - Click on it to get details
 VWHCLIC1	superimposed objects - click on them to get details
@@ -1473,7 +1473,7 @@ VWMSEL.fr	Sélectionner toutes les vues
 VWMDELV.fr	Supprimer toutes les vues sélectionnées
 VWMCROP1.fr	Extraire une portion de l'image...
 VWVIEW.fr	Vue
-VWROIINFO.fr	Aladin va générer des vues-vignettes de l'image de fond "verrouillées" sur les objets sélectionnés. Si vous n'avez pas sélectionné d'objets au préalable (sources astronomiques ou marques), Aladin utilisera les objets du plan le plus haut dans la pile.\n \nVoulez-vous effectuer cette opération ?
+VWROIINFO.fr	Astrovia va générer des vues-vignettes de l'image de fond "verrouillées" sur les objets sélectionnés. Si vous n'avez pas sélectionné d'objets au préalable (sources astronomiques ou marques), Astrovia utilisera les objets du plan le plus haut dans la pile.\n \nVoulez-vous effectuer cette opération ?
 VWROIWNG.fr	Vous devez au préalable charger un catalogue et sélectionner les objets astronomiques\ndont vous voulez générer les vignettes.
 VWHCLIC.fr	   - Cliquer pour afficher le détail
 VWHCLIC1.fr	objets superposés - cliquer pour afficher les détails
@@ -1508,9 +1508,9 @@ CMAPPLYALLTIP	Apply this pixel mapping on all other compatible images selected i
 CMAPPLYCCDTIP	Apply this pixel mapping on all other CCDs
 CMMETHOD Select the range\nof visible pixels\nand adjust its associated\ncolor map
 CMMETHODERGB	Adjust the contrast by moving\nthe three triangles for each component
-CMMESSAGE	The pixel dynamic of astronomical images is generally not adapted to the human eye sensibility. In preview mode (JPEG, PNG,...), Aladin can not provides the physical value associated to each pixel value. You can just modify the constrast of the provided pixels.\nIn the case of full dynamic mode (FITS), Aladin displays the physical values associated to the pixel values and select automatically the best visible range amongst the whole dynamic. This range is drawn as a gray rectangular below. The minimum and the maximum physical values - if known - are displayed on each side of the graphic.\n \nYou can modify this visible range either by the mouse, or directly by editing the two text fields.\nYou can also re-estimate this visible range based on the pixels localized around the current position of the reticle in the image (button "local cut").\nYou can also display the whole range of values (button "All values").
+CMMESSAGE	The pixel dynamic of astronomical images is generally not adapted to the human eye sensibility. In preview mode (JPEG, PNG,...), Astrovia can not provides the physical value associated to each pixel value. You can just modify the constrast of the provided pixels.\nIn the case of full dynamic mode (FITS), Astrovia displays the physical values associated to the pixel values and select automatically the best visible range amongst the whole dynamic. This range is drawn as a gray rectangular below. The minimum and the maximum physical values - if known - are displayed on each side of the graphic.\n \nYou can modify this visible range either by the mouse, or directly by editing the two text fields.\nYou can also re-estimate this visible range based on the pixels localized around the current position of the reticle in the image (button "local cut").\nYou can also display the whole range of values (button "All values").
 CMMESSAGE1	This histogram represents the distribution of visible pixel value (in a logarithm scale). The overlay curves/lines illustrate the transfert function between these values and the current color map (below).\n \nYou can adjust dynamically the resulting image contrast by moving the three triangles at the bottom of the graph, or by clicking/dragging your mouse "a la DS9" either in the histogram or directly in the image main view.
-CMMESSAGE2	Aladin uses 256 channel color maps for displaying the images. Each channel is associated to a color or a gray level. You can select one of these color maps usually used in astronomy (gray, BB, A, stern, rainbow, eosb, fire, cubehlx, polar).\nYou can also select the transfert function used to associate a color map channel to a range of pixel values (hsin, log, sqrt, linear - the default, sqr).\nYou can also reverse the color map in order to obtain an inverse picture effect.
+CMMESSAGE2	Astrovia uses 256 channel color maps for displaying the images. Each channel is associated to a color or a gray level. You can select one of these color maps usually used in astronomy (gray, BB, A, stern, rainbow, eosb, fire, cubehlx, polar).\nYou can also select the transfert function used to associate a color map channel to a range of pixel values (hsin, log, sqrt, linear - the default, sqr).\nYou can also reverse the color map in order to obtain an inverse picture effect.
 CMPIXTOOL Calculator...
 CMPIXTOOLTIP Open the pixel calculator...
 CMONVIEW CM on view
@@ -1543,9 +1543,9 @@ CMAPPLYALLTIP.fr	Applique cet dynamique de pixel à toutes les images compatibles
 CMAPPLYCCDTIP.fr	Applique cet dynamique de pixel à tous les CCD.
 CMMETHOD.fr Ajuster la plage\des pixels visibles\nainsi que la table\ndes couleurs associée
 CMMETHODERGB.fr	Ajuster le contraste en déplaçant\nles triangles de contrôle
-CMMESSAGE.fr	Les images astronomiques ont généralement une plage de valeurs bien plus large que ce que l'oeil humain peut discerner. En mode de prévisualisation (JPEG, PNG...), Aladin ne connait pas les valeurs physiques correspondantes, et vous ne pouvez qu'adapter le contraste des pixels fournis. \nEn revanche, dans le cas du mode dynamique complète (FITS), Aladin affiche les valeurs physiques correspondantes aux valeurs des pixels et sélectionne automatiquement l'intervalle visible qui lui semble le plus adapté. Celui-ci est representé par la barre grisée ci-dessous. Les valeurs minimum et maximum - si elles sont connues - s'affichent à droite et à gauche du graphique.\n \nVous pouvez ajuster manuellement la plage visible via les deux champs de saisie, ou utiliser votre souris pour ajuster ou déplacer la zone grisée.\nVous pouvez également recalculer l'estimation automatique en se basant sur la position courante du réticule dans l'image (bouton "local cut").\nVous pouvez afin afficher toute la plage des valeurs possibles (bouton "Toutes les valeurs").
+CMMESSAGE.fr	Les images astronomiques ont généralement une plage de valeurs bien plus large que ce que l'oeil humain peut discerner. En mode de prévisualisation (JPEG, PNG...), Astrovia ne connait pas les valeurs physiques correspondantes, et vous ne pouvez qu'adapter le contraste des pixels fournis. \nEn revanche, dans le cas du mode dynamique complète (FITS), Astrovia affiche les valeurs physiques correspondantes aux valeurs des pixels et sélectionne automatiquement l'intervalle visible qui lui semble le plus adapté. Celui-ci est representé par la barre grisée ci-dessous. Les valeurs minimum et maximum - si elles sont connues - s'affichent à droite et à gauche du graphique.\n \nVous pouvez ajuster manuellement la plage visible via les deux champs de saisie, ou utiliser votre souris pour ajuster ou déplacer la zone grisée.\nVous pouvez également recalculer l'estimation automatique en se basant sur la position courante du réticule dans l'image (bouton "local cut").\nVous pouvez afin afficher toute la plage des valeurs possibles (bouton "Toutes les valeurs").
 CMMESSAGE1.fr	Cet histogramme représente la distribution des valeurs visibles des pixels (en échelle logarithmique). La ligne/courbe tracée en superposition illustre la fonction de transfert appliquée aux valeurs vers la table des couleurs (ci-dessous).\n \nVous pouvez ajuster dynamiquement le contraste de l'image en agissant sur les 3 triangles situés sous le graphique. Alternativement, vous pouvez cliquer/glisser votre souris "à la DS9" soit dans l'histogramme, soit directement sur l'image dans la vue principale.
-CMMESSAGE2.fr	Pour visualiser l'image, Aladin utilise des tables de couleurs à 256 canaux. Chaque canal est associé à une couleur ou à un niveau de gris. Vous disposez de plusieurs tables de couleurs classiques en astronomie (gray, BB, A, stern, rainbow, eosb, fire, cubehlx, polar).\nVous pouvez également modifier la fonction de transfert qui permet d'associer une plage de valeurs de pixel à un canal de la table des couleurs. Par défaut linéaire, cette fonction peut être hsin, log, sqrt ou sqr ce qui correspond à des contrastes décroisssants. Il vous est également possible d'inverser la table des couleurs afin d'obtenir un effet de négatif photo.
+CMMESSAGE2.fr	Pour visualiser l'image, Astrovia utilise des tables de couleurs à 256 canaux. Chaque canal est associé à une couleur ou à un niveau de gris. Vous disposez de plusieurs tables de couleurs classiques en astronomie (gray, BB, A, stern, rainbow, eosb, fire, cubehlx, polar).\nVous pouvez également modifier la fonction de transfert qui permet d'associer une plage de valeurs de pixel à un canal de la table des couleurs. Par défaut linéaire, cette fonction peut être hsin, log, sqrt ou sqr ce qui correspond à des contrastes décroisssants. Il vous est également possible d'inverser la table des couleurs afin d'obtenir un effet de négatif photo.
 CMPIXTOOL.fr Calculette...
 CMPIXTOOLTIP.fr Ouvrir la calculette à pixel
 CMONVIEW.fr CM sur vue 
@@ -1585,7 +1585,7 @@ FTSHAPEFCT	Shape functions
 FTCOLORFCT	Color functions
 FTIOERR	I/O error
 FTCAVEATMSG	In order to be as generic as possible, those predefined filters\nare based on UCD 1+ (Unified Content Descriptors).\n[look at http://vizier.u-strasbg.fr/UCD for more details]\n \nIf your catalogues lack this semantic content,\nor use the previous version of UCD (UCD1),\ncolumns won't be recognized and filters won't apply properly.\nIn such a case, switch to "Advanced mode" and edit\nthe filter definition in order to make it match with\nthe metadata of the table you are working on.
-FTFILTER_EXPLAIN	A filter allows you to customize and constrain the display of catalogue planes in Aladin
+FTFILTER_EXPLAIN	A filter allows you to customize and constrain the display of catalogue planes in Astrovia
 FTDEMO1	Draw circles proportional to the object luminosity
 FTDEMO2	Show brightest stars (magnitude < 12)
 FTDEMO3	Show faintest stars (magnitude > 17)
@@ -1667,7 +1667,7 @@ NCCANCEL	Close
 NCONE	by parameters
 NCTWO	by matching stars
 NCTHREE	by WCS header
-NCHELPSTRING	Aladin allows you to recalibrate images following three different methods. You can specify the basic parameters to describe the new projection. You can also select a set of stars and their corresponding coordinates that you will pick from a overlaying catalog.
+NCHELPSTRING	Astrovia allows you to recalibrate images following three different methods. You can specify the basic parameters to describe the new projection. You can also select a set of stars and their corresponding coordinates that you will pick from a overlaying catalog.
 NCMYPROJ	My projection
 NCADJUST1	Choose a calibration method, fill up the corresponding form\naccording to the plane
 NCADJUST2	Adjust the following form according to the plane
@@ -1684,7 +1684,7 @@ NCRASYM	RA symmetry:
 NCQUADMSG	Click in the image (or in the measurement frame) to get\nthe corresponding coordinates. (nearest star for XY fields,\nnearest catalog object for RA/Dec fields)
 NCXYPOS	"x y" position
 NCERRNOXY	No XY object near the pointer, try again
-NCERRNOBEST	Aladin will use the clicked coordinates
+NCERRNOBEST	Astrovia will use the clicked coordinates
 NCERRIMG	Click on image to calibrate !
 NCALIBAGAIN This image has already an astrometrical solution !\nDo you really want to modify it ?
 #NCCOPYCAL	Do you want to use the astrometrical calibration\nof this plane for the new calibration ?
@@ -1701,7 +1701,7 @@ NCCANCEL.fr	Fermer
 NCONE.fr	Par paramètres
 NCTWO.fr	Par corresp. d'étoiles
 NCTHREE.fr	par entête WCS
-NCHELPSTRING.fr	Aladin vous permet de recalibrer des images par trois méthodes. Vous pouvez indiquer les paramètres de base pour décrire la nouvelle projection. Vous pouvez également sélectionner un ensemble d'étoiles et leurs coordonnées que vous pointerez via un catalogue astrométrique placé en superposition.
+NCHELPSTRING.fr	Astrovia vous permet de recalibrer des images par trois méthodes. Vous pouvez indiquer les paramètres de base pour décrire la nouvelle projection. Vous pouvez également sélectionner un ensemble d'étoiles et leurs coordonnées que vous pointerez via un catalogue astrométrique placé en superposition.
 NCMYPROJ.fr	Ma projection
 NCADJUST1.fr	Choississez une méthode, puis remplissez le formulaire\nen fonction du plan
 NCADJUST2.fr	Complétez le formulaire en fonction du plan
@@ -1718,20 +1718,20 @@ NCRASYM.fr	Symétrie en RA:
 NCQUADMSG.fr	Cliquez dans l'image (ou dans le panneau des mesures) pour\nrécupérer les coordonnées correspondantes. (plus proche étoile pour un champ XY, plus proche objet de catalogue pour un champ RA/DEC)
 NCXYPOS.fr	position "x y"
 NCERRNOXY.fr	Aucun objet avec des coordonnées XY à côté du pointeur,\nessayez à nouveau
-NCERRNOBEST.fr	Aladin va utiliser la position sous la souris
+NCERRNOBEST.fr	Astrovia va utiliser la position sous la souris
 NCERRIMG.fr	Cliquez dans l'image à calibrer !
 NCALIBAGAIN.fr Cette image a déjà une solution astrométrique. Voulez-vous réellement la modifier ?
 #NCCOPYCAL.fr	Voulez-vous utilisez la solution astrométrique de ce plan\npour la nouvelle calibration
 
 #Configuration.java strings
-UPTITLE	Aladin user preferences
+UPTITLE	Astrovia user preferences
 UPDEFDIR	Working directory
-UPDEFDIRH	Indicate the Aladin working directory\n.If there is no directory specified Aladin will use the current directory.
+UPDEFDIRH	Indicate the Astrovia working directory\n.If there is no directory specified Astrovia will use the current directory.
 UPLANGUE	Language
-UPLANGUEH	Indicate the interface language.\nIf you select "-- default --", Aladin will use the language defined by your operating system if it knows it
+UPLANGUEH	Indicate the interface language.\nIf you select "-- default --", Astrovia will use the language defined by your operating system if it knows it
 UPLANGCONTRIB	New translation ?
 UPMODE	User profile
-UPMODEH	Specify the Aladin running mode. In "undergraduate" profile, for simplying the usage some data and advanced features are hidden.
+UPMODEH	Specify the Astrovia running mode. In "undergraduate" profile, for simplying the usage some data and advanced features are hidden.
 UPPIXB	Display
 UPCMB	Pixel mapping
 UPCMH	Choose the default pixel mapping:\nvideo mode, colormap, autocut, transfert functions and display mode.
@@ -1741,9 +1741,9 @@ UPCMCO	Contrast
 UPCMC	Pixel Cut
 UPCMF	Transfert Fct
 UPWEBB	Web browser
-UPWEBH	Indicate your preferred browser amongs mozilla, firefox, netscape or konqueror.\nOr specify the path to your browser. A blank field lets Aladin choose for you.
+UPWEBH	Indicate your preferred browser amongs mozilla, firefox, netscape or konqueror.\nOr specify the path to your browser. A blank field lets Astrovia choose for you.
 UPREGB	Registry site
-UPREGH  Aladin uses the GLU, a "yellow page service" for discovering available servers. It is generally better to choose the closest site. Modifying this selection during the session or press the "Reload" button will re-build dynamically all the forms.
+UPREGH  Astrovia uses the GLU, a "yellow page service" for discovering available servers. It is generally better to choose the closest site. Modifying this selection during the session or press the "Reload" button will re-build dynamically all the forms.
 UPAPPLY	Apply
 UPCLOSE	Close
 UPTEST	Test available registries
@@ -1771,14 +1771,14 @@ UPPROJALLSKYB	HiPS projection
 UPPROJALLSKYH Specify the default projection for progressive sky mode
 UPFRAMEH	Specify the default coordinate frame.\nIn case of progressive mode (HiPS display), the drawing orientation will use by default the same coordinate system. But you can explicitely specify another orientation.\nYou can modify this first choice via the plane propertie window.
 UPCACHE	Permanent disk cache
-UPCACHEH	Aladin requires local disk space for keeping data from one session to the other. More it has, better it runs. It is localized in your $HOME/.aladin directory.
+UPCACHEH	Astrovia requires local disk space for keeping data from one session to the other. More it has, better it runs. It is localized in your $HOME/.aladin directory.
 UPHIDETAPSCHEMA Hide tap schema tables
-UPHIDETAPSCHEMAH Hide tap schema tables on Aladin tap interface(if it is irrelevant to your usage).
+UPHIDETAPSCHEMAH Hide tap schema tables on Astrovia tap interface(if it is irrelevant to your usage).
 UPLOG CDS log
-UPLOGH You are freely using Aladin developed by the Centre de Données astronomiques de Strasbourg (France). You will help a lot the developer team by activating the Aladin usage statistic mechanism (short reports automatically sent to CDS). These logs are anonymous and do not contain any local or personal information (paths, file names, ...).\n \nThese statistics are highly valuable for us to justify our activity and to decide next developements.
+UPLOGH You are freely using Astrovia developed by the Centre de Données astronomiques de Strasbourg (France). You will help a lot the developer team by activating the Astrovia usage statistic mechanism (short reports automatically sent to CDS). These logs are anonymous and do not contain any local or personal information (paths, file names, ...).\n \nThese statistics are highly valuable for us to justify our activity and to decide next developements.
 UPLOGH1 Do you accept anonymous statistics logs (you will always be able to change this choice via the menu Edit -> Preferrences) ?
 UPHELP Wizard
-UPHELPH Switch on/off the beginner help. Help new Aladin users to discover progressively the Aladin graphical interface.
+UPHELPH Switch on/off the beginner help. Help new Astrovia users to discover progressively the Astrovia graphical interface.
 UPFILTERHDU FITS HDU filtering
 UPFILTERHDUH If activated, only usefull FITS extensions (images, tables) will be loaded, otherwise useless tables (technical reduction information, without coordinates, ...) will be ignored
 UPPLANET Planetary data (test)
@@ -1796,10 +1796,10 @@ FILEDIALOGHELP.fr Rendu (Look&feel) des fenêtres de dialogue de sélection des fi
 FILEDIALOGJAVA.fr Library Java
 FILEDIALOGNATIVE.fr Système d'exploitation
 THEME	Interface
-THEMEHELP	General interface properties. These properties indicate the graphical theme of the interface as well as the scale factor that manages the enlargement of fonts and menus when Aladin runs on a high-resolution screen. It is possible to explicitly indicate a scale factor, or let Aladin decide the best choice (Automatic). It is also possible to let the Operating System and the Java machine manage the scale factor (OS method). Note that this last method may cause blurring effects depending on the type of monitor concerned. These properties require a restart.
+THEMEHELP	General interface properties. These properties indicate the graphical theme of the interface as well as the scale factor that manages the enlargement of fonts and menus when Astrovia runs on a high-resolution screen. It is possible to explicitly indicate a scale factor, or let Astrovia decide the best choice (Automatic). It is also possible to let the Operating System and the Java machine manage the scale factor (OS method). Note that this last method may cause blurring effects depending on the type of monitor concerned. These properties require a restart.
 UISCALE UI scale
 THEME.fr	Thème de l'interface
-THEMEHELP.fr	Propriétés générales de l'interface. Ces propriétés ermettent d'indiquer le thème graphique de l'interface ainsi que le facteur d'échelle qui gère l'agrandissement des polices et menus lorsque Aladin s'exécute sur un écran à haute résolution. Il est possible d'indiquer explicitement un facteur d'échelle, ou de laisser Aladin décider du meilleur choix (Automatic). Il est également possible de laisser le Système d'Exploitation et la machine Java gérer le facteur d'échelle (OS method). A noter que cette dernière méthode peut entrainer des effets de flous suivant le type de moniteur concerné. Ces propriétés nécessitent un redémarrage.
+THEMEHELP.fr	Propriétés générales de l'interface. Ces propriétés ermettent d'indiquer le thème graphique de l'interface ainsi que le facteur d'échelle qui gère l'agrandissement des polices et menus lorsque Astrovia s'exécute sur un écran à haute résolution. Il est possible d'indiquer explicitement un facteur d'échelle, ou de laisser Astrovia décider du meilleur choix (Automatic). Il est également possible de laisser le Système d'Exploitation et la machine Java gérer le facteur d'échelle (OS method). A noter que cette dernière méthode peut entrainer des effets de flous suivant le type de moniteur concerné. Ces propriétés nécessitent un redémarrage.
 UISCALE.fr Echelle
 UPGRID Coordinate grid
 UPGRID.fr Grille de coord.
@@ -1830,9 +1830,9 @@ UPINFOFONTBORDER.fr bordure police
       
 UPTITLE.fr	Préférences utilisateur
 UPDEFDIR.fr	Rép. de travail
-UPDEFDIRH.fr	Spécifiez le répertoire de travail.\nSi ce champ est laissé vide, Aladin utilisera le répertoire courant.
+UPDEFDIRH.fr	Spécifiez le répertoire de travail.\nSi ce champ est laissé vide, Astrovia utilisera le répertoire courant.
 UPLANGUE.fr	Langue
-UPLANGUEH.fr	Spécifiez la langue de l'interface.\nSi vous choississez "-- default --", Aladin utilisera la langue\ndéfinie par votre système d'exploitation s'il la connait.
+UPLANGUEH.fr	Spécifiez la langue de l'interface.\nSi vous choississez "-- default --", Astrovia utilisera la langue\ndéfinie par votre système d'exploitation s'il la connait.
 UPLANGCONTRIB.fr	Nouvelle traduction ?
 UPMODE.fr	Profile utilisateur
 UPMODEH.fr 	Spécifiez le mode d'exécution. Sous le profile "undergraduate", pour faciliter l'usage, certaines données et fonctions avancées ne sont pas accessibles.
@@ -1848,9 +1848,9 @@ UPCMCO.fr	Contraste
 UPCMC.fr	Filtre
 UPCMF.fr	Fonction
 UPWEBB.fr	Navigateur Web
-UPWEBH.fr	Spécifiez votre navigateur préféré\nparmi mozilla, firefox, netscape ou konqueror\nou spécifiez le chemin de votre propre navigateur. Laissez le champ vide\npour laisser Aladin choisir pour vous
+UPWEBH.fr	Spécifiez votre navigateur préféré\nparmi mozilla, firefox, netscape ou konqueror\nou spécifiez le chemin de votre propre navigateur. Laissez le champ vide\npour laisser Astrovia choisir pour vous
 UPREGB.fr	Site de l'annuaire
-UPREGH.fr	Aladin utilise un service d'annuaire pour connaître les serveurs accessibles - le GLU. Il est généralement préférable de désigner le site le plus proche de vous. Un changement de sélection en cours de session ou l'utilisation du bouton "Recharger" réinitialisera dynamiquement les formulaires.
+UPREGH.fr	Astrovia utilise un service d'annuaire pour connaître les serveurs accessibles - le GLU. Il est généralement préférable de désigner le site le plus proche de vous. Un changement de sélection en cours de session ou l'utilisation du bouton "Recharger" réinitialisera dynamiquement les formulaires.
 #UPREGCL.fr	Trouver le + proche:
 #UPREGMAN.fr	Site GLU
 UPAPPLY.fr	Appliquer
@@ -1891,9 +1891,9 @@ UPPROJALLSKYB.fr	Projection ciel complet
 UPPROJALLSKYH.fr Indiquez la méthode de projection par défaut dans le cas de tracé d'un ciel progressive (HiPS)
 UPFRAMEH.fr	Indiquez le système de référence céleste par défaut.\nLe tracé d'un ciel progressif sera orienté par défaut dans le même système, à moins que vous n'en précisiez un autre explicitement.\nIl est possible de modifier ce choix a posteriori via les propriétés du plan.
 UPCACHE.fr	Mémoire tampon
-UPCACHEH.fr	Aladin requière de la place sur le disque local afin de conserver les données d'une session à l'autre. Plus il en dispose, mieux il s'exécutera. Ce cache est localisé dans votre répertoire $HOME/.aladin
+UPCACHEH.fr	Astrovia requière de la place sur le disque local afin de conserver les données d'une session à l'autre. Plus il en dispose, mieux il s'exécutera. Ce cache est localisé dans votre répertoire $HOME/.aladin
 UPLOG.fr Log CDS
-UPLOGH.fr Vous utilisez gratuitement Aladin développé par le Centre de Données astronomiques de Strasbourg (France).Vous aiderez grandement l'équipe de développement en activant le mécanisme de statistiques d'utilisation (courts rapports d'utilisations (logs) transmis automatiquement au CDS). Ils sont anonymes et ne contiennent aucune information locale ou personnelle (noms de fichier, répertoires, ...).\n \nCes statistiques nous sont précieuses pour justifier de notre activité, et décider des futurs développements.
+UPLOGH.fr Vous utilisez gratuitement Astrovia développé par le Centre de Données astronomiques de Strasbourg (France).Vous aiderez grandement l'équipe de développement en activant le mécanisme de statistiques d'utilisation (courts rapports d'utilisations (logs) transmis automatiquement au CDS). Ils sont anonymes et ne contiennent aucune information locale ou personnelle (noms de fichier, répertoires, ...).\n \nCes statistiques nous sont précieuses pour justifier de notre activité, et décider des futurs développements.
 UPLOGH1.fr Autorisez-vous ces statistiques anonymes (vous pourrez toujours changer ce choix via le menu Editer -> Préférences) ?
 UPHELP.fr Assistant
 UPHELPH.fr Active/désactive l'assistant pour les débutatns. Celui-ci permet aux nouveaux utilisateurs d'Aaldin de se familiariser avec l'interface graphique
@@ -2289,7 +2289,7 @@ MTAGINFO.fr	Cochez les cases ci-dessous correspondantes aux lignes\nque vous sou
 
 
 # Save.java strings
-SFTITLE	Aladin save window
+SFTITLE	Astrovia save window
 SFINFO	Choose one of these possibilities
 SFSECONDINFO	Select the planes, specify the target directory\nand press the EXPORT button
 SFCANCEL	Cancel
@@ -2297,7 +2297,7 @@ SFEXPORT	EXPORT
 SFDIR	Dir: 
 SFCANNOT	Cannot create
 SFCANNOT1	=>save aborted
-SFINFOIMG	Aladin saves images\nby keeping original pixels if possible, otherwise\nin 8 bits per pixel (for instance with the JPEG images).\n \nFor images with modified astrometrical reductions,\nthe original WCS FITS keywords have been replaced with\na new WCS definition.
+SFINFOIMG	Astrovia saves images\nby keeping original pixels if possible, otherwise\nin 8 bits per pixel (for instance with the JPEG images).\n \nFor images with modified astrometrical reductions,\nthe original WCS FITS keywords have been replaced with\na new WCS definition.
 SFSAVEIN	Save catalogs in:
 SFSAVERGBIN	Save images in:
 SFSAVEMOCIN	Save MOCs in:
@@ -2308,14 +2308,14 @@ SFCH3	Save\ncurrent\nview
 SFCH4	Get\nimage\nlinks.
 SFCH5	Print\nthe\nview(s)
 SFCH6	Save\nall the\nviews
-SFHCH1	Create a file storing the current stack\n(The format is Aladin proprietary - AJ format)
+SFHCH1	Create a file storing the current stack\n(The format is Astrovia proprietary - AJ format)
 SFHCH2	Allows you to save planes:\n- catalogs in ASCII TSV, VOTable or JSON\n- images in FITS (or JPEG/PNG for RGB images)
 SFHCH3	Create a file of the view with the\ncurrent overlays
 SFHCH4	Produce a Web page with links\nto the original images
 SFHCH5	Print the view(s) with\nall overlays
 SFHCH6	Save all the views,\neach of them in an individual file
 
-SFTITLE.fr	Sauvegarde Aladin
+SFTITLE.fr	Sauvegarde Astrovia
 SFINFO.fr	Choississez l'une de ces possibilités
 SFSECONDINFO.fr	Sélectionnez les plans, indiquez le répertoire de destination\npuis appuyez sur le bouton EXPORTE
 SFCANCEL.fr	Annule
@@ -2323,7 +2323,7 @@ SFEXPORT.fr	EXPORTE
 SFDIR.fr	Rép: 
 SFCANNOT.fr	Impossibilité de créer
 SFCANNOT1.fr	=>sauvegarde annulée
-SFINFOIMG.fr	Aladin sauvegarde les images\nsi possible en conservant les pixels originaux. Si Aladin n'en dispose pas, il sauvegardera les pixels en 8 bits (par exemple pour les images JPEG).\n \nLes images pour lesquelles la réduction astrométrique a été modifiée, l'entête FITS originale est conservé et les mots clés WCS sont remplacés par la nouvelle définition.
+SFINFOIMG.fr	Astrovia sauvegarde les images\nsi possible en conservant les pixels originaux. Si Astrovia n'en dispose pas, il sauvegardera les pixels en 8 bits (par exemple pour les images JPEG).\n \nLes images pour lesquelles la réduction astrométrique a été modifiée, l'entête FITS originale est conservé et les mots clés WCS sont remplacés par la nouvelle définition.
 SFSAVEIN.fr	Sauve les catalogues en:
 SFSAVERGBIN.fr	Sauve les images en:
 SFJPEGENCODER.fr	Le codeur JPEG n'est pas accessible dans votre configuration Java, utilisez le bormat BMP par défaut.
@@ -2333,7 +2333,7 @@ SFCH3.fr	Sauve\nla vue\ncourante
 SFCH4.fr	Génère\nles liens\nimages
 SFCH5.fr	Imprimer\nles\nvues
 SFCH6.fr	Sauve\ntoutes les\nvues
-SFHCH1.fr	Crée un fichier unique mémorisant la pile courante\n(Le format est propre à Aladin - format AJ)
+SFHCH1.fr	Crée un fichier unique mémorisant la pile courante\n(Le format est propre à Astrovia - format AJ)
 SFHCH2.fr	Vous permet de sauvegarder des plans:\n- catalogues en ASCII TSV, VOTable ou JSON\n- images en FITS (ou JPEG/PNG pour les images RVB)
 SFHCH3.fr	Sauvegarde la vue courante dans\nun fichier
 SFHCH4.fr	Génère une page Web avec des liens\nsur les images originales
@@ -2341,7 +2341,7 @@ SFHCH5.fr	Imprime les vues ainsi que\nleurs surcharges graphiques
 SFHCH6.fr	Sauvegarde toutes les vues,\nchacune dans un fichier séparé.
 
 # NotePad.java strings
-NPTITLE	Aladin console
+NPTITLE	Astrovia console
 NPCLONE	Dump measurement frame
 NPCLOSE	Close
 NPRESET	Clear
@@ -2349,7 +2349,7 @@ EXEC   Execute
 RESETHISTORY	Delete hist.
 NPCONF    Do you really want to remove the history of commands ?
 
-NPTITLE.fr	Console Aladin
+NPTITLE.fr	Console Astrovia
 NPCLONE.fr	Copie le contenu du panneau des mesures
 NPCLOSE.fr	Fermer
 NPRESET.fr	Effacer
@@ -2371,7 +2371,7 @@ PILOADIMG	Load the image
 PIHTTPERR	Server not reached or HTTP error
 PIUNK	unknown
 PIONEDIM	Not an image nor a catalog !
-PINAXIS2	Too many NAXIS for Aladin, assume NAXIS = 2
+PINAXIS2	Too many NAXIS for Astrovia, assume NAXIS = 2
 PILOCFILE	Local file
 PIVOAPP	VOApp origin
 
@@ -2606,7 +2606,7 @@ PAUSE.fr Pause
 #DONE.fr FINI
 PUBLISHALLSKY Form to publish
 PUBLISHALLSKY.fr Formulaire pour publier
-HELPRGBALLSKY In order to build a colored progressive sky, select 2 or 3 allskys already generated and loaded in the Aladin stack. You have to adjust their contrast and/or specify manually the parameters before starting the process. Before launching the generation, it is possible to view the result which will be obtained via the "preview" button.
+HELPRGBALLSKY In order to build a colored progressive sky, select 2 or 3 allskys already generated and loaded in the Astrovia stack. You have to adjust their contrast and/or specify manually the parameters before starting the process. Before launching the generation, it is possible to view the result which will be obtained via the "preview" button.
 HELPRGBALLSKY.fr Afin de générer un ciel progressif (HiPS) en couleur, vous devez sélectionner 2 ou 3 HiPS déjà générés et chargés dans la pile. Vous devez ajuster leur contraste et/ou mettre à jour manuellement les paramètres avant de démarrer le processus. Avant de lancer la génération, il est possible de visualiser le résultat qui sera obtenu via le bouton "prévisualisation".
 TITLEALLSKY Build your own Hierarchical Progressive Sky (HiPS)
 TITLEALLSKY.fr Créez votre propre ciel progressif (HiPS)
@@ -2644,10 +2644,10 @@ SKYVALALLSKY Sky background adjustement (FITS keyword|true=auto)
 SKYVALALLSKY.fr Ajustement du fond du ciel (mot clé FITS|true=auto)
 LABELALLSKY Data name:
 LABELALLSKY.fr Nom des données:
-INFOALLSKY This panel allows you to generate a "progressive sky", also called HiPS (Hierarchical Progressive Survey), from an image collection (FITS, JPEG or PNG, astrometrically calibrated, possibly gzipped). Aladin resamples your images on an HEALPix grid, and stores the result under a hierarchy of directories and files (called "tiles"). Ater this process, you can load the target directory and view your new progressive sky in the same way as any remote progressive surveys in Aladin. You can also publish it for your collaborators.
-INFOALLSKY.fr	Ce formulaire vous permet de construire un "ciel progressif" également appelé HiPS (Hierarchical Progressive Survey) à partir d'une collection d'images (FITS, JPEG ou PNG, calibrées astrométriquement, éventuellement gzippées). Aladin rééchantillonne votre collection d'images en HEALPix, et enregistre le résultat sous la forme d'une hiérarchie de répertoires et de fichiers (nommés "tuiles"). Une fois généré, vous pourrez accéder directement à votre ciel progressif aussi simplement que ceux déjà disponibles dans Aladin. Vous pourrez également le publier afin de le rendre accessible à vos collaborateurs.
-RGBALLSKY	This panel allows you to create a colored progressive sky (HiPS) from two or three monochromatic precomputed HiPS. You must load these HiPS in the Aladin stack, adjust their contrast as you wish. After that, you must associate the RED, GREEN and BLUE components via the  three choice menus, specify the target directory and submit.
-RGBALLSKY.fr Ce formulaire est dédié à la création d'un "ciel progressif" (HiPS) en couleur. Celui-ci est généré à partir de 2 ou 3 HiPS en niveaux de gris, ayant déjà été calculés au préalable. Pour ce faire, vous devez charger ces HiPS dans la pile d'Aladin, puis ajuster leur contraste respectif. Après cela, il s'agit d'associer à chacune des composantes couleurs Rouge, Vert et Bleu le ciel souhaité, de spécifier le répertoire de destination puis de lancer le calcul.
+INFOALLSKY This panel allows you to generate a "progressive sky", also called HiPS (Hierarchical Progressive Survey), from an image collection (FITS, JPEG or PNG, astrometrically calibrated, possibly gzipped). Astrovia resamples your images on an HEALPix grid, and stores the result under a hierarchy of directories and files (called "tiles"). Ater this process, you can load the target directory and view your new progressive sky in the same way as any remote progressive surveys in Astrovia. You can also publish it for your collaborators.
+INFOALLSKY.fr	Ce formulaire vous permet de construire un "ciel progressif" également appelé HiPS (Hierarchical Progressive Survey) à partir d'une collection d'images (FITS, JPEG ou PNG, calibrées astrométriquement, éventuellement gzippées). Astrovia rééchantillonne votre collection d'images en HEALPix, et enregistre le résultat sous la forme d'une hiérarchie de répertoires et de fichiers (nommés "tuiles"). Une fois généré, vous pourrez accéder directement à votre ciel progressif aussi simplement que ceux déjà disponibles dans Astrovia. Vous pourrez également le publier afin de le rendre accessible à vos collaborateurs.
+RGBALLSKY	This panel allows you to create a colored progressive sky (HiPS) from two or three monochromatic precomputed HiPS. You must load these HiPS in the Astrovia stack, adjust their contrast as you wish. After that, you must associate the RED, GREEN and BLUE components via the  three choice menus, specify the target directory and submit.
+RGBALLSKY.fr Ce formulaire est dédié à la création d'un "ciel progressif" (HiPS) en couleur. Celui-ci est généré à partir de 2 ou 3 HiPS en niveaux de gris, ayant déjà été calculés au préalable. Pour ce faire, vous devez charger ces HiPS dans la pile d'Astrovia, puis ajuster leur contraste respectif. Après cela, il s'agit d'associer à chacune des composantes couleurs Rouge, Vert et Bleu le ciel souhaité, de spécifier le répertoire de destination puis de lancer le calcul.
 DESCFALLSKY Description :
 DESCFALLSKY.fr Description :
 COPYRIGHT Copyright :
@@ -2738,8 +2738,8 @@ PUBRESTINFOALLSKY By exposing your target folder behind a Web server, you will a
 PUBRESTINFOALLSKY.fr Pour une distribution restreinte de votre relevé, placez le répertoire de destination derrière un serveur Web. Vos collaborateurs pourront accéder à votre relevé en utilisant directement l'adresse Web ci-dessous. Cet accès pourra être éventuellement protégé par mot de passe.
 PUBLICALLSKY Public distribution:
 PUBLICALLSKY.fr Distribution publique :
-PUBLICINFOALLSKY To allow an access to all Aladin users, "expose" your target folder behind a Web server, fill up and validate this following form:
-PUBLICINFOALLSKY.fr Afin de rendre accessible votre relevé pour tous les utilisateurs Aladin, veuillez "exposer" le repértoire de destination derrière un serveur Web, remplir et valider le formulaire suivant :
+PUBLICINFOALLSKY To allow an access to all Astrovia users, "expose" your target folder behind a Web server, fill up and validate this following form:
+PUBLICINFOALLSKY.fr Afin de rendre accessible votre relevé pour tous les utilisateurs Astrovia, veuillez "exposer" le repértoire de destination derrière un serveur Web, remplir et valider le formulaire suivant :
 INFOHIPSFITS The drawing of a progressive sky in "true" pixel mode requires a large network bandwidth\nYour sky is being reloaded...
 INFOHIPSFITS.fr L'affichage d'un ciel progressif en "vrai" pixels requière un bon réseau.\nVotre ciel est entrain d'être rechargé...
 
@@ -2752,8 +2752,8 @@ HFINGER	Simbad pointer:\n \nIf this function is activated, point your mouse on a
 HFINGER.fr	Le pointeur Simbad :\n \nLorsque cette fonction est activée, glissez le pointeur de la souris sur un objet astronomique puis patientez 3 secondes pour voir si cet objet est connu par Simbad.\n \nSi Simbad connait plusieurs objets proche de cette position\nc'est celui qui a le plus de références bibliographiques qui sera cité.\n \nVous pouvez cliquer sur le label qui s'affiche afin d'accéder directement à l'enregistrement Simbad correspondant.
 HFINGERVIZIERSED	VizieR Phot. pointer:\n \nIf this function is activated, point your mouse on any astronomical object and wait 3 seconds to build a photometry graph from VizieR catalog service.\n \nClick on this plot for displaying and manipulating individual photometry measurements, and also to know their origin.
 HFINGERVIZIERSED.fr	Le pointeur Phot. VizieR :\n \nLorsque cette fonction est activée, glissez le pointeur de la souris sur un objet astronomique puis patientez 3 secondes lancer la construction d'un graphe photométrique à partir du service des catalogues VizieR.\n \nVous pouvez cliquer le graphe qui s'affiche afin d'afficher et d'accéder aux mesures photométriques individuelles, et afin d'un connaître leur origine.
-INFOXY	This table has only XY positions. You must specify the astrometrical reduction parameters allowing Aladin to compute the associated sky positions.
-INFOXY.fr	Cette table ne contient que des positions XY. Veuillez indiquer les paramètres de la réduction astrométrique permettant à Aladin de calculer les positions correspondantes dans le ciel.
+INFOXY	This table has only XY positions. You must specify the astrometrical reduction parameters allowing Astrovia to compute the associated sky positions.
+INFOXY.fr	Cette table ne contient que des positions XY. Veuillez indiquer les paramètres de la réduction astrométrique permettant à Astrovia de calculer les positions correspondantes dans le ciel.
 NONET	No network found !\nOnly local resources will be available !
 NONET.fr	Pas de réseau !\nSeules les ressources locales seront accessibles !
 OBJUNKNOWN	unknown astronomical target\nGive a valid identifier or J2000 coordinates.\n \nYou can also use the "Server selector" window\nby clicking the LOAD button at the top left corner\nof the screen
@@ -2784,8 +2784,8 @@ PIXEL	Pixel
 PIXEL.fr	Pixel
 YOUROBJ	Which astronomical object ? 
 YOUROBJ.fr	Quel objet astronomique ? 
-INSTALLSA	You are running Aladin inside your Browser as a Java applet.\nDo you know that Aladin can also be run as a "classical" application providing you more flexible usage and better performances.\nFor doing that, you have to install Aladin on your machine (2 MB).\n \nOpen the Aladin installation web page ?
-INSTALLSA.fr Vous utilisez actuellement Aladin comme une applet java intégrée dans votre navigateur.\nSaviez-vous que vous pouvez également exécuter Aladin comme un logiciel à part entière. L'installation d'Aladin sur votre machine (~2 MB) ne requière que quelques instants et vous offrira un usage plus souple et de meilleures performances.\n \nOuvrir la page Web d'installation d'Aladin ?
+INSTALLSA	You are running Astrovia inside your Browser as a Java applet.\nDo you know that Astrovia can also be run as a "classical" application providing you more flexible usage and better performances.\nFor doing that, you have to install Astrovia on your machine (2 MB).\n \nOpen the Astrovia installation web page ?
+INSTALLSA.fr Vous utilisez actuellement Astrovia comme une applet java intégrée dans votre navigateur.\nSaviez-vous que vous pouvez également exécuter Astrovia comme un logiciel à part entière. L'installation d'Astrovia sur votre machine (~2 MB) ne requière que quelques instants et vous offrira un usage plus souple et de meilleures performances.\n \nOuvrir la page Web d'installation d'Aladin ?
 NOTTOOMANY Do you really want to download\nall these images ? 
 NOTTOOMANY.fr Voulez-vous vraiment\ncharger toutes ces images ? 
 TOOMANYIMG	You can not download\nso many images simultaneously ! 
@@ -2848,8 +2848,8 @@ BKMTITLE	Bookmarks controller
 BKMTITLE.fr	Gestionnaire des signets
 BKMDEFAULT	Reload bookmarks
 BKMDEFAULT.fr Recharge signets
-BKMCONFIRM	Do you really want to reload the Aladin original bookmarks ?
-BKMCONFIRM.fr	Voulez-vous réellement reprendre\nles signets Aladin d'origine ?
+BKMCONFIRM	Do you really want to reload the Astrovia original bookmarks ?
+BKMCONFIRM.fr	Voulez-vous réellement reprendre\nles signets Astrovia d'origine ?
 BKMEDITOR	Bookmark editor
 BKMEDITOR.fr	Editeur de signet
 BKMAPPLY	Do you want to apply your modifications ?
@@ -2892,7 +2892,7 @@ ALTITLE ALMA footprints
 ALINFO  Create a footprint for a configuration of ALMA
 
 #Tooltip strings
-TIPLOGO	Click on it to the Aladin Web page
+TIPLOGO	Click on it to the Astrovia Web page
 TIPLOGO.fr Cliquer pour aller sur la page Web d'Aladin
 TIPOPEN	Open the data load form...
 TIPOPEN.fr	Ouvrir le formulaire de chargement des données...
@@ -2934,15 +2934,15 @@ TIPAPRES	Next location
 TIPAPRES.fr Position suivante
 
 #Plugin strings
-PLUGWARNING	WARNING: The Aladin plugins are pieces of java code runnable by Aladin. They have been developped by some Aladin users and not by the CDS. These codes are provided with no guarantee.\nPlease contact directly the authors for any questions, bugs...
+PLUGWARNING	WARNING: The Astrovia plugins are pieces of java code runnable by Astrovia. They have been developped by some Astrovia users and not by the CDS. These codes are provided with no guarantee.\nPlease contact directly the authors for any questions, bugs...
 PLUGRELOAD	Re-load
-PLUGRELOADTIP	Scan again the available Aladin plugins in this specified directory
+PLUGRELOADTIP	Scan again the available Astrovia plugins in this specified directory
 PLUGDOWNLOAD	Download...
 PLUGUPLOAD	Upload...
 PLUGADD	Local add...
 PLUGREMOVE	Remove...
 PLUGMOREINFO	More info...
-PLUGDOWNLOADTIP	Web access to the Aladin plugin repository (aladin.u-strasbg.fr)
+PLUGDOWNLOADTIP	Web access to the Astrovia plugin repository (aladin.u-strasbg.fr)
 PLUGUPLOADTIP	Will prepare the mail for distributing your plugin (plugin@aladin.u-strasbg.fr)
 PLUGADDTIP	Add a new plugin from a local java .class or.jar file
 PLUGREMOVETIP	Remove the selected plugins in the list below
@@ -2951,20 +2951,20 @@ PLUGERROR	Plugin error !
 PLUGLOC	Your plugin directory
 PLUGCONF	Do you really want to remove\ndefinitively the selected plugins ?
 
-PLUGWARNING.fr	ATTENTION: Les plugins Aladin sont des portions de code Java utilisables par Aladin. Ils ont été développés par des utilisateurs d'Aladin et non pas par l'équipe du CDS. Ces codes sont fournis sans aucune garantie.\nPour toutes questions ou rapport d'erreurs, veuillez contacter directement les auteurs .
+PLUGWARNING.fr	ATTENTION: Les plugins Astrovia sont des portions de code Java utilisables par Astrovia. Ils ont été développés par des utilisateurs d'Astrovia et non pas par l'équipe du CDS. Ces codes sont fournis sans aucune garantie.\nPour toutes questions ou rapport d'erreurs, veuillez contacter directement les auteurs .
 PLUGRELOAD.fr	Re-charge
-PLUGRELOADTIP.fr	Recherche à nouveau les plugins compatibles Aladin dans le répertoire spécifié
+PLUGRELOADTIP.fr	Recherche à nouveau les plugins compatibles Astrovia dans le répertoire spécifié
 PLUGDOWNLOAD.fr	Charger...
 PLUGUPLOAD.fr	Déposer...
 PLUGADD.fr	Ajout local...
 PLUGREMOVE.fr	Suppression...
 PLUGERROR.fr	Erreur du plugin !
 PLUGMOREINFO.fr	Plus d'info...
-PLUGDOWNLOADTIP.fr	Accès au site Web des plugins compatibles Aladin (aladin.u-strasbg.fr)
+PLUGDOWNLOADTIP.fr	Accès au site Web des plugins compatibles Astrovia (aladin.u-strasbg.fr)
 PLUGUPLOADTIP.fr	Prépare le mail pour distribuer votre plugin (plugin@aladin.u-strasbg.fr)
 PLUGADDTIP.fr	Ajout d'un nouveau plugin via un fichier java .class ou .jar
 PLUGREMOVETIP.fr	Suppression des plugins sélectionnés dans la liste ci-dessus
-PLUGMOREINFOTIP.fr	Accès Web à la page d'aide des plugins compatibles Aladin
+PLUGMOREINFOTIP.fr	Accès Web à la page d'aide des plugins compatibles Astrovia
 PLUGERROR.fr	Erreur du plugin !
 PLUGLOC.fr	Votre répertoire à plugins
 PLUGCONF.fr	Désirez-vous réellement supprimer définitivement\nles plugins sélectionnés ?
@@ -2982,7 +2982,7 @@ TIP8	Load files quickly => Drag&Drog from your desktop
 TIP9	Adjust zoom level => Mouse wheel
 TIP10	Reset the stack => SHIFT key + "Del" button
 TIP11	Do you know that zipped/gzipped files are supported?
-TIP12	Create your own Aladin java "plugins" => Tool>Plugins
+TIP12	Create your own Astrovia java "plugins" => Tool>Plugins
 TIP13	Détach the measurement panel => arrow button
 TIP14	Execute a script command by writting it in the "Location" field
 TIP15	Sort the source measurements by clicking in the table head line
@@ -2996,7 +2996,7 @@ TIP22  Create your own instrument field of view => Tool>Instrument footprint
 TIP23  Modify the stack order => Drag&drop plane icons
 TIP24  Do you know that you can load FITS images of any size?
 TIP25  Adjust the source display according to its measurements => Catalog>Create a filter
-TIP26  Use Aladin in outreach mode => Edition>Préférences>Profile
+TIP26  Use Astrovia in outreach mode => Edition>Préférences>Profile
 TIP27  Create a group of planes for activating them simultaneously => Edit>Create a folder
 TIP28  Do you know that you can edit&save the FITS header => Alt+H
 TIP29  Adjust the epoch for displaying dynamically the star proper motions
@@ -3028,7 +3028,7 @@ TIP8.fr	Chargez facilement vos fichiers => Glissez/déposer
 TIP9.fr	Ajustez facilement le zoom => Molette souris
 TIP10.fr	Vider la pide d'un coup => MAJ + bouton "Suppr"
 TIP11.fr	Saviez-vous que vos fichiers peuvent être zippés ou gzippés ?
-TIP12.fr	Créer vos propres "plugins" java compatibles Aladin => Outil>Plugins
+TIP12.fr	Créer vos propres "plugins" java compatibles Astrovia => Outil>Plugins
 TIP13.fr	Détacher la fenêtre des mesures => flêche en bas à droite
 TIP14.fr	Vous pouvez saisir une commande script directement dans le champ "Position"
 TIP15.fr	Triez les mesures en cliquant dans leurs entêtes
@@ -3042,7 +3042,7 @@ TIP22.fr  Vous pouvez créer votre champ instrumental => Outils>Editeur de champ.
 TIP23.fr  Modifiez l'ordre des plans dans la pile => Glisser/Déposer
 TIP24.fr  Saviez-vous que vous pouvez charger des images FITS de n'importe quelle taille ?
 TIP25.fr  Contraindre la manière dont s'affiche les sources => Catalogue>Créer un filtre
-TIP26.fr  Aladin peut s'utiliser en mode "enseignement" => Edition>Préférences>Profile
+TIP26.fr  Astrovia peut s'utiliser en mode "enseignement" => Edition>Préférences>Profile
 TIP27.fr  Grouper des plans pour les activer simultanément => Edition>Créer un dossier
 TIP28.fr  Saviez-vous que vous pouvez éditer l'entête FITS => Alt+H
 TIP29.fr  Vous pouvez modifier dynamiquement l'époque pour visualiser le mvt propre des étoiles
@@ -3083,14 +3083,14 @@ STATUS_NOPOS.fr Aucune coordonnée
 STATUS_EMPTYCAT.fr Aucune source
 STATUS_READY.fr Ok
 
-BEGIN1	Welcome to Aladin,\nyour professional sky atlas.\n \n* Discover all astronomical data available over the net!\n \n* Compare them with your own data.\n \n* Prepare your observation missions.\n \n \nTo start, type any object name, such as M1, and press ENTER...\n \nOr easier, clic in the main frame and enjoy the sky...
+BEGIN1	Welcome to Astrovia,\nyour professional sky atlas.\n \n* Discover all astronomical data available over the net!\n \n* Compare them with your own data.\n \n* Prepare your observation missions.\n \n \nTo start, type any object name, such as M1, and press ENTER...\n \nOr easier, clic in the main frame and enjoy the sky...
 BEGIN2	Imagine your eye\nlooking through a stack of planes (below).\n \nEach plane contains its own data set: image, catalog, graphical overlays...\n \nYou see the combination of them in the main panel.\n \nFor accessing to other data, use the discovery tree in the left panel,\nor clic & drag your own local files.
 BEGIN3	Stack controls:\n \n*the icon: show/hide a plane\n*size: change object size\n*zoom: adjust field size.\n*Opacity: adjust transparency.\n \nThe view is drawn according to the projection of a reference plane.\n \nFor changing the reference, click on its check box.
 BEGIN4	Mouse controls:\n \n*Left: source selection.\n*Middle: quick panning.\n*Right: constrast adjustement.\n*Wheel: quick zoom on the reticle.\n*Simple-clic: move the reticle.\n*Double-clic: re-center.\n \nClick and let your mouse pointer a few seconds on an object for discovering advanced information about it.
 BEGIN5	Basic controls:\n \n*Type any object name or coordinates for moving on it.\n \n*Select catalog sources for displaying associated data measurements.\n \nDisplay simultaneously several views via the "multiview" controller.
 BEGIN6	Data discovery tree\nof available collections (left panel)\n \n*in green: the collections visible in the current view, in orange the outside collections\n \n*Type un key word, a mission name, etc in the "select" field to keep only relevant collections\n \n*Use the predefined filters to select more specifically the collections\n \n*Create and store your own filters thanks to the right button\n \nActivate the "view" mode to hide temporary the collections outside the view.
 
-BEGIN1.fr Bienvenue sur Aladin,\nvotre atlas professionel du ciel.\n \n* Accédez à toutes les données astronomiques disponibles sur le net !\n \n* Comparez-les avec vos propres données.\n \n* Préparez vos missions d'observations.\n \n \nPour débuter, saisissez un nom d'objet, par exemple M1, puis validez par ENTER...\n \nOu tout simplement, cliquez dans la fenêtre principale pour explorer le ciel.
+BEGIN1.fr Bienvenue sur Astrovia,\nvotre atlas professionel du ciel.\n \n* Accédez à toutes les données astronomiques disponibles sur le net !\n \n* Comparez-les avec vos propres données.\n \n* Préparez vos missions d'observations.\n \n \nPour débuter, saisissez un nom d'objet, par exemple M1, puis validez par ENTER...\n \nOu tout simplement, cliquez dans la fenêtre principale pour explorer le ciel.
 BEGIN2.fr	Imaginez votre oeil regardant à travers une pile de calques (ci-dessous).\n \nChaque calque représente une donnée: image, catalogues, graphiques...\n \nLe panneau central affiche la combinaison de l'ensemble de ces calques.\n \nPour accéder à d'autres données utilisez l'arbre de découverte sur le panneau de gauche,\nou glissez/déposez vos propres fichiers locaux.
 BEGIN3.fr	Contrôle de la pile:\n \n*le logo: montre/cache le plan\n*taille: change la taille des objets\n*zoom: modifie l'agrandissement\n*opacité: ajuste la transparence.\n \nLa vue est dessinée en fonction de la projection d'un plan de référence.\n \nPour changer de plan de référence, cliquer sur sa coche.
 BEGIN4.fr	Contrôle par la souris:\n \n*Gauche: sélection des sources.\n*Milieu: déplacement du champ.\n*Droite: ajustement du contraste.\n*Molette: zoom sur le réticule.\n*Simple-clic: déplace le réticule\n*Double-clic: recentre la vue.\n \nPour découvrir les données connues d'un objet, cliquez sur celui-ci, puis laissez le pointeur quelques secondes dessus.
@@ -3155,12 +3155,12 @@ ASYNCTOOLTIP This is a async server. Your requests will be executed asynchronous
 
 #tap menu configurations
 TAPFORMTITLE	Tap client
-TAPFORMINFO	Query TAP servers via Aladin.
+TAPFORMINFO	Query TAP servers via Astrovia.
 TAPCLIENTINSTR Construct your query, verify and execute.
 SELECTSERVERTOOLTIP List of tap server that can be loaded...
-TAPGENERICFORMDESC	Access TAP servers via Aladin by filling the form. \nYou can write your tap query in the large white text area at the bottom of the panel\nor use the gui to generate the desired query: \nFirst, select the table you want from the "Table" dropdown at the top. \nSelect the columns to be displayed from the select list on the left.\nClick on "Add new" button to add column constraints.\n   The new constraint will be populated right next to the columns list. \nSet constraint value and click on "Refresh query" button (above the large white text area).\nFor position constraints: Use the target panel to add position constraints. If no default ra and dec columns are identified for your selected table, then no target panel gui will appear. In this case (or to change the selected ra,dec): click on the "Set ra,dec" button(next to the tables dropdown).To add position constraints click on "Add" button.\nNew position constraints are also populated right next to the columns list. Here you can review, set values or delete constraints. \nWhen ready, click the "Refresh query" button to generate the query. Note: This rewrites any manual changes made on the query. You can then verify the query for correctness with the "Check" button and then on "Submit"(at the bottom) to get the results.\nChoose other flavors of tap clients with the "Mode" dropdown at the top right corner of form.\n\nThe metadata from the tap schema of the server is shown in this panel(Server status report). In case the metainfo of a particular table is unavailable, select the respective table on the main form in the "Table" dropdown. The new info will be refreshed here.
-TAPEXAMPLEFORMDESC	Access TAP servers via Aladin by filling the form. \nYou can write your tap query in the large white text area at the bottom of the panel\nor select the generated queries: \nFirst, select the table you want from the "Table" dropdown at the top. \nThe queries are generated w.r.t the selected table.\nClick on "Settings" button to change some basic settings like maximum rows, target selection, setting of right ascension and declination columns, a second table which includes a choice to upload local tables(synchronized to votables loaded on Aladin stack).\nYou can make any manual edits to the generated query and then verify the query for correctness with the "Check" button. To submit click on "Submit"(at the bottom) and get the results.\nYou can also get a selection of server provided queries. If the selected server provides them, a small folder button appears next to the generated queries. Click on it and the server provided queries are populated next to the default queries.\nChoose other flavors of tap clients with the "Mode" dropdown at the top right corner of form.\n\nThe metadata from the tap schema of the server is shown in this panel(Server status report). In case the metainfo of a particular table is unavailable, select the particular table on the gui in the "Table" dropdown. The new info will be refreshed here.
-TAPOBSFORMDESC Access TAP servers via Aladin by filling the form. \nYou can write your tap query in the large white text area at the bottom of the panel\nor use the gui to generate the desired query: \nThis is a specialized form to query an Obscore table hosted by the respective tap server.\nFirst, select the table you want from the "Table" drop-down at the top.\nSelect the columns to be displayed from the select list on the left.\nThe Obscore spec is detailed here: http://www.ivoa.net/documents/ObsCore/ \nObscore specific constraints can be chosen in the form inputs below the "Select"\nConstraints includes:\nA dataproduct type which can be: "image", "cube", "spectrum", "sed", "timeseries" etc,..\nClick on "Add" button to add column constraints.\n For position constraints: Use the target panel to select a target on Aladin and then click on "Add" button.\nThe next 3 types of form inputs are constraints of position, spectrum and time. Choose the relevant constraint, write the required constraint value in the text input box and click on "Add" button to add the constraint.\nThe last drop down is nonrestrictive: it is a simple columns constraint input not specific to Obscore. This contains all the columns for the given Obscore table and any can be chosen to set a constraint (steps as previously described).\nThe query is generated at the bottom text panel. You can verify the query for correctness with the "Check" button and then on "Submit"(at the bottom) to get the results. \nChoose other flavors of tap clients with the "Mode" dropdown at the top right corner of form. \n\nThe metadata from the tap schema of the server is shown in this panel(Server status report). In case the metainfo of a particular table is unavailable, select the respective table on the main form in the "Table" dropdown. The new info will be refreshed here.
+TAPGENERICFORMDESC	Access TAP servers via Astrovia by filling the form. \nYou can write your tap query in the large white text area at the bottom of the panel\nor use the gui to generate the desired query: \nFirst, select the table you want from the "Table" dropdown at the top. \nSelect the columns to be displayed from the select list on the left.\nClick on "Add new" button to add column constraints.\n   The new constraint will be populated right next to the columns list. \nSet constraint value and click on "Refresh query" button (above the large white text area).\nFor position constraints: Use the target panel to add position constraints. If no default ra and dec columns are identified for your selected table, then no target panel gui will appear. In this case (or to change the selected ra,dec): click on the "Set ra,dec" button(next to the tables dropdown).To add position constraints click on "Add" button.\nNew position constraints are also populated right next to the columns list. Here you can review, set values or delete constraints. \nWhen ready, click the "Refresh query" button to generate the query. Note: This rewrites any manual changes made on the query. You can then verify the query for correctness with the "Check" button and then on "Submit"(at the bottom) to get the results.\nChoose other flavors of tap clients with the "Mode" dropdown at the top right corner of form.\n\nThe metadata from the tap schema of the server is shown in this panel(Server status report). In case the metainfo of a particular table is unavailable, select the respective table on the main form in the "Table" dropdown. The new info will be refreshed here.
+TAPEXAMPLEFORMDESC	Access TAP servers via Astrovia by filling the form. \nYou can write your tap query in the large white text area at the bottom of the panel\nor select the generated queries: \nFirst, select the table you want from the "Table" dropdown at the top. \nThe queries are generated w.r.t the selected table.\nClick on "Settings" button to change some basic settings like maximum rows, target selection, setting of right ascension and declination columns, a second table which includes a choice to upload local tables(synchronized to votables loaded on Astrovia stack).\nYou can make any manual edits to the generated query and then verify the query for correctness with the "Check" button. To submit click on "Submit"(at the bottom) and get the results.\nYou can also get a selection of server provided queries. If the selected server provides them, a small folder button appears next to the generated queries. Click on it and the server provided queries are populated next to the default queries.\nChoose other flavors of tap clients with the "Mode" dropdown at the top right corner of form.\n\nThe metadata from the tap schema of the server is shown in this panel(Server status report). In case the metainfo of a particular table is unavailable, select the particular table on the gui in the "Table" dropdown. The new info will be refreshed here.
+TAPOBSFORMDESC Access TAP servers via Astrovia by filling the form. \nYou can write your tap query in the large white text area at the bottom of the panel\nor use the gui to generate the desired query: \nThis is a specialized form to query an Obscore table hosted by the respective tap server.\nFirst, select the table you want from the "Table" drop-down at the top.\nSelect the columns to be displayed from the select list on the left.\nThe Obscore spec is detailed here: http://www.ivoa.net/documents/ObsCore/ \nObscore specific constraints can be chosen in the form inputs below the "Select"\nConstraints includes:\nA dataproduct type which can be: "image", "cube", "spectrum", "sed", "timeseries" etc,..\nClick on "Add" button to add column constraints.\n For position constraints: Use the target panel to select a target on Astrovia and then click on "Add" button.\nThe next 3 types of form inputs are constraints of position, spectrum and time. Choose the relevant constraint, write the required constraint value in the text input box and click on "Add" button to add the constraint.\nThe last drop down is nonrestrictive: it is a simple columns constraint input not specific to Obscore. This contains all the columns for the given Obscore table and any can be chosen to set a constraint (steps as previously described).\nThe query is generated at the bottom text panel. You can verify the query for correctness with the "Check" button and then on "Submit"(at the bottom) to get the results. \nChoose other flavors of tap clients with the "Mode" dropdown at the top right corner of form. \n\nThe metadata from the tap schema of the server is shown in this panel(Server status report). In case the metainfo of a particular table is unavailable, select the respective table on the main form in the "Table" dropdown. The new info will be refreshed here.
 TAPLOADINGSTATUSINFO Loading tap schemas from your selected server. Please wait!
 TAPERRORSTATUSINFO Unable to load tap server. Please try again later!
 TARGETERROR Please check target co-ordinates!
@@ -3183,7 +3183,7 @@ SHOWSERVICEEXTIP You have a set of examples provided by the service! Click here 
 HIDESERVICEEXAMPLES Click to hide service provided examples.
 
 TAPFORMTITLE.fr	Client TAP
-TAPFORMINFO.fr	Interroge les serveurs TAP via Aladin.
+TAPFORMINFO.fr	Interroge les serveurs TAP via Astrovia.
 TAPCLIENTINSTR.fr Générez, vérifiez et exécutez votre requête.
 SELECTSERVERTOOLTIP.fr Liste des serveurs TAP disponibles...
 TAPGENERICFORMDESC.fr	Accès aux serveurs compatibles TAP.\n Vous pouvez, soit écrire directement une requête ADQL dans le champ de saisie du bas soit utiliser l'interface GUI de la manière suivante: En premier lieu sélectionnez la table concernée dans le menu déroulant du haut. Sélectionnez ensuite dans le panneau de gauche les colonnes de cette table que vous souhaitez récupérer. Cliquez sur sur le bouton "Ajouter" afin de définir une contrainte sur une colonne. Celle-ci s'affichera dans le panneau de droite. Spécifiez les valeurs souhaitées puis complétez la requête en cours de rédaction en cliquant sur le bouton "Rafraichir". Dans le cas d'une contrainte de position, si les colonnes contenant la longitude et la latitude n'ont pas été reconnues automatiquement, vous utiliserez le bouton "Positionner ra,dec". Enfin pour indiquer une contrainte de position, vous disposez d'un champ spécifique. Utilisez le bouton "Ajouter" comme pour une contrainte classique. Vous pouvez supprimer une contrainte déjà mémorisée via le bouton "X" tout à droite de chaque contrainte. Dès lors que votre requête sera prête, vérifiez sa syntaxe (notamment si vous l'avez éditée manuellement) via le bouton "Vérifier", puis soumettez-là via le bouton "Charger".
@@ -3243,7 +3243,7 @@ FORMATFORBETWEEN Format for between operator: value1 AND value2. Ex: 2 and 3.
 INCORRECTCONSTRAINTVALUE Please input a number constraint value
 JOINTABLETOOLTIP Join with an uploaded table
 QUERIESREFRESHED Queries refreshed as per your selection!
-JOINTIP You can construct join constraints from this form. \nThe table selected in the main tap form can be joined with one of tables in Aladin stack(if the TAP server supports upload) \nOR ..with one of the server's own table. \n3 types of join constraints can be constructed using this form:\n   1. Join where a foreign key relation exists\n   2. Join with a position constraints: specify radius to constrain a cone area within which the targets from the 2 tables should lie\n   3. Or join for any 2 columns you know are related(ensure that they are of the same datatype)\n\nClick on "Add join query button" to add the join constraint.\nYou can review/delete your join constraints in the bottom panel.\nAll join constraints constructed in this "sub-form" are simultaneously updated in the main tap form.\nTherefore, you can review, validate and submit the query from the main tap form.\n\nClick on the info(i) button to see this message again.
+JOINTIP You can construct join constraints from this form. \nThe table selected in the main tap form can be joined with one of tables in Astrovia stack(if the TAP server supports upload) \nOR ..with one of the server's own table. \n3 types of join constraints can be constructed using this form:\n   1. Join where a foreign key relation exists\n   2. Join with a position constraints: specify radius to constrain a cone area within which the targets from the 2 tables should lie\n   3. Or join for any 2 columns you know are related(ensure that they are of the same datatype)\n\nClick on "Add join query button" to add the join constraint.\nYou can review/delete your join constraints in the bottom panel.\nAll join constraints constructed in this "sub-form" are simultaneously updated in the main tap form.\nTherefore, you can review, validate and submit the query from the main tap form.\n\nClick on the info(i) button to see this message again.
 
 TAPTABLEJOINTIP.fr  Jointure de table
 TAPTABLEUPLOADPARSETIP.fr  Charger ces données dans l'interface.
@@ -3282,12 +3282,12 @@ NORANGEERRORMESSAGE.fr  Requière un interval de valeurs. Veuillez indiquer deux 
 CHOOSEFROMTAPSERVERSTEXT.fr  Ou choississez dans la liste ci-dessous :
 WAITLOADINGTAPSERVERSLIST.fr  Chargement de la liste des serveurs TAP en cours...
 #NODUPLICATESELECTION.fr  Cannot select same table! No second table selected.
-NOCUTOUTCLIENTSUPPORT Cutout clients are not supported in this Aladin version yet. Please use Aladin BETA to access the current implementation of them.
-NOCUTOUTCLIENTSUPPORT.fr Le Cutout service n'est pas encore supporté par cette version d'Aladin. Veuillez utiliser la dernière version Aladin BETA pour utiliser l'implémentation en cours d'élaboration pour ce service.
+NOCUTOUTCLIENTSUPPORT Cutout clients are not supported in this Astrovia version yet. Please use Aladin BETA to access the current implementation of them.
+NOCUTOUTCLIENTSUPPORT.fr Le Cutout service n'est pas encore supporté par cette version d'Astrovia. Veuillez utiliser la dernière version Aladin BETA pour utiliser l'implémentation en cours d'élaboration pour ce service.
 
 # FrameUploadServer.java strings
 UPLOADTITLE	Upload tables
-UPFILEINFO Choose to add a local file or an already loaded file in Aladin.
+UPFILEINFO Choose to add a local file or an already loaded file in Astrovia.
 UPLOADTITLE.fr	Upload serveur
 DISCARD	Discard table
 DISCARDALL Discard all
@@ -3361,9 +3361,9 @@ UPLOADJOINTABLENAMETOOLTIP %1$s can be used as %2$s in your adql query. Click on
 WRITEJOINBUTTONLABEL Add join query
 LOADUPLOADCLIENTTIP Load local file as a tap table
 JOINRADIUSTOOLTIP in degrees
-JOINUPLOADTABLELABEL Tables in Aladin stack:
+JOINUPLOADTABLELABEL Tables in Astrovia stack:
 UPLOADTABLECHANGEWARNING Upload table changed! While any of your existing join constraints are not removed, you are adviced to regenerate them if they refer to the old table.
-NOSTACKTABLES No tables available for upload from Aladin stack.
+NOSTACKTABLES No tables available for upload from Astrovia stack.
 JOINCONSTRAINTADDEDNOTIFICATION Main tap form is now updated with the new join condition. Verify and submit the query from the main tap form
 JOINADDORREPLACELABEL replace
 JOINADDORREPLACETOOLTIP Choose to replace if you intend to create single and not multiple join constraints.

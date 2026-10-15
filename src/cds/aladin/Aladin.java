@@ -208,14 +208,15 @@ DropTargetListener, DragSourceListener, DragGestureListener
    static final boolean LSCREEN= true; //SCREENSIZE.width>1000;
 
    /** Nom de l'application */
-   static protected final String TITRE       = "Aladin";
-   static protected final String FULLTITRE   = "Aladin Sky Atlas";
+   static protected final String TITRE       = "Astrovia";
+   static protected final String FULLTITRE   = "Astrovia";
 
    /** Numero de version */
-   static public final    String VERSION = "v12.060";
+   static public final    String VERSION = "v12.060";   // Aladin engine version this build is based on
+   static public final    String ASTROVIA_VERSION = "0.5.0";
    static protected final String AUTHORS = "P.Fernique, T.Boch, A.Oberto, F.Bonnarel, Chaitra & al";
 //   static protected final String OUTREACH_VERSION = "    *** UNDERGRADUATE MODE (based on "+VERSION+") ***";
-   static protected final String BETA_VERSION     = "    *** BETA VERSION (based on "+VERSION+") ***";
+   static protected final String BETA_VERSION     = "  (engine "+VERSION+")";
    static protected final String PROTO_VERSION    = "    *** PROTOTYPE VERSION (based on "+VERSION+") ***";
    static protected  String currentVersion = null;  // Version courante dispo
 
@@ -253,11 +254,10 @@ DropTargetListener, DragSourceListener, DragGestureListener
 
    static final String ICON              = "icon.gif";
    static final String ALADINMAINSITE    = "aladin.cds.unistra.fr";
-   static final String WELCOME           = "Bienvenue sur "+TITRE+" - "+getReleaseNumber();
-   static String COPYRIGHT         = PREMIERE | BETA || PROTO ? "(c) 2023 Université de Strasbourg/CNRS - developed by CDS, ALL RIGHT RESERVED" :
-                               "(c) 2023 Université de Strasbourg/CNRS - developed by CDS, distributed under GPLv3";
+   static final String WELCOME           = "Welcome to "+TITRE+" - "+getReleaseNumber();
+   static String COPYRIGHT         = "(c) CDS/Université de Strasbourg (GPL v3) - Astrovia community project";
 
-   static protected String CACHE = ".aladin"; // Nom du répertoire cache
+   static protected String CACHE = ".astrovia"; // Nom du répertoire cache
    static protected String CACHEDIR = null;   // Filename du répertoire cache, null si non encore
    // crée, "" si impossible à créer
 
@@ -416,6 +416,50 @@ DropTargetListener, DragSourceListener, DragGestureListener
          COLOR_MEASUREMENT_FOREGROUND = COLOR_CONTROL_FOREGROUND;
       }
       
+      if( DARK_THEME ) {
+         // Astrovia palette
+         COLOR_MAINPANEL_BACKGROUND = new Color(0x0B1020);
+         COLOR_BACKGROUND = new Color(0x0E1426);
+         COLOR_FOREGROUND = new Color(0xE8EEF7);
+         COLOR_LABEL = new Color(0x9FB0CC);
+         COLOR_CONTROL_BACKGROUND = new Color(0x16203A);
+         COLOR_CONTROL_FOREGROUND = new Color(0xC5D2E8);
+         COLOR_CONTROL_FOREGROUND_HIGHLIGHT = Color.white;
+         COLOR_CONTROL_FOREGROUND_UNAVAILABLE = new Color(0x5C6B88);
+         COLOR_CONTROL_FILL_IN = new Color(0x0E1426);
+         COLOR_BUTTON_BACKGROUND = new Color(0x8A9CBF);
+         COLOR_BUTTON_FOREGROUND = new Color(0x05070D);
+         COLOR_BUTTON_BACKGROUND_BORDER_UP = new Color(0x243049);
+         COLOR_BUTTON_BACKGROUND_BORDER_DOWN = new Color(0x05070D);
+         COLOR_TOOL_DOWN = new Color(0x3F6FB0);
+         COLOR_TOOL_UP = new Color(0x1B2540);
+         COLOR_TEXT_BACKGROUND = new Color(0x121A30);
+         COLOR_TEXT_FOREGROUND = new Color(0xE8EEF7);
+         COLOR_TEXT_FOREGROUND_INFO = new Color(0x9FB0CC);
+         COLOR_CONTROL_BACKGROUND_UNAVAILABLE = new Color(0x0B1020);
+         COLOR_STATUS_BACKGROUND = new Color(0x0E1426);
+         COLOR_STATUS_LEFT_FOREGROUND = new Color(0x9FB0CC);
+         COLOR_RED = new Color(0xEF4444);
+         COLOR_GREEN = new Color(0x22C55E);
+         COLOR_GREEN_LIGHT = new Color(0x4ADE80);
+         COLOR_GREEN_LIGHTER = new Color(0x86EFAC);
+         COLOR_BLUE = new Color(0x6F9BE0);
+         COLOR_BLUETIME = new Color(0x3F6FB0);
+         COLOR_FOREGROUND_ANCHOR = new Color(0x6FA8FF);
+         COLOR_STACK_SELECT = new Color(0x3F6FB0);
+         COLOR_STACK_HIGHLIGHT = new Color(0x243049);
+         COLOR_MEASUREMENT_BACKGROUND = COLOR_BACKGROUND;
+         COLOR_MEASUREMENT_FOREGROUND = COLOR_CONTROL_FOREGROUND;
+         COLOR_MEASUREMENT_LINE = new Color(0x243049);
+         COLOR_MEASUREMENT_HEADER_BACKGROUND = new Color(0x1B2540);
+         COLOR_MEASUREMENT_HEADER_FOREGROUND = new Color(0xE8EEF7);
+         COLOR_MEASUREMENT_BACKGROUND_SELECTED_LINE = new Color(0x3F6FB0);
+         COLOR_MEASUREMENT_FOREGROUND_SELECTED_LINE = Color.white;
+         COLOR_MEASUREMENT_BORDERS_MOUSE_CELL = new Color(0xE8C547);
+         COLOR_MEASUREMENT_BACKGROUND_MOUSE_CELL = new Color(0x1B2540);
+         COLOR_MEASUREMENT_FOREGROUND_COMPUTED = new Color(0xE8C547);
+      }
+
       COLOR_ICON_ACTIVATED = Aladin.COLOR_GREEN.brighter(); //new Color(220,0,0);
       COLOR_DIRECTORY_BACKGROUND = COLOR_MAINPANEL_BACKGROUND;
 
@@ -490,7 +534,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
    static boolean TESTNETWORK=true;
 
    // true si on compare le numéro de version avec la version courante
-   static boolean TESTRELEASE=true;
+   static boolean TESTRELEASE=false;   // Astrovia never checks CDS for Aladin releases
 
    // true si on ne lance pas de hub interne, quelles que soient les preferences
    static boolean NOHUB=false;
@@ -2291,7 +2335,8 @@ DropTargetListener, DragSourceListener, DragGestureListener
 
       if( !flagLaunch ) {
          try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            if( !cds.astrovia.AstroviaTheme.install() ) 
+               UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 //                       UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
             
          } catch( Exception e ) { e.printStackTrace(); }
@@ -3111,7 +3156,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
     * generale x.a
     */
    static protected String getReleaseNumber() {
-      return VERSION.substring(0,VERSION.indexOf('.')+2);
+      return ASTROVIA_VERSION;
    }
    
    
@@ -3297,47 +3342,17 @@ DropTargetListener, DragSourceListener, DragGestureListener
 
    // Affichage des authors et contributors
    private void about() {
-      Aladin.info(TITRE+" ("+VERSION+(PREMIERE?" avant-premiere":BETA?" beta":PROTO?" proto":"")+") "+
-            chaine.getString("CDS")+
-            "Authors: Pierre Fernique, Thomas Boch,\n      Anaïs Oberto, François Bonnarel, Chaitra\n" +
-            "      (see also the Aladin FAQ for all other contributers)\n \n" +
-            "* "+COPYRIGHT+"\n \n" +
-//            "* Copyright: Université de Strasbourg/CNRS - developed by the Centre de Données de Strasbourg "
-//            + "from the Observatoire astronomique de Strasbourg\n  \n" +
-            "Portions of the code (planetary data support) have been developed in the framework of Europlanet/VESPA project (2019-2023)." +
-            "HiPS & MOCs have been developed in the framework of ASTERICS project (2015-2018)." +
-            "Progressive catalogs, PM facility, have been developed in the framework of GAIA CU9 (2012-2022)." +
-            "The outreach mode has been developed in the framework of EuroVO AIDA & ICE projects (2008-2012)." +
-            "WCS in JPEG, extended SIA, IDL bridge, FoV advanced integration, Fits cubes, Xmatcher by ellipses, SAMP " +
-            "integration have been developed in the framework of the EuroVO VOTech project (2005-2008). " +
-            "The contours, filters, data tree, column calculator and Xmatcher have been developed " +
-            "in the framework of the Astrophysical Virtual Observatory (AVO), an EC RTD project 2002-2004. " +
-            "The RGB feature has been developed in the framework of the IDHA project (ACI GRID of the French Ministere de la Recherche).\n" +
-            "See also the Aladin FAQ for the external contributions notably JSAMP, JSOFA and all language supports.\n \n" +
-            "* Contact:\ncds-question@unistra.fr\nhttp://aladin.cds.unistra.fr\n \n " +
-            "If the Aladin sky atlas was helpful for your research work, the citation of the following " +
-            "article 2000A&AS..143...33B would be appreciated.");
+      cds.astrovia.WelcomeDialog.show(f, false);
    }
 
    // Pour envoyer un rapport de bug/une question
    private void sendBugReport() {
-      String s = "mailto:cds-question@unistra.fr?subject=[Aladin] Bug report/question";
-      // on ajoute la date pour générer des sujets uniques, sinon on a des problemes à trier dans question
-      String date = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, Locale.ENGLISH).format(new Date());
-      s += " ("+date+")";
-      s += "&body=";
-      s += "Aladin version: "+(SIGNEDAPPLET?"signed applet ":STANDALONE?"standalone ":"applet ")+VERSION;
-      s += "%0A" + "JVM: "+javaVersion+" / "+javaVendor;
-      s += "%0A" + "OS: "+osName+"/"+osArch+"/"+osVersion;
-      s += "%0A" + "Language: "+configuration.getLanguage();
-      s += "%0A%0A" + "Bug description: ";
-
-      glu.showDocument("Http", s.replaceAll(" ", "%20"), true);
+      glu.showDocument("Http", cds.astrovia.AstroviaTheme.SOURCE_URL+"/issues", true);
    }
 
    // Pour afficher les nouveautes
    private void newsReport() {
-      glu.showDocument("Http", "http://aladin.cds.unistra.fr/java/NewInV12.png", true);
+      glu.showDocument("Http", cds.astrovia.AstroviaTheme.SOURCE_URL+"/releases", true);
    }
 
    // Pour affiche la page d'info sur les plugins
@@ -6456,6 +6471,8 @@ DropTargetListener, DragSourceListener, DragGestureListener
    static protected void startInFrame(final Aladin a) {
       a.f = new MyFrame(a,"");
       a.f.setIconImage(a.getImagette("AladinIconSS.gif"));
+      java.util.List<Image> icons = cds.astrovia.AstroviaTheme.windowIcons();
+      if( !icons.isEmpty() ) a.f.setIconImages(icons);
       JPanel p = (JPanel)a.f.getContentPane();
       p.setLayout( new BorderLayout(0,0) );
       makeAdd(p,a,"Center");
@@ -6581,6 +6598,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
     */
    public static void main(String[] args) {
       String chart=null;        // en cas de demande de carte de champ
+      Default.LOG=false; SETLOG=true;   // Astrovia: no usage statistics, ever (unless -log is explicitly given)
       int lastArg;      // Prochain indice des arguments a loader
       String SCREEN=null;
       String TTL=null;
@@ -6692,6 +6710,10 @@ DropTargetListener, DragSourceListener, DragGestureListener
      
 
       // Création d'Aladin
+      if( !NOGUI && scriptParam==null && extApplet==null ) {
+         cds.astrovia.AstroviaTheme.install();
+         cds.astrovia.WelcomeDialog.showIfFirstRun();
+      }
       setSystemProperties(); // indispensable d'appeler cette méthode avant la création de l'objet Aladin !
       aladin = new Aladin();
       aladin.SCREEN = SCREEN;
