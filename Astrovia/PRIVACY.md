@@ -18,4 +18,4 @@ download. You can clear the cache from Settings or by uninstalling the app.
 
 **Children:** the app does not knowingly collect any data from anyone, including children.
 
-**Contact:** open an issue at <https://github.com/kroryan/aladin-android/issues>.
+**Contact:** open an issue at <https://github.com/kroryan/Astrovia/issues>.

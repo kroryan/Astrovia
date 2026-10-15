@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="source_url" translatable="false">https://github.com/kroryan/aladin-android</string>
+    <string name="source_url" translatable="false">https://github.com/kroryan/Astrovia</string>
     <string name="welcome_subtitle">Open-source sky atlas for Android</string>
     <string name="notice_origin_title">Where it comes from</string>
     <string name="notice_origin_body">Astrovia is an independent project based on the Aladin Sky Atlas, developed by the Centre de Données astronomiques de Strasbourg (CDS).</string>
