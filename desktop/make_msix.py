@@ -70,43 +70,88 @@ mpath = os.path.join(tmp, 'AppxManifest.xml')
 open(mpath, 'w', encoding='utf-8').write(manifest)
 files['AppxManifest.xml'] = mpath
 
+import struct
+
+# content types: a Default per extension, an Override for extension-less files
+known = {'png': 'image/png', 'dll': 'application/x-msdownload', 'exe': 'application/x-msdownload',
+         'jar': 'application/java-archive', 'xml': 'application/xml'}
+exts = sorted({os.path.splitext(n)[1][1:].lower() for n in files if os.path.splitext(n)[1]} | {'xml'})
 ctypes = ['<?xml version="1.0" encoding="utf-8"?>',
           '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">']
-exts = sorted({os.path.splitext(n)[1][1:].lower() for n in files if os.path.splitext(n)[1]})
-known = {'png': 'image/png', 'xml': 'application/vnd.ms-appx.manifest+xml', 'dll': 'application/x-msdownload',
-         'exe': 'application/x-msdownload', 'jar': 'application/java-archive'}
 for e in exts:
-    if e == 'xml':
-        continue
-    ctypes.append(f'<Default Extension="{e}" ContentType="{known.get(e, "application/octet-stream")}"/>')
-ctypes.append('<Default Extension="xml" ContentType="application/octet-stream"/>')
+    ctypes.append(f'<Default Extension="{escape(e)}" ContentType="{known.get(e, "application/octet-stream")}"/>')
+for n in sorted(files):
+    base = n.rsplit('/', 1)[-1]
+    if '.' not in base or base.endswith('.'):
+        ctypes.append(f'<Override PartName="/{escape(n)}" ContentType="application/octet-stream"/>')
 ctypes.append('<Override PartName="/AppxManifest.xml" ContentType="application/vnd.ms-appx.manifest+xml"/>')
 ctypes.append('<Override PartName="/AppxBlockMap.xml" ContentType="application/vnd.ms-appx.blockmap+xml"/>')
 ctypes.append('</Types>')
 
-# zip (stored). Local header size is needed in the block map, so write the payload first.
 BLOCK = 65536
-entries = []
-zpath = out
-if os.path.exists(zpath):
-    os.remove(zpath)
-with zipfile.ZipFile(zpath, 'w', zipfile.ZIP_STORED, allowZip64=True) as z:
-    for arc, p in sorted(files.items()):
-        data = open(p, 'rb').read()
-        zi = zipfile.ZipInfo(arc, date_time=(2024, 1, 1, 0, 0, 0))
-        zi.compress_type = zipfile.ZIP_STORED
-        z.writestr(zi, data)
-        lfh = 30 + len(arc.encode('utf-8'))
-        blocks = [base64.b64encode(hashlib.sha256(data[i:i + BLOCK]).digest()).decode()
-                  for i in range(0, len(data), BLOCK)] or [base64.b64encode(hashlib.sha256(b'').digest()).decode()]
-        entries.append((arc, len(data), lfh, blocks))
-    bm = ['<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
-          '<BlockMap xmlns="http://schemas.microsoft.com/appx/2010/blockmap" HashMethod="http://www.w3.org/2001/04/xmlenc#sha256">']
-    for arc, size, lfh, blocks in entries:
-        bm.append(f'<File Name="{escape(arc.replace("/", chr(92)))}" Size="{size}" LfhSize="{lfh}">')
-        bm.extend(f'<Block Hash="{h}"/>' for h in blocks)
-        bm.append('</File>')
-    bm.append('</BlockMap>')
-    z.writestr('AppxBlockMap.xml', '\n'.join(bm).encode('utf-8'))
-    z.writestr('[Content_Types].xml', '\n'.join(ctypes).encode('utf-8'))
+import zlib
+DOS_TIME, DOS_DATE = 0, ((2024 - 1980) << 9) | (1 << 5) | 1
+
+
+def deflate_blocks(data):
+    """Raw deflate stream whose 64 KiB blocks are independently delimited (as makeappx does).
+    Returns (compressed bytes, [compressed size of each block])."""
+    c = zlib.compressobj(9, zlib.DEFLATED, -15)
+    parts, sz = [], []
+    n = (len(data) + BLOCK - 1) // BLOCK
+    for i in range(n):
+        chunk = c.compress(data[i * BLOCK:(i + 1) * BLOCK])
+        chunk += c.flush(zlib.Z_FINISH if i == n - 1 else zlib.Z_FULL_FLUSH)
+        parts.append(chunk)
+        sz.append(len(chunk))
+    return b''.join(parts), sz
+
+
+class Zip:
+    def __init__(self, path):
+        self.f = open(path, 'wb')
+        self.cd = []
+        self.lfh = {}
+
+    def add(self, name, data, deflate=True):
+        nb = name.encode('utf-8')
+        if deflate and data:
+            body, bsz = deflate_blocks(data)
+            method = 8
+        else:
+            body, bsz, method = data, [], 0
+        off = self.f.tell()
+        crc = zlib.crc32(data) & 0xffffffff
+        self.f.write(struct.pack('<IHHHHHIIIHH', 0x04034b50, 20, 0, method, DOS_TIME, DOS_DATE,
+                                 crc, len(body), len(data), len(nb), 0) + nb + body)
+        self.cd.append(struct.pack('<IHHHHHHIIIHHHHHII', 0x02014b50, 20, 20, 0, method, DOS_TIME, DOS_DATE,
+                                   crc, len(body), len(data), len(nb), 0, 0, 0, 0, 0, off) + nb)
+        self.lfh[name] = 30 + len(nb)
+        return bsz
+
+    def close(self):
+        start = self.f.tell()
+        cd = b''.join(self.cd)
+        self.f.write(cd)
+        self.f.write(struct.pack('<IHHHHIIH', 0x06054b50, 0, 0, len(self.cd), len(self.cd), len(cd), start, 0))
+        self.f.close()
+
+
+if os.path.exists(out):
+    os.remove(out)
+z = Zip(out)
+z.add('[Content_Types].xml', '\n'.join(ctypes).encode('utf-8'))
+bm = ['<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
+      '<BlockMap xmlns="http://schemas.microsoft.com/appx/2010/blockmap" HashMethod="http://www.w3.org/2001/04/xmlenc#sha256">']
+for arc, p in sorted(files.items()):
+    data = open(p, 'rb').read()
+    bsz = z.add(arc, data)
+    bm.append(f'<File Name="{escape(arc.replace("/", chr(92)))}" Size="{len(data)}" LfhSize="{z.lfh[arc]}">')
+    for i, off in enumerate(range(0, len(data), BLOCK)):
+        h = base64.b64encode(hashlib.sha256(data[off:off + BLOCK]).digest()).decode()
+        bm.append(f'<Block Hash="{h}" Size="{bsz[i]}"/>' if bsz else f'<Block Hash="{h}"/>')
+    bm.append('</File>')
+bm.append('</BlockMap>')
+z.add('AppxBlockMap.xml', '\n'.join(bm).encode('utf-8'), deflate=False)
+z.close()
 print('wrote', out, os.path.getsize(out) // 1024 // 1024, 'MB')
