@@ -27,14 +27,18 @@ Outputs in `release/desktop/`:
 
 ## Microsoft Store
 
-Reserve the app name in Partner Center, copy *Product identity* values and rebuild the MSIX:
+The package identity is private and is not stored in the repository. Create
+`credenciales/msix-identity.env` (git-ignored) with the values from Partner Center
+(*Product management > Product identity*):
 
 ```
-MSIX_IDENTITY_NAME='12345kroryan.Astrovia' MSIX_PUBLISHER='CN=XXXXXXXX-....' \
-MSIX_PUBLISHER_DISPLAY='kroryan' ./package-desktop.sh
+MSIX_IDENTITY_NAME=<Package/Identity/Name>
+MSIX_PUBLISHER=<Package/Identity/Publisher>
+MSIX_PUBLISHER_DISPLAY=<Publisher display name>
 ```
 
-Upload the `.msix` (the Store signs it). For sideload testing sign it with your own certificate (`signtool`).
+then run `./package-desktop.sh` (the same variables can also be passed in the environment).
+Upload the `.msix` (the Store signs it).
 
 ## apt repository
 

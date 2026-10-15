@@ -11,9 +11,27 @@ from urllib.parse import quote
 from xml.sax.saxutils import escape
 
 bundle, icons, out, version = sys.argv[1:5]
-name = os.environ.get('MSIX_IDENTITY_NAME', 'kroryan.Astrovia')
-publisher = os.environ.get('MSIX_PUBLISHER', 'CN=kroryan')
-pubdisp = os.environ.get('MSIX_PUBLISHER_DISPLAY', 'kroryan')
+# Identity values are private: they come from the environment or from credenciales/msix-identity.env
+# (KEY=VALUE lines; the credenciales/ folder is git-ignored).
+_cfg = {}
+_envfile = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'credenciales', 'msix-identity.env')
+if os.path.isfile(_envfile):
+    for _l in open(_envfile, encoding='utf-8'):
+        if '=' in _l and not _l.lstrip().startswith('#'):
+            _k, _v = _l.rstrip('\n').split('=', 1)
+            _cfg[_k.strip()] = _v.strip().strip('"').strip("'")
+
+
+def _get(key):
+    v = os.environ.get(key) or _cfg.get(key)
+    if not v:
+        sys.exit(f'{key} is not set (environment or credenciales/msix-identity.env)')
+    return v
+
+
+name = _get('MSIX_IDENTITY_NAME')
+publisher = _get('MSIX_PUBLISHER')
+pubdisp = _get('MSIX_PUBLISHER_DISPLAY')
 
 assets = {  # file -> size (square unless noted)
     'StoreLogo.png': (50, 50), 'Square44x44Logo.png': (44, 44), 'Square71x71Logo.png': (71, 71),
