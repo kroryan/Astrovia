@@ -1,5 +1,10 @@
 Unicode true
 !include "MUI2.nsh"
+!include "FileFunc.nsh"
+!include "x64.nsh"
+!include "LogicLib.nsh"
+!define MIN_FREE_MB 400
+!define MUI_CUSTOMFUNCTION_ABORT AstroAbort
 !define APP "Astrovia"
 !define UNINST "Software\Microsoft\Windows\CurrentVersion\Uninstall\Astrovia"
 Name "${APP} ${VER}"
@@ -18,6 +23,44 @@ SetCompressor /SOLID lzma
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "English"
+
+; Exit codes: 0 ok | 1602 cancelled | 1638 already installed | 1618 another install running
+;             112 disk full | 1625 rejected by policy (not admin) | 1603 fatal error | 3010 reboot (never needed)
+Function .onInit
+  System::Call 'kernel32::CreateMutex(p 0, i 1, t "AstroviaSetupMutex") p .r1 ?e'
+  Pop $2
+  ${If} $2 = 183
+    SetErrorLevel 1618
+    Abort
+  ${EndIf}
+  UserInfo::GetAccountType
+  Pop $0
+  ${If} $0 != "Admin"
+    SetErrorLevel 1625
+    Abort
+  ${EndIf}
+  ReadRegStr $0 HKLM "${UNINST}" "DisplayVersion"
+  ${If} $0 == "${VER}"
+    ${If} ${Silent}
+      SetErrorLevel 1638
+      Abort
+    ${EndIf}
+  ${EndIf}
+  ${GetRoot} "$PROGRAMFILES64" $1
+  ${DriveSpace} "$1\" "/D=F /S=M" $2
+  ${If} $2 < ${MIN_FREE_MB}
+    SetErrorLevel 112
+    Abort
+  ${EndIf}
+FunctionEnd
+
+Function AstroAbort
+  SetErrorLevel 1602
+FunctionEnd
+
+Function .onInstFailed
+  SetErrorLevel 1603
+FunctionEnd
 
 Section "Install"
   SetOutPath "$INSTDIR"
