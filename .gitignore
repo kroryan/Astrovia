@@ -13,5 +13,15 @@ aladin-deb/
 junit*.properties
 
 # Android/Gradle build output
-AladinAndroid/**/build/
-AladinAndroid/.gradle/
+Astrovia/**/build/
+Astrovia/.gradle/
+
+# Credenciales de firma (NUNCA subir)
+credenciales/
+*.jks
+*.keystore
+keystore.properties
+local.properties
+
+# Artefactos de release (AAB/APK firmados)
+release/

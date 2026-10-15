@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="source_url" translatable="false">https://github.com/kroryan/aladin-android</string>
+    <string name="welcome_subtitle">Open-source sky atlas for Android</string>
+    <string name="notice_origin_title">Where it comes from</string>
+    <string name="notice_origin_body">Astrovia is an independent project based on the Aladin Sky Atlas, developed by the Centre de Données astronomiques de Strasbourg (CDS).</string>
+    <string name="notice_unofficial_title">Not an official app</string>
+    <string name="notice_unofficial_body">Astrovia is NOT affiliated with, endorsed by or sponsored by the CDS or the Aladin project. \"Aladin\", \"CDS\", \"Simbad\" and \"VizieR\" belong to their respective owners and are only mentioned to credit the original work and data.</string>
+    <string name="notice_ai_title">Made with the help of AI</string>
+    <string name="notice_ai_body">This port / adaptation to Android was created with the help of artificial intelligence tools. It may contain mistakes: please report any problem you find.</string>
+    <string name="notice_license_title">Free and open source</string>
+    <string name="notice_license_body">Free, no ads and no tracking. Licensed under the GNU General Public License v3 (GPL-3.0). The source code is publicly available.</string>
+    <string name="notice_data_title">Data and privacy</string>
+    <string name="notice_data_body">Astrovia has no accounts and collects no personal data. To show images and catalogs it connects to public astronomical services (HiPS servers, Simbad and VizieR at CDS); the coordinates and names you search are sent to those servers. This research has made use of the SIMBAD database and the VizieR catalogue access tool, operated at CDS, Strasbourg, France.</string>
+    <string name="welcome_accept">I understand, continue</string>
+    <string name="about_open_source">Source code</string>
+    <string name="about_close">Close</string>
+    <string name="about_menu_item">About Astrovia</string>
+    <string name="about_version">Version %1$s</string>
+</resources>

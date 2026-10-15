@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: AladinAndroid
+        working-directory: Astrovia
     steps:
       - uses: actions/checkout@v4
 
@@ -48,7 +48,7 @@ jobs:
         run: |
           mkdir -p ../dist
           cp app/build/outputs/apk/debug/app-debug.apk \
-             "../dist/Aladin-${{ steps.meta.outputs.short_sha }}.apk"
+             "../dist/Astrovia-${{ steps.meta.outputs.short_sha }}.apk"
 
       - name: Publish pre-release
         uses: softprops/action-gh-release@v2
@@ -60,4 +60,4 @@ jobs:
             Not a tagged release — installable APK for testing.
           prerelease: true
           make_latest: true
-          files: dist/Aladin-${{ steps.meta.outputs.short_sha }}.apk
+          files: dist/Astrovia-${{ steps.meta.outputs.short_sha }}.apk

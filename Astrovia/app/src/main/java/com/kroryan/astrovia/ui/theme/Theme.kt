@@ -1,0 +1,28 @@
+@file:Suppress("EmptyCatchBlock", "TooGenericExceptionThrown", "VariableNaming", "ImplicitDefaultLocale", "WildcardImport", "MagicNumber", "MaxLineLength", "ComplexCondition", "CyclomaticComplexMethod", "LongMethod", "ReturnCount", "LongParameterList", "SwallowedException", "TooGenericExceptionCaught", "NestedBlockDepth", "FunctionNaming", "LoopWithTooManyJumpStatements", "TooManyFunctions")
+package com.kroryan.astrovia.ui.theme
+
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.Composable
+
+private val DarkColors = darkColorScheme(
+    primary = AstroviaBlue,
+    secondary = AstroviaGold,
+    background = SkyBlack,
+    surface = SkyNight,
+    onPrimary = TextPrimary,
+    onSecondary = SkyBlack,
+    onBackground = TextPrimary,
+    onSurface = TextPrimary,
+)
+
+@Composable
+fun AstroviaTheme(content: @Composable () -> Unit) {
+    // Edge-to-edge mode is enabled in MainActivity (enableEdgeToEdge); system
+    // bars are transparent over the dark sky background.
+    MaterialTheme(
+        colorScheme = DarkColors,
+        typography = Typography,
+        content = content,
+    )
+}
