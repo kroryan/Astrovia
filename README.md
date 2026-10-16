@@ -22,9 +22,33 @@ FITS images and MOC coverage, in a modern dark interface. Free, no ads, no track
 
 ## Install (desktop)
 
-- **Debian/Ubuntu:** `sudo apt install ./astrovia_<version>_all.deb`
+### Debian / Ubuntu / Linux Mint (apt repository)
+
+Add the Astrovia repository once, then install and update it with `apt`:
+
+```
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://kroryan.github.io/Astrovia/astrovia.gpg | sudo tee /etc/apt/keyrings/astrovia.gpg >/dev/null
+echo "deb [signed-by=/etc/apt/keyrings/astrovia.gpg] https://kroryan.github.io/Astrovia stable main" | sudo tee /etc/apt/sources.list.d/astrovia.list
+sudo apt update
+sudo apt install astrovia
+```
+
+Astrovia then updates with the rest of your system (`sudo apt upgrade`). Requires Java 8 or newer
+(`default-jre` is pulled in automatically). To remove it:
+
+```
+sudo apt remove astrovia
+sudo rm /etc/apt/sources.list.d/astrovia.list /etc/apt/keyrings/astrovia.gpg
+```
+
+You can also install the `.deb` directly from the Releases page: `sudo apt install ./astrovia_<version>_all.deb`
+
+### Other options
+
 - **Windows:** run `Astrovia-<version>-windows-setup.exe` (includes its own Java runtime), or use the portable zip
 - **Any OS:** `java -jar Astrovia.jar` (Java 8+)
+- **Linux portable:** unpack `astrovia-<version>-linux.tar.gz` and run `./astrovia.sh`
 
 Binaries are published on the [Releases](https://github.com/kroryan/Astrovia/releases) page.
 User data lives in `~/.astrovia`.
