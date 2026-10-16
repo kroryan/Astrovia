@@ -1,8 +1,18 @@
-# Astrovia
+<p align="center">
+  <img src="Astrovia/store/feature-graphic-PC-1024x500.png" alt="Astrovia - Open-source sky atlas" width="100%">
+</p>
 
-**Open-source sky atlas for Android, Linux and Windows.**
+<h1 align="center">
+  <img src="Astrovia/store/icon-512.png" alt="" width="64" align="absmiddle"> Astrovia
+</h1>
 
-<img src="Astrovia/store/icon-512.png" alt="Astrovia" width="160">
+<p align="center"><b>Open-source sky atlas for Windows, Linux and Android.</b></p>
+
+<p align="center">
+  <a href="https://apps.microsoft.com/detail/9pk3fbqlh2x3?cid=DevShareMCLPCS&hl=en-US&gl=ES"><img alt="Get it from Microsoft Store" src="https://img.shields.io/badge/Microsoft%20Store-Get%20it%20for%20Windows-0078D4?style=for-the-badge&logo=windows"></a>
+  <a href="https://github.com/kroryan/Astrovia/releases"><img alt="Releases" src="https://img.shields.io/badge/Download-GitHub%20Releases-181717?style=for-the-badge&logo=github"></a>
+  <img alt="License GPL-3.0" src="https://img.shields.io/badge/License-GPL--3.0-green?style=for-the-badge">
+</p>
 
 Astrovia lets you explore the sky with HiPS surveys, overlay Simbad and VizieR catalogues, and work with
 FITS images and MOC coverage, in a modern dark interface. Free, no ads, no tracking.
@@ -46,7 +56,7 @@ You can also install the `.deb` directly from the Releases page: `sudo apt insta
 
 ### Other options
 
-- **Windows:** run `Astrovia-<version>-windows-setup.exe` (includes its own Java runtime), or use the portable zip
+- **Windows (recommended):** get it from the [Microsoft Store](https://apps.microsoft.com/detail/9pk3fbqlh2x3?cid=DevShareMCLPCS&hl=en-US&gl=ES), or run `Astrovia-<version>-windows-setup.exe` (includes its own Java runtime), or use the portable zip
 - **Any OS:** `java -jar Astrovia.jar` (Java 8+)
 - **Linux portable:** unpack `astrovia-<version>-linux.tar.gz` and run `./astrovia.sh`
 
