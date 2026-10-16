@@ -7,7 +7,7 @@ Unicode true
 !define MUI_CUSTOMFUNCTION_ABORT AstroAbort
 !define APP "Astrovia"
 !define UNINST "Software\Microsoft\Windows\CurrentVersion\Uninstall\Astrovia"
-Name "${APP} ${VER}"
+Name "Astrovia: Sky Atlas ${VER}"
 OutFile "${OUT}"
 InstallDir "$PROGRAMFILES64\${APP}"
 InstallDirRegKey HKLM "Software\${APP}" "InstallDir"

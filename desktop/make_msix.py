@@ -60,7 +60,7 @@ manifest = f'''<?xml version="1.0" encoding="utf-8"?>
          IgnorableNamespaces="uap rescap">
   <Identity Name="{escape(name)}" Publisher="{escape(publisher)}" Version="{version}" ProcessorArchitecture="x64"/>
   <Properties>
-    <DisplayName>Astrovia</DisplayName>
+    <DisplayName>Astrovia: Sky Atlas</DisplayName>
     <PublisherDisplayName>{escape(pubdisp)}</PublisherDisplayName>
     <Logo>Assets\\StoreLogo.png</Logo>
     <Description>Astrovia - Open-source sky atlas</Description>
@@ -71,7 +71,7 @@ manifest = f'''<?xml version="1.0" encoding="utf-8"?>
   <Resources><Resource Language="en-us"/></Resources>
   <Applications>
     <Application Id="Astrovia" Executable="Astrovia.exe" EntryPoint="Windows.FullTrustApplication">
-      <uap:VisualElements DisplayName="Astrovia" Description="Astrovia - Open-source sky atlas"
+      <uap:VisualElements DisplayName="Astrovia: Sky Atlas" Description="Astrovia - Open-source sky atlas"
           BackgroundColor="#0B1020" Square150x150Logo="Assets\\Square150x150Logo.png" Square44x44Logo="Assets\\Square44x44Logo.png">
         <uap:DefaultTile Wide310x150Logo="Assets\\Wide310x150Logo.png" Square71x71Logo="Assets\\Square71x71Logo.png"
             Square310x310Logo="Assets\\Square310x310Logo.png"/>

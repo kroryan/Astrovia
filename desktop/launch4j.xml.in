@@ -3,7 +3,7 @@
   <outfile>@OUT@</outfile>
   <jar>@JAR@</jar>
   <dontWrapJar>false</dontWrapJar>
-  <errTitle>Astrovia</errTitle>
+  <errTitle>Astrovia: Sky Atlas</errTitle>
   <cmdLine></cmdLine>
   <chdir>.</chdir>
   <priority>normal</priority>

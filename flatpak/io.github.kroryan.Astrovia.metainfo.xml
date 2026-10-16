@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
   <id>io.github.kroryan.Astrovia</id>
-  <name>Astrovia</name>
+  <name>Astrovia: Sky Atlas</name>
   <summary>Open-source sky atlas for exploring the universe</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
@@ -69,7 +69,7 @@
     <binary>astrovia</binary>
   </provides>
   <releases>
-    <release version="0.6.1" date="2026-10-16">
+    <release version="0.6.2" date="2026-10-16">
       <description>
         <ul>
           <li>Capture only the sky picture of the view at high resolution, in a folder you choose</li>

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Version=1.0
-Name=Astrovia
+Name=Astrovia: Sky Atlas
 GenericName=Sky Atlas
 Comment=Open-source sky atlas: HiPS, FITS, MOC, Simbad, VizieR
 Exec=astrovia %F
