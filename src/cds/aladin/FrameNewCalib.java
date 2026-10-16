@@ -933,11 +933,11 @@ e.printStackTrace();
    private void setFocusPos(Component c) {
       String s;
       int i=getIndexPos(c);
-      if( focusTextField!=null ) focusTextField.setBackground(Color.white);
+      if( focusTextField!=null ) { focusTextField.setBackground(javax.swing.UIManager.getColor("TextField.background")); focusTextField.setForeground(javax.swing.UIManager.getColor("TextField.foreground")); }
       if( i==-1 ) { focusTextField=null; return; }
       flagXY=(c==xyPosT[i]);
       focusTextField=(JTextField)c;
-      focusTextField.setBackground(Color.yellow);
+      focusTextField.setBackground(Color.yellow); focusTextField.setForeground(Color.black);
       if( flagXY ) s = xyPosT[i].getText().trim();
       else s = cooPosT[i].getText().trim();
       setRepere(s,flagXY);
@@ -978,7 +978,7 @@ e.printStackTrace();
    private void changeFocus() {
       int i=getIndexPos(focusTextField);
       if( i==-1 ) { focusTextField=null; return; }
-      focusTextField.setBackground(Color.white);
+      { focusTextField.setBackground(javax.swing.UIManager.getColor("TextField.background")); focusTextField.setForeground(javax.swing.UIManager.getColor("TextField.foreground")); }
       if( focusTextField==xyPosT[i] ) { focusTextField=cooPosT[i]; flagXY=false; }
       else {
          i++;
@@ -989,7 +989,7 @@ e.printStackTrace();
          }
       }
       if( focusTextField!=null ) {
-         focusTextField.setBackground(Color.yellow);
+         focusTextField.setBackground(Color.yellow); focusTextField.setForeground(Color.black);
          focusTextField.requestFocus();
       }
    }

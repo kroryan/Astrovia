@@ -453,7 +453,7 @@ public class FrameMacro extends JFrame {
 //			JLabel helpLabel = new JLabel(a.chaine.getString("FMHELPCONTENT"));
 			helpPane.setFont(Aladin.PLAIN);
 			helpPane.setOpaque(true);
-			helpPane.setBackground(Color.white);
+			helpPane.setBackground(Color.white); helpPane.setForeground(Color.black);
 			helpPane.setBorder(new EmptyBorder(5,5,5,5));
 			final JScrollPane scrollPane = new JScrollPane(helpPane);
 			scrollPane.setPreferredSize(new Dimension(530, 250));

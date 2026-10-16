@@ -446,7 +446,7 @@ public class MyButton extends JComponent implements MouseListener {
          else drawFond(g,Aladin.MYBLUE,Color.gray,Color.gray);
          
       } else {
-         if( !isNormal()) drawFond(g, new Color(250,249,245), Color.gray,Color.gray);
+         if( !isNormal()) drawFond(g, Aladin.DARK_THEME ? new Color(0x1B,0x25,0x40) : new Color(250,249,245), Color.gray,Color.gray);
          else if( type==NORMAL ) {
             drawFond(g, bkgdColor!=null ? bkgdColor : Aladin.BLUE,Color.white,Color.gray );
          } else {

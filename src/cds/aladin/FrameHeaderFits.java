@@ -132,7 +132,7 @@ public class FrameHeaderFits extends JFrame {
          atValue.addAttribute(StyleConstants.CharacterConstants.Foreground,Color.black);
          atValue.addAttribute(StyleConstants.CharacterConstants.Background,Color.white);
          atComment = new SimpleAttributeSet();
-         atComment.addAttribute(StyleConstants.CharacterConstants.Foreground,Aladin.COLOR_LABEL);
+         atComment.addAttribute(StyleConstants.CharacterConstants.Foreground,new Color(70,70,70));
          atComment.addAttribute(StyleConstants.CharacterConstants.Background,Color.white);
          atCom = new SimpleAttributeSet();
          atCom.addAttribute(StyleConstants.CharacterConstants.Foreground,Aladin.COLOR_GREEN);
@@ -144,8 +144,10 @@ public class FrameHeaderFits extends JFrame {
          atHist.addAttribute(StyleConstants.CharacterConstants.Foreground,new Color(127,0,85));
          atHist.addAttribute(StyleConstants.CharacterConstants.Background,Color.white);
          atWhite = new SimpleAttributeSet();
+         atWhite.addAttribute(StyleConstants.CharacterConstants.Foreground,Color.black);
          atWhite.addAttribute(StyleConstants.CharacterConstants.Background,Color.white);
          atYellow = new SimpleAttributeSet();
+         atYellow.addAttribute(StyleConstants.CharacterConstants.Foreground,Color.black);
          atYellow.addAttribute(StyleConstants.CharacterConstants.Background,Color.yellow);
       }
       String s = ta.getText();

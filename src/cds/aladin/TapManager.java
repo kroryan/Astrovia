@@ -2254,7 +2254,7 @@ public class TapManager {
  						JTextArea infoTablesDisplay = new JTextArea(20, 85);
  						infoTablesDisplay.setText(recordInfoTables.toString());
  						infoTablesDisplay.setFont(Aladin.COURIER);
- 						infoTablesDisplay.setBackground(Color.white);
+ 						infoTablesDisplay.setBackground(Color.white); infoTablesDisplay.setForeground(Color.black);
  						infoTablesDisplay.setEditable(false);
  						scrollPane = new JScrollPane(infoTablesDisplay);
  						bagConstraints.fill = GridBagConstraints.BOTH;

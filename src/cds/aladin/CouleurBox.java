@@ -160,7 +160,7 @@ public final class CouleurBox extends JPanel implements MouseListener,ActionList
          setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
          JPanel contentPane = (JPanel)getContentPane();
          contentPane.setLayout( new BorderLayout(5,5)) ;
-         contentPane.setBackground( new Color(240,240,250));
+         contentPane.setBackground( Aladin.DARK_THEME ? new Color(0x0E,0x14,0x26) : new Color(240,240,250));
          contentPane.setBorder( BorderFactory.createLineBorder(Color.black));
          setUndecorated(true);
          

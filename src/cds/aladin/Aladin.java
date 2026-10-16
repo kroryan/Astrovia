@@ -270,8 +270,8 @@ DropTargetListener, DragSourceListener, DragGestureListener
    static public boolean DARK_THEME = true;
    
 //   static final Color COLOR_CONTROL_BACKGROUND = FUN ? new Color(10,10,10) : new Color(229,229,229);
-   public static final Color BLUE =  new Color(214,214,255);
-   static final Color MAXBLUE =  new Color(153,153,255);
+   public static final Color BLUE =  DARK_THEME ? new Color(0x16,0x1F,0x3A) : new Color(214,214,255);
+   static final Color MAXBLUE =  DARK_THEME ? new Color(0x3F,0x6F,0xB0) : new Color(153,153,255);
    static final Color BLUEHELP = new Color(25,76,127);
    static final Color MYGRAY = DARK_THEME ? new Color(100,103,107) : new Color(180,183,187);
    static final Color BLACKBLUE = new Color(0,0,200);

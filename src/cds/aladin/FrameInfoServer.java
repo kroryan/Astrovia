@@ -94,7 +94,7 @@ public class FrameInfoServer extends JFrame implements ActionListener {
 	   setTitle(TITLE);
 	   ta = new JTextArea(20,85);
 	   ta.setFont( Aladin.COURIER );
-	   ta.setBackground(Color.white);
+	   ta.setBackground(Color.white); ta.setForeground(Color.black); ta.setCaretColor(Color.black);
 	   ta.setEditable(false);
 	   JScrollPane js = new JScrollPane(ta);
 
@@ -133,7 +133,7 @@ public class FrameInfoServer extends JFrame implements ActionListener {
 		setTitle(TITLE);
 		ta = new JTextArea(20, 85);
 		ta.setFont(Aladin.COURIER);
-		ta.setBackground(Color.white);
+		ta.setBackground(Color.white); ta.setForeground(Color.black); ta.setCaretColor(Color.black);
 		ta.setEditable(false);
 		JScrollPane js = new JScrollPane(ta);
 //		js.setBounds(10, 10, 800, 200);

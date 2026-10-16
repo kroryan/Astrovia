@@ -23,7 +23,6 @@ package cds.aladin;
 
 
 import java.awt.BorderLayout;
-import java.awt.Button;
 import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.Dimension;
@@ -33,18 +32,20 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.Label;
 import java.awt.Panel;
 import java.awt.Point;
-import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.StringTokenizer;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.UIManager;
 
 import cds.tools.Util;
 
@@ -57,7 +58,7 @@ import cds.tools.Util;
  * @version 1.0
  */
 
-public class Message extends Panel {
+public class Message extends JPanel {
     static final int NON=0;
     static final int OUI=1;
     static final int MESSAGE=0;
@@ -69,19 +70,20 @@ public class Message extends Panel {
     int type;
     int value=NON;
 
-    static Button ok,oui,non;
-    static TextField user,passwd;
+    static JButton ok,oui,non;
+    static JTextField user;
+    static JPasswordField passwd;
     static Dialog dialog;
     static Message currentMessage=null;
 
     public Message(String message,Panel myPanel,int type) {
         super();
-        Panel p = getPanel(message==null?"[*EMPTY*]":message,myPanel,type);
+        JPanel p = getPanel(message==null?"[*EMPTY*]":message,myPanel,type);
         add(p);
     }
     
-    protected Panel getPanel(String message,Panel myPanel,int type) {
-        Panel p = new Panel();
+    protected JPanel getPanel(String message,Panel myPanel,int type) {
+        JPanel p = new JPanel();
         this.type = type;
 
         GridBagLayout g = new GridBagLayout();
@@ -144,54 +146,55 @@ public class Message extends Panel {
         c.insets = new Insets(10,20,10,20);
         JPanel pb = new JPanel();
         if( type==CONFIRME ) {
-           non = new Button("No");
+           non = new JButton("No");
            non.addActionListener(new ActionListener()  {
               public void actionPerformed(ActionEvent e) { value=NON; dialog.dispose(); }
            });
            pb.add(non);
-           oui = new Button("Yes");
+           oui = new JButton("Yes");
            oui.addActionListener(new ActionListener()  {
               public void actionPerformed(ActionEvent e) { value=OUI; dialog.dispose(); }
            });
            pb.add(oui);
         } else if( type==PASSWORD ) {
-           user = new TextField(15);
-           passwd = new TextField(15);
+           user = new JTextField(15);
+           passwd = new JPasswordField(15);
            passwd.setEchoChar('.');
            JPanel panelPwd = new JPanel();
            panelPwd.setLayout(new GridLayout(2,2));
-           panelPwd.add(new Label("User name:"));
+           panelPwd.add(new JLabel("User name:"));
            panelPwd.add(user);
-           panelPwd.add(new Label("Password:"));
+           panelPwd.add(new JLabel("Password:"));
            panelPwd.add(passwd);
            g.setConstraints(panelPwd,c);
            p.add(panelPwd);
            
-           oui = new Button("Ok");
+           oui = new JButton("Ok");
            oui.addActionListener(new ActionListener()  {
               public void actionPerformed(ActionEvent e) { value=OUI; dialog.dispose(); }
            });
            pb.add(oui);
-           non = new Button("Cancel");
+           non = new JButton("Cancel");
            non.addActionListener(new ActionListener()  {
               public void actionPerformed(java.awt.event.ActionEvent e) { value=NON; dialog.dispose(); }
            });
            pb.add(non);
         } else if( type==QUESTION ) {
+           themeAwt(myPanel);
            g.setConstraints(myPanel,c);
            p.add(myPanel);
-          oui = new Button("Ok");
+          oui = new JButton("Ok");
            oui.addActionListener(new ActionListener()  {
               public void actionPerformed(ActionEvent e) { value=OUI; dialog.dispose(); }
            });
            pb.add(oui);
-           non = new Button("Cancel");
+           non = new JButton("Cancel");
            non.addActionListener(new ActionListener()  {
               public void actionPerformed(java.awt.event.ActionEvent e) { value=NON; dialog.dispose(); }
            });
            pb.add(non);
        } else {        
-           ok = new Button("OK");
+           ok = new JButton("OK");
            ok.addActionListener(new ActionListener()  {
                public void actionPerformed(ActionEvent e) { dialog.dispose(); }
            });
@@ -209,7 +212,7 @@ public class Message extends Panel {
        int rep=showFrame(Aladin.aladin,message,null,PASSWORD);
        if( rep==NON) return NON;
        u.append(user.getText());
-       p.append(passwd.getText());
+       p.append(new String(passwd.getPassword()));
        return OUI;
     }
 
@@ -260,6 +263,19 @@ public class Message extends Panel {
     
     public static void hideFrame() { if( dialog!=null ) dialog.dispose(); }
 
+
+    /** AWT containers/components do not follow the Swing look and feel: paint them with the current theme. */
+    static void themeAwt(Component c) {
+        if( c==null ) return;
+        java.awt.Color bg = UIManager.getColor("Panel.background");
+        java.awt.Color fg = UIManager.getColor("Label.foreground");
+        if( bg!=null && !(c instanceof javax.swing.JComponent) ) c.setBackground(bg);
+        if( fg!=null && !(c instanceof javax.swing.JComponent) ) c.setForeground(fg);
+        if( c instanceof java.awt.Container ) {
+            for( Component k : ((java.awt.Container)c).getComponents() ) themeAwt(k);
+        }
+    }
+
     public Dialog createDialog(Component c, String title) {
         final Dialog dialog;
 
@@ -267,7 +283,10 @@ public class Message extends Panel {
 
         dialog = new Dialog((Frame)c, title,
               type==CONFIRME || type==PASSWORD || type==QUESTION);
+        java.awt.Color bg = UIManager.getColor("Panel.background");
+        if( bg!=null ) dialog.setBackground(bg);
         dialog.setLayout(new BorderLayout());
+        setBorder(javax.swing.BorderFactory.createLineBorder(UIManager.getColor("Component.borderColor")!=null?UIManager.getColor("Component.borderColor"):java.awt.Color.GRAY));
         dialog.add(this, BorderLayout.CENTER);
         dialog.pack();
         Point p;
