@@ -81,6 +81,15 @@ class TileRepository(
     concurrency: Int = 12,
 ) {
 
+    /**
+     * The in-memory bitmap cache never exceeds a share of the app's heap class, whatever the user types in
+     * Settings: Google Play's quality checks (Android vitals) penalise apps that hold lots of bitmap memory.
+     */
+    private val maxCacheMb: Int = run {
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+        ((am?.memoryClass ?: 192) / 4).coerceIn(16, 128)
+    }
+
     private val cacheDir = File(context.cacheDir, "hips_tiles").apply { mkdirs() }
     private val client: OkHttpClient = OkHttpClient.Builder()
         .cache(Cache(File(cacheDir, "net"), DISK_CACHE_BYTES))
@@ -111,7 +120,7 @@ class TileRepository(
     // another thread would cause flickering / native crash). No upper limit:
     // the user can enter any MB figure (see LongLruCache, which uses Long to
     // avoid Int overflow that crashed above ~2048 MB).
-    private var memCacheMbCurrent = memCacheMb.coerceAtLeast(8)
+    private var memCacheMbCurrent = memCacheMb.coerceIn(8, maxCacheMb)
     @Volatile private var memCache: LongLruCache<String, Bitmap> = newMemCache(memCacheMbCurrent)
 
     private fun newMemCache(mb: Int) =
@@ -119,12 +128,26 @@ class TileRepository(
 
     /** Resizes the in-memory cache (clears the current one and creates a new one). */
     fun setMemCacheMb(mb: Int) {
-        val clamped = mb.coerceAtLeast(8)
+        val clamped = mb.coerceIn(8, maxCacheMb)
         if (clamped == memCacheMbCurrent) return
         synchronized(scope) {
             memCache.evictAll()
             memCache = newMemCache(clamped)
             memCacheMbCurrent = clamped
+        }
+    }
+
+    /**
+     * Gives memory back when the system asks for it. Bitmaps must not sit in memory while the app is not
+     * visible (background / cached), so everything is dropped as soon as the UI is hidden; they are
+     * reloaded from the disk cache the next time the sky is shown. Under pressure in the foreground the
+     * cache is emptied too (the visible tiles come back from disk in a moment).
+     */
+    fun trimMemory(level: Int) {
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN ||
+            level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW
+        ) {
+            memCache.evictAll()
         }
     }
 

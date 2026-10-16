@@ -75,6 +75,14 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
     val downloader = com.kroryan.astrovia.data.hips.HiPSDownloader(app)
     val catalogDownloader = com.kroryan.astrovia.data.vizier.CatalogDownloader(app)
 
+    // Releases the tile bitmaps when the app is hidden or the system is short of memory.
+    private val memoryCallbacks = object : android.content.ComponentCallbacks2 {
+        override fun onTrimMemory(level: Int) { tileRepo.trimMemory(level) }
+        override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {}
+        @Deprecated("Superseded by onTrimMemory")
+        override fun onLowMemory() { tileRepo.trimMemory(android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE) }
+    }
+
     private val _state = MutableStateFlow(SkyUiState())
     val state: StateFlow<SkyUiState> = _state.asStateFlow()
 
@@ -87,6 +95,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
         tileRepo.onTilesChanged = {
             _state.update { it.copy(tileVersion = it.tileVersion + 1, downloadingTiles = tileRepo.activeDownloads) }
         }
+        app.registerComponentCallbacks(memoryCallbacks)
         _state.update { it.copy(settings = settings) }
         loadSurveyProperties(_state.value.survey)
         fetchSurveys()
@@ -654,6 +663,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
 
     override fun onCleared() {
         // Cancels ongoing fetches and frees cached bitmaps.
+        app.unregisterComponentCallbacks(memoryCallbacks)
         tileRepo.shutdown()
         super.onCleared()
     }

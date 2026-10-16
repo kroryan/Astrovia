@@ -23,7 +23,7 @@ android {
         applicationId = "com.kroryan.astrovia"
         minSdk = 24
         targetSdk = 36
-        versionCode = 7
+        versionCode = 8
         versionName = "0.6.2"
         vectorDrawables { useSupportLibrary = true }
     }
@@ -47,6 +47,8 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Native debug symbols go into the bundle: Play Console symbolicates native crashes and ANRs.
+            ndk { debugSymbolLevel = "SYMBOL_TABLE" }
         }
         debug {
             enableUnitTestCoverage = true
