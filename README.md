@@ -1,26 +1,59 @@
-# Aladin Desktop / Android
+# Astrovia
 
-**The Desktop / Android application of the CDS Aladin Sky Atlas project**  
+**Open-source sky atlas for Android, Linux and Windows.**
 
-<img src="src/Logo.png" alt="Aladin logo" width="220">
+<img src="Astrovia/store/icon-512.png" alt="Astrovia" width="160">
 
-Aladin is an interactive sky atlas allowing the user to visualize digitized astronomical images or full surveys, superimpose entries from astronomical catalogues or databases, and interactively access related data and information from the Simbad database, the VizieR service and other archives for all known astronomical objects in the field. 
+Astrovia lets you explore the sky with HiPS surveys, overlay Simbad and VizieR catalogues, and work with
+FITS images and MOC coverage, in a modern dark interface. Free, no ads, no tracking.
 
-The Aladin sky atlas is developed and maintained at [CDS, Strasbourg astronomical data center](https://cds.unistra.fr/). It is available in two modes:
-- **Aladin Desktop** , a regular Desktop application (this distribution)
-- **Aladin Lite** a Web application (also available on [Github/cds-astro/aladin-lite](https://github.com/cds-astro/aladin-lite))
+> **Astrovia is an independent community project based on the [Aladin Sky Atlas](https://aladin.cds.unistra.fr/)**
+> developed by the Centre de Données astronomiques de Strasbourg (CDS). It is **not** affiliated with,
+> endorsed by or sponsored by the CDS or the Aladin project. "Aladin", "CDS", "Simbad" and "VizieR" belong
+> to their respective owners and are only mentioned to credit the original work and data.
+> This adaptation was created with the help of artificial intelligence tools and may contain mistakes.
 
-See [A&A 143, p33-40 (2000)](https://ui.adsabs.harvard.edu/abs/2000A%26AS..143...33B/abstract) for more details about Aladin Sky Atlas project.
+## Editions
 
+| Edition | Where | Notes |
+|---|---|---|
+| **Desktop** (Linux, Windows) | this repository (`src/`) | Java/Swing, based on Aladin Desktop. See [DESKTOP.md](DESKTOP.md) |
+| **Android** | [`Astrovia/`](Astrovia/README.md) | Native Kotlin / Jetpack Compose app |
 
-Documentation and manuals available on the [CDS Aladin Sky Atlas site](https://aladin.cds.unistra.fr/).
+## Install (desktop)
 
-# Distribution
+- **Debian/Ubuntu:** `sudo apt install ./astrovia_<version>_all.deb`
+- **Windows:** run `Astrovia-<version>-windows-setup.exe` (includes its own Java runtime), or use the portable zip
+- **Any OS:** `java -jar Astrovia.jar` (Java 8+)
 
-Aladin Desktop is a CDS development, available on Github, but **without free external contribution**. For any suggestions of extensions or bug reports, please contact the CDS hotline cds-question at astro.unistra.fr.
+Binaries are published on the [Releases](https://github.com/kroryan/Astrovia/releases) page.
+User data lives in `~/.astrovia`.
 
-For classic software installation, please see the [official Aladin Desktop distribution](https://aladin.cds.unistra.fr/java/nph-aladin.pl?frame=downloading) which provides ready to use packages according to your configuration.
+## Build
 
-# Compilation
+```
+./package-desktop.sh      # Linux .deb, Windows installer/zip, MSIX, jar  -> release/desktop/
+./build-desktop.sh        # only Astrovia.jar
+```
 
-Use the `build.xml` ant file to generate the jar file . 
+Details, Microsoft Store and apt repository instructions: [DESKTOP.md](DESKTOP.md).
+Installer exit codes: [docs/installer-return-codes.md](docs/installer-return-codes.md).
+The Android build is described in [Astrovia/README.md](Astrovia/README.md).
+
+## Licence and attribution
+
+Astrovia is distributed under the **GNU General Public License v3** ([COPYING](COPYING)), the same licence as
+the original software. Copyright of the original Aladin code: © Université de Strasbourg/CNRS (CDS).
+Astrovia modifications: kroryan. The program comes with ABSOLUTELY NO WARRANTY.
+See [NOTICE.md](NOTICE.md) for modifications and third-party components.
+
+## Data and privacy
+
+Astrovia connects to public astronomical services (HiPS servers, Simbad and VizieR at CDS); coordinates and
+names you query are sent to those servers. Astrovia itself collects nothing. See
+[Astrovia/PRIVACY.md](Astrovia/PRIVACY.md).
+
+## Contributing
+
+Bug reports and pull requests are welcome on [GitHub](https://github.com/kroryan/Astrovia/issues).
+For problems with the original Aladin, contact the CDS directly.

@@ -26,7 +26,7 @@ cp build/desktop/Astrovia.jar "$REL/Astrovia.jar"
 echo "== linux portable"
 P=build/pkg/astrovia-$VER
 rm -rf build/pkg; mkdir -p "$P"
-cp "$REL/Astrovia.jar" desktop/astrovia.sh desktop/astrovia.desktop COPYING "$P/"
+cp "$REL/Astrovia.jar" desktop/astrovia.sh desktop/astrovia.desktop COPYING NOTICE.md "$P/"
 cp desktop/icons/astrovia-256.png "$P/astrovia.png"
 tar -C build/pkg -czf "$REL/astrovia-$VER-linux.tar.gz" "astrovia-$VER"
 
@@ -41,6 +41,7 @@ for s in 16 24 32 48 64 128 256 512; do
 done
 install -m644 desktop/icons/astrovia-48.png $D/usr/share/pixmaps/astrovia.png
 gzip -9n -c COPYING > $D/usr/share/doc/astrovia/COPYING.gz
+install -m644 NOTICE.md $D/usr/share/doc/astrovia/NOTICE.md
 cat > $D/usr/share/doc/astrovia/copyright <<'CR'
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Astrovia
@@ -118,6 +119,7 @@ sed -e "s|@OUT@|$ABS/build/win/Astrovia/Astrovia.exe|" -e "s|@JAR@|$ABS/$REL/Ast
 java -jar "$CACHE/launch4j/launch4j.jar" build/win/launch4j.xml >/dev/null
 cp -r "$CACHE/jre-win" "$W/jre"
 cp COPYING "$W/COPYING.txt"
+cp NOTICE.md "$W/NOTICE.txt"
 cp desktop/icons/astrovia.ico "$W/"
 ( cd build/win && zip -qr "$ABS/$REL/Astrovia-$VER-windows-x64.zip" Astrovia )
 echo "== windows installer (NSIS)"
