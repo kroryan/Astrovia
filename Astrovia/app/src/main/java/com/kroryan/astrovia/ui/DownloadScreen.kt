@@ -1,6 +1,11 @@
 @file:Suppress("EmptyCatchBlock", "TooGenericExceptionThrown", "VariableNaming", "ImplicitDefaultLocale", "WildcardImport", "MagicNumber", "MaxLineLength", "ComplexCondition", "CyclomaticComplexMethod", "LongMethod", "ReturnCount", "LongParameterList", "SwallowedException", "TooGenericExceptionCaught", "NestedBlockDepth", "FunctionNaming", "LoopWithTooManyJumpStatements", "TooManyFunctions")
 package com.kroryan.astrovia.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,6 +15,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kroryan.astrovia.data.hips.HiPSDownloader
@@ -19,6 +26,34 @@ import com.kroryan.astrovia.data.hips.HiPSSurvey
 import com.kroryan.astrovia.data.vizier.CatalogDownloader
 import com.kroryan.astrovia.model.SkyPosition
 import com.kroryan.astrovia.data.vizier.VizieRService
+
+/**
+ * Returns a function that runs a download-starting action, first asking (once) for the notification
+ * permission on Android 13+. The downloads keep running in the background either way; the permission
+ * only decides whether their progress notification is visible. The action runs after the answer.
+ */
+@Composable
+fun rememberStartWithNotifications(): (() -> Unit) -> Unit {
+    val ctx = LocalContext.current
+    var asked by remember { mutableStateOf(false) }
+    var pending by remember { mutableStateOf<(() -> Unit)?>(null) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        val action = pending
+        pending = null
+        action?.invoke()
+    }
+    return { action ->
+        val needs = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !asked &&
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        if (needs) {
+            asked = true
+            pending = action
+            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            action()
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,6 +122,7 @@ fun HiPSTabContent(
     var maxThreads by remember { mutableFloatStateOf(8f) }
     var fastCheck by remember { mutableStateOf(true) }
     var customPath by remember { mutableStateOf("") }
+    val startWithNotifications = rememberStartWithNotifications()
 
     if (state.isRunning) {
         Text("Downloading: ${state.datasetName}", style = MaterialTheme.typography.titleMedium)
@@ -184,7 +220,7 @@ fun HiPSTabContent(
             Button(
                 onClick = { 
                     if (customPath.isNotBlank()) onAddCustomDir(customPath)
-                    downloader.startDownload(currentSurvey, selectedOrder.toInt(), fastCheck, maxThreads.toInt(), customPath.ifBlank { null }, region)
+                    startWithNotifications { downloader.startDownload(currentSurvey, selectedOrder.toInt(), fastCheck, maxThreads.toInt(), customPath.ifBlank { null }, region) }
                 },
                 enabled = !tooBig,
                 modifier = Modifier.weight(1f)
@@ -210,6 +246,7 @@ fun CatalogTabContent(
     
     val catalogs = remember { VizieRService().catalogs }
     var selectedCatalogIndex by remember { mutableIntStateOf(0) }
+    val startWithNotifications = rememberStartWithNotifications()
 
     if (state.isRunning) {
         Text("Downloading: ${state.catalogName}", style = MaterialTheme.typography.titleMedium)
@@ -288,7 +325,7 @@ fun CatalogTabContent(
         
         Spacer(modifier = Modifier.height(16.dp))
         Button(
-            onClick = {
+            onClick = { startWithNotifications {
                 val r = raText.toDoubleOrNull() ?: 0.0
                 val d = decText.toDoubleOrNull() ?: 0.0
                 val rad = radiusText.toDoubleOrNull() ?: 0.0
@@ -303,7 +340,7 @@ fun CatalogTabContent(
                 } else {
                     catalogDownloader.startVizieRDownload(cat.id, r, d, rad, allSky)
                 }
-            },
+            } },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Start Catalog Download")

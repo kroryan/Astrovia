@@ -2,6 +2,8 @@
 package com.kroryan.astrovia.data.vizier
 
 import android.content.Context
+import com.kroryan.astrovia.data.DownloadForeground
+import com.kroryan.astrovia.data.DownloadNotice
 import com.kroryan.astrovia.data.hips.HiPSDownloader
 import com.kroryan.astrovia.data.net.HttpClient
 import kotlinx.coroutines.*
@@ -33,6 +35,13 @@ class CatalogDownloader(private val context: Context) {
     @Volatile private var activeCall: okhttp3.Call? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
+    init {
+        DownloadForeground.registerStop { stopDownload() }
+    }
+
+    private fun beginForeground(name: String) =
+        DownloadForeground.begin(context, FG_ID, DownloadNotice.catalogLine(name, 0L))
+
     fun startVizieRDownload(catalogId: String, raDeg: Double, decDeg: Double, radiusArcmin: Double, allSky: Boolean = false) {
         if (downloadJob?.isActive == true) return
 
@@ -42,6 +51,7 @@ class CatalogDownloader(private val context: Context) {
         val suffix = if (allSky) "allsky" else "${raDeg}_${decDeg}_${radiusArcmin}"
         val outputFile = File(baseDir, "${safeCatalogId}_$suffix.xml")
 
+        beginForeground(catalogId)
         downloadJob = scope.launch {
             _state.value = CatalogDownloadState(isRunning = true, catalogName = catalogId)
             try {
@@ -75,6 +85,7 @@ class CatalogDownloader(private val context: Context) {
                 _state.update { it.copy(isRunning = false, errorMessage = e.message) }
             }
         }
+        downloadJob?.invokeOnCompletion { DownloadForeground.end(FG_ID) }
     }
 
     fun startSimbadDownload(raDeg: Double, decDeg: Double, radiusArcmin: Double) {
@@ -84,6 +95,7 @@ class CatalogDownloader(private val context: Context) {
         baseDir.mkdirs()
         val outputFile = File(baseDir, "Simbad_${raDeg}_${decDeg}_${radiusArcmin}.xml")
 
+        beginForeground("Simbad")
         downloadJob = scope.launch {
             _state.value = CatalogDownloadState(isRunning = true, catalogName = "Simbad")
             try {
@@ -110,6 +122,7 @@ class CatalogDownloader(private val context: Context) {
                 _state.update { it.copy(isRunning = false, errorMessage = e.message) }
             }
         }
+        downloadJob?.invokeOnCompletion { DownloadForeground.end(FG_ID) }
     }
 
     private fun downloadFile(url: String, outputFile: File) {
@@ -137,6 +150,7 @@ class CatalogDownloader(private val context: Context) {
                         if (now - lastPublish > 250) {
                             lastPublish = now
                             _state.update { it.copy(bytesDownloaded = total) }
+                            DownloadForeground.progress(FG_ID, DownloadNotice.catalogLine(_state.value.catalogName, total))
                         }
                         // A full catalogue can be gigabytes: stop before the phone runs out of space.
                         if (total - lastSpaceCheck > 8L * 1024 * 1024) {
@@ -159,6 +173,7 @@ class CatalogDownloader(private val context: Context) {
     }
 
     companion object {
+        private const val FG_ID = "catalog"
         private const val MIN_FREE_BYTES = 50L * 1024 * 1024
         private val OVERFLOW = Regex("name=\"QUERY_STATUS\"\\s+value=\"OVERFLOW\"")
         private val VOTABLE_ERROR = Regex("name=\"Error\"\\s+value=\"([^\"]*)\"")

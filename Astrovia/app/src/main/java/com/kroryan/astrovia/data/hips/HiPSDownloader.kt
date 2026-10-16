@@ -2,6 +2,8 @@ package com.kroryan.astrovia.data.hips
 
 import android.content.Context
 import android.os.StatFs
+import com.kroryan.astrovia.data.DownloadForeground
+import com.kroryan.astrovia.data.DownloadNotice
 import com.kroryan.astrovia.data.net.HttpClient
 import com.kroryan.astrovia.sky.Healpix
 import com.kroryan.astrovia.sky.SkyFrame
@@ -63,6 +65,11 @@ class HiPSDownloader(private val context: Context) {
     private val calls = ConcurrentHashMap.newKeySet<Call>()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
+    init {
+        // The notification's "Stop" button cancels every download this object runs.
+        DownloadForeground.registerStop { for (id in jobs.keys.toList()) stopDownload(id) }
+    }
+
     fun getState(surveyId: String): StateFlow<DownloadState> =
         _states.getOrPut(surveyId) { MutableStateFlow(DownloadState()) }.asStateFlow()
 
@@ -83,7 +90,11 @@ class HiPSDownloader(private val context: Context) {
         val baseDir = if (customPath.isNullOrBlank()) defaultDir(survey) else File(customPath)
         val state = _states.getOrPut(survey.id) { MutableStateFlow(DownloadState()) }
 
-        jobs[survey.id] = scope.launch {
+        // Foreground service: the download survives the app going to the background.
+        val fgId = "hips:${survey.id}"
+        DownloadForeground.begin(context, fgId, DownloadNotice.hipsLine(survey.title, 0, 0L))
+
+        val launched = scope.launch {
             state.value = DownloadState(isRunning = true, datasetName = survey.title)
             fun fail(msg: String) {
                 state.value = DownloadState(datasetName = survey.title, message = msg)
@@ -142,6 +153,7 @@ class HiPSDownloader(private val context: Context) {
             for (i in 0L..11L) enqueue(0, i)
 
             fun publish(running: Boolean, message: String? = null) {
+                if (running) DownloadForeground.progress(fgId, DownloadNotice.hipsLine(survey.title, downloaded.get() + skipped.get(), bytes.get()))
                 state.value = DownloadState(
                     isRunning = running, datasetName = survey.title, tilesScanned = scanned.get(),
                     tilesDownloaded = downloaded.get() + skipped.get(), bytesDownloaded = bytes.get(),
@@ -211,6 +223,8 @@ class HiPSDownloader(private val context: Context) {
             }
             publish(false, if (isActive) summary else "Stopped. $summary")
         }
+        jobs[survey.id] = launched
+        launched.invokeOnCompletion { DownloadForeground.end(fgId) }
     }
 
     fun stopDownload(surveyId: String) {

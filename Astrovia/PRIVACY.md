@@ -14,7 +14,10 @@ internet connection — your IP address is visible to those servers. Their own p
 **Data stored on your device:** settings, a tile cache and any HiPS surveys / catalogs you choose to
 download. You can clear the cache from Settings or by uninstalling the app.
 
-**Permissions:** `INTERNET` and `ACCESS_NETWORK_STATE` only.
+**Permissions:** `INTERNET`, `ACCESS_NETWORK_STATE`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`
+and `POST_NOTIFICATIONS`. The last three exist only so that a download you start (HiPS tiles or a
+catalogue) keeps running while the app is in the background and shows its progress in a notification
+with a Stop button. They are not used for advertising, tracking or any message from us.
 
 **Children:** the app does not knowingly collect any data from anyone, including children.
 
