@@ -47,7 +47,7 @@ public class DirectorySort {
    public static final String ADDS        = "Adds";
    
    public static final String[] BRANCHES   = { 
-         "Image", "Data base", "Catalog", "Cube", "Solar system", "Ancillary", "Outreach", "Deprecated", OTHERS, PROBLEMATIC };
+         "HiPS offline", "Catalogs offline", "Image", "Data base", "Catalog", "Cube", "Solar system", "Ancillary", "Outreach", "Deprecated", OTHERS, PROBLEMATIC };
    
    public static final String[] PROTOCOLS = { "HiPS", "SIA2 (image|cube)", "SIA (image)",
          "SSA (spectrum)","CS (table)","TAP (table)"};
@@ -407,6 +407,14 @@ public class DirectorySort {
     * @return false si aucune clé de tri n'a été générée
     */
    protected boolean setInternalSortKey(String id, MyProperties prop) {
+      // Astrovia: offline collections sit directly under their own branch, with no sub-grouping
+      if( prop.getProperty(OfflineCollections.KEY)!=null ) {
+         // the two offline branches come first (before Image), each one alphabetical
+         String t = prop.getFirst("obs_title");
+         prop.replaceValue("internal_sort_key", ("hips".equals(prop.getProperty(OfflineCollections.KEY)) ? "/00/" : "/01/") + (t==null ? id : t.toLowerCase()));
+         prop.remove("internal_category");
+         return true;
+      }
       int [] mode;
       StringBuilder k1 = new StringBuilder( );
       String branch = prop.getFirst("client_category");

@@ -16,6 +16,7 @@ public class CatalogDownloaderDialog extends JDialog implements CatalogDownloade
     private JButton startBtn;
     private JButton cancelBtn;
     private JLabel progressLabel;
+    private JCheckBox offlineCb;
     
     private boolean isDownloading = false;
 
@@ -83,7 +84,7 @@ public class CatalogDownloaderDialog extends JDialog implements CatalogDownloade
         gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 1;
         inputPanel.add(new JLabel("Output File:"), gbc);
         gbc.gridx = 1; gbc.gridwidth = 1;
-        fileField = new JTextField(System.getProperty("user.home") + File.separator + "catalog.vot");
+        fileField = new JTextField(System.getProperty("user.home") + File.separator + "Astrovia" + File.separator + "Catalogs" + File.separator + "catalog.vot");
         inputPanel.add(fileField, gbc);
         gbc.gridx = 2;
         JButton browseBtn = new JButton("Browse...");
@@ -94,6 +95,14 @@ public class CatalogDownloaderDialog extends JDialog implements CatalogDownloade
             }
         });
         inputPanel.add(browseBtn, gbc);
+
+        // Keep it in the collections list
+        gbc.gridx = 0; gbc.gridy = 5; gbc.gridwidth = 1;
+        inputPanel.add(new JLabel("Library:"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 2;
+        offlineCb = new JCheckBox("Add to \"Catalogs offline\" when finished (always available in the collections list)", true);
+        offlineCb.setEnabled(aladin != null);
+        inputPanel.add(offlineCb, gbc);
         
         add(inputPanel, BorderLayout.CENTER);
         
@@ -145,6 +154,14 @@ public class CatalogDownloaderDialog extends JDialog implements CatalogDownloade
             radius = -1; // Flag for all sky
         }
         
+        // Name under which it will appear in "Catalogs offline", and a file name that says what it is
+        offlineLabel = source + (source.equals("VizieR") ? " " + catalog : "")
+                + (radius < 0 ? " all-sky" : String.format(java.util.Locale.US, " (%.3f %+.3f r=%.3f)", ra, dec, radius));
+        if (file.getName().equals("catalog.vot")) {
+            String base = offlineLabel.replaceAll("[^A-Za-z0-9._-]+", "_");
+            file = new File(file.getParentFile(), base + ".vot");
+            fileField.setText(file.getAbsolutePath());
+        }
         isDownloading = true;
         startBtn.setEnabled(false);
         cancelBtn.setEnabled(true);
@@ -167,6 +184,7 @@ public class CatalogDownloaderDialog extends JDialog implements CatalogDownloade
     }
 
     private String warning = null;
+    private String offlineLabel = null;
 
     @Override
     public void onWarning(String message) { warning = message; }
@@ -180,9 +198,13 @@ public class CatalogDownloaderDialog extends JDialog implements CatalogDownloade
                 warning != null ? "Incomplete table" : "Success",
                 warning != null ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
         warning = null;
-        // A downloaded catalogue used to be saved with no way to use it: offer to show it on the sky.
+        // A downloaded catalogue used to be saved with no way to use it: keep it in the list and offer to show it.
         if (aladin != null) {
             File saved = new File(fileField.getText());
+            if (saved.isFile() && offlineCb.isSelected() && OfflineCollections.addCatalog(aladin, saved, offlineLabel)) {
+                JOptionPane.showMessageDialog(this, "Added to \"Catalogs offline\": it is now in the collections list.",
+                        "Catalogs offline", JOptionPane.INFORMATION_MESSAGE);
+            }
             if (saved.isFile() && JOptionPane.showConfirmDialog(this, "Show this catalogue on the sky now?\n" + saved.getName(),
                     "Show catalogue", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 aladin.execAsyncCommand("load \"" + saved.getAbsolutePath().replace("\\", "/") + "\"");

@@ -21,6 +21,7 @@ public class HiPSDownloaderDialog extends JDialog implements HiPSDownloader.HiPS
 
     private final Aladin aladin;
     private JCheckBox areaCb;
+    private JCheckBox offlineCb;
     private JLabel estimateLabel;
 
     public HiPSDownloaderDialog(Window owner) { this(owner, null); }
@@ -96,6 +97,12 @@ public class HiPSDownloaderDialog extends JDialog implements HiPSDownloader.HiPS
         gbc.gridx = 1; gbc.gridy = 6; gbc.gridwidth = 2;
         estimateLabel = new JLabel(" ");
         inputPanel.add(estimateLabel, gbc);
+        gbc.gridx = 0; gbc.gridy = 7; gbc.gridwidth = 1;
+        inputPanel.add(new JLabel("Library:"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 2;
+        offlineCb = new JCheckBox("Add to \"HiPS offline\" when finished (always available in the collections list)", true);
+        offlineCb.setEnabled(aladin != null);
+        inputPanel.add(offlineCb, gbc);
         javax.swing.event.ChangeListener est = e -> updateEstimate();
         orderSpinner.addChangeListener(est);
         areaCb.addChangeListener(est);
@@ -119,7 +126,9 @@ public class HiPSDownloaderDialog extends JDialog implements HiPSDownloader.HiPS
         
         addBtn.addActionListener(e -> {
             LocalHiPSManager.addLocalHiPS((String) urlCombo.getSelectedItem(), dirField.getText());
-            JOptionPane.showMessageDialog(this, "Folder added to local catalog!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            int n = aladin == null ? 0 : OfflineCollections.addHipsFolder(aladin, new File(dirField.getText()));
+            JOptionPane.showMessageDialog(this, n > 0 ? n + " HiPS added to \"HiPS offline\"" : "No HiPS (properties file) found in that folder",
+                    n > 0 ? "Success" : "Nothing added", n > 0 ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.WARNING_MESSAGE);
             dispose();
         });
         startBtn.addActionListener(e -> startDownload());
@@ -221,7 +230,12 @@ public class HiPSDownloaderDialog extends JDialog implements HiPSDownloader.HiPS
         cancelBtn.setEnabled(false);
         progressLabel.setText(summary != null ? summary : progressLabel.getText() + " - Completed!");
         LocalHiPSManager.addLocalHiPS((String) urlCombo.getSelectedItem(), dirField.getText());
-        JOptionPane.showMessageDialog(this, summary != null ? summary : "Download completed!",
+        String extra = "";
+        if (aladin != null && offlineCb.isSelected()) {
+            int n = OfflineCollections.addHipsFolder(aladin, new File(dirField.getText()));
+            if (n > 0) extra = "\nAdded to \"HiPS offline\": it is now in the collections list.";
+        }
+        JOptionPane.showMessageDialog(this, (summary != null ? summary : "Download completed!") + extra,
                 incomplete ? "Finished with errors" : "Success",
                 incomplete ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
     }

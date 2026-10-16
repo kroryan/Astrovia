@@ -868,6 +868,9 @@ public class PlanBG extends PlanImage {
          moc = new SMoc();
          moc.read(mis);
          Aladin.trace(3,"Loading "+id+" "+mocName+" from net");
+      } catch( java.io.FileNotFoundException e ) {
+         // a local HiPS folder without Moc.fits is fine: the whole sky is then assumed covered
+         Aladin.trace(3,"No "+mocName+" for "+id+" => no coverage map");
       } catch( Exception e ) { e.printStackTrace(); }
       finally { if( mis!=null) mis.close(); }
 
@@ -1238,7 +1241,8 @@ public class PlanBG extends PlanImage {
                else if( hasMoc() ) loadInternalMoc();
                
                // Déplacement a posteriori car complètement hors champ du HiPS
-               if( hasMoc() && co!=null ) {
+               // moc can still be null here (offline HiPS folders may have no Moc.fits): nothing to check then
+               if( hasMoc() && moc!=null && co!=null ) {
                   Healpix hpx = new Healpix();
                   if( !moc.contains(hpx, co.al, co.del) ) {
                      co.al = Double.parseDouble( prop.getFirst("hips_initial_ra") );

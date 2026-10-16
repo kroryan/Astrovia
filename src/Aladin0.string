@@ -3377,15 +3377,15 @@ DTLABEL	Available data
 DTLABEL.fr	Données disponibles
 DTLABELTIP	Tree of available data set collections from CDS and other IVOA compliant providers.\nBrowse, filter, select, and load the collections you want to display...\nThe blue folders contain collections unsorted/unsupervised by CDS, the red folders contain problematic collections (prototype or unmaintained service, or based on a rarely working server, etc).
 DTLABELTIP.fr	Arbre des collections de données fournies par le CDS et autres fournisseurs compatibles IVOA.\n Visualisez, filtrez, sélectionnez et enfin charger les collections que vous voulez afficher.\nLes répertoires en bleu contiennent des collections non organisées/triées par le CDS, ceux en rouge contiennent des collections dont l'accès ou le contenu est problématique (service prototype ou non maintenu, ou dont le serveur n'est que rarement accessible, etc)
-DTSELECT	select
+DTSELECT	Search
 DTSELECT.fr	sélect.
-DTSELECTTIP	Filter by free keywords (AND logic, blank separated, quote sub-expr supported) or by any advanced filter expression (ex: nb_rows&lt;1000).
+DTSELECTTIP	Type keywords to find collections (e.g. dss gaia galex): all the words must match. Advanced filter expressions also work (e.g. nb_rows&lt;1000).
 DTSELECTTIP.fr	Filtrage par mot clés (logique ET, séparateur ESPACE, sous-expression quotées) ou par tout autre expression de filtrage avancée (ex: nb_rows&lt;1000).
-DTCOMBOTIP	List of predefined filters. Use '+' button to edit it, or create a new one
+DTCOMBOTIP	Predefined filters (a wavelength range, only HiPS...). Use the '+' button to edit the current filter or create your own.
 DTCOMBOTIP.fr	Liste des filtres prédéfinis. Utiliser le bouton '+' afin de les éditer, ou pour créer un nouveau filtre.
 DTPLUSTIP	Edit the current filter or create a new one
 DTPLUSTIP.fr	Editer le filtre courant, ou créer un nouveau filtre
-DTFROM	from
+DTFROM	Filter
 DTFROM.fr	dans
 DTYRKW	Your keyword ?
 DTYRKW.fr	Votre mot clé ?
@@ -3793,3 +3793,8 @@ BROWSING_TITLE.fr	Sélection automatique des sources
 BROWSING_HELP	Select automatically the resulting sources, zoom on the first one,\nand if required, load a default background image survey.
 BROWSING_HELP.fr	Sélectionne automatiquement les sources retournées, zoome sur la première d'entre elles,\n et si nécessaire, charge un relevé image en arrière fond.
 
+
+OFFSRC	Source
+OFFSRCTIP	Show all the collections, only the online ones (CDS servers) or only the offline ones (kept on this computer)
+OFFPLUS	Offline collections...
+OFFPLUSTIP	Add HiPS folders or catalogue files that are on this computer, download new ones, or manage the offline library

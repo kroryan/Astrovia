@@ -1106,7 +1106,8 @@ public class TreeObjDir extends TreeObj implements Propable {
    
    /** Chargement par défaut à effectuer (suite à un double-clic sur le noeud de l'arbre) */
    protected void load() {
-      if( hasGlobalAccess() ) loadGlobalAccess();
+      if( isOfflineCatalog() ) loadOfflineCatalog();
+      else if( hasGlobalAccess() ) loadGlobalAccess();
       else if( hasAllAccess() ) loadAll();
       else if( hasSIA() ) loadSIA();
       else if( hasSSA() ) loadSSA();
@@ -1371,6 +1372,14 @@ public class TreeObjDir extends TreeObj implements Propable {
 
    /** Génération et exécution de la requête script correspondant au protocole HiPS */
    protected void loadHips() {
+      // Astrovia: an offline HiPS (or an online one that has an offline copy, with "prefer offline" on)
+      // is opened through the engine's native local loader: `load <folder>`.
+      String off = isOfflineHips() ? prop.getProperty(OfflineCollections.KEY_PATH)
+                                   : OfflineCollections.redirectPath(internalId!=null?internalId:label);
+      if( off!=null && (new java.io.File(off)).isDirectory() ) {
+         exec( "load "+Tok.quote(off.replace('\\','/')) );
+         return;
+      }
       String trg=null;
       
       // Si cette ressource n'est pas hors champ, on prend le centre de la vue courante
@@ -1401,6 +1410,19 @@ public class TreeObjDir extends TreeObj implements Propable {
       return cmd;
    }
    
+   /** True for a HiPS folder kept on this computer (HiPS offline branch) */
+   protected boolean isOfflineHips() { return prop!=null && "hips".equals(prop.getProperty(OfflineCollections.KEY)); }
+
+   /** True for a catalogue file kept on this computer (Catalogs offline branch) */
+   protected boolean isOfflineCatalog() { return prop!=null && prop.getProperty(OfflineCollections.KEY_FILE)!=null; }
+
+   /** Opens the catalogue file of an offline catalogue collection as a catalogue plane */
+   protected void loadOfflineCatalog() {
+      String f = prop.getProperty(OfflineCollections.KEY_FILE);
+      if( f==null || !(new java.io.File(f)).isFile() ) { aladin.error("The catalogue file is no longer there:\n"+f); return; }
+      exec( "load "+Tok.quote(f.replace('\\','/')) );
+   }
+
    /** Génération et exécution de la requête script correspondant à l'accès aux progéniteurs */
    protected void loadProgenitors() {exec( getProgenitorsCmd() ); }
    protected String getProgenitorsBkm() { return getProgenitorsCmd(); }

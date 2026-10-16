@@ -149,6 +149,11 @@ public class HiPSDownloader {
             if (!targetDir.isDirectory() && !targetDir.mkdirs()) throw new Exception("Cannot create " + targetDir);
             if (!targetDir.canWrite()) throw new Exception("Cannot write to " + targetDir);
             downloadProperties();
+            patchLocalProperties(new File(targetDir, "properties"));
+            // Coverage map and the all-sky preview, when the survey has them: the viewer reads them when it
+            // opens a local HiPS (a missing Moc.fits used to raise an exception in the viewer).
+            fetchOptional("Moc.fits");
+            fetchOptional("Norder3/Allsky." + ext);
 
             long[] est = estimate(maxOrder, region, ext);
             if (est[0] > MAX_TILES) {
@@ -242,6 +247,72 @@ public class HiPSDownloader {
         for (String p : prio) for (String o : offered) if (o.equals(p)) { best = p; break outer; }
         ext = "jpeg".equals(best) ? "jpg" : best;
         return isHips;
+    }
+
+    /**
+     * A partial download (only the area in view) must open ON that area: the survey's own initial position is
+     * usually elsewhere, where there are no tiles, so the view would come up empty. The local copy of the
+     * properties file gets the region centre (in the survey's own frame) and a matching field of view.
+     */
+    private void patchLocalProperties(File propFile) {
+        try {
+            // The local copy only has tiles down to maxOrder: say so, or the viewer asks for finer tiles that do
+            // not exist (the survey's own hips_order, e.g. 9) and shows nothing instead of magnifying the last level.
+            int surveyOrder = -1;
+            try (BufferedReader r = new BufferedReader(new FileReader(propFile))) {
+                String line;
+                while ((line = r.readLine()) != null) {
+                    int i = line.indexOf('=');
+                    if (i > 0 && line.substring(0, i).trim().equals("hips_order")) surveyOrder = Integer.parseInt(line.substring(i + 1).trim());
+                }
+            }
+            boolean cutOrder = surveyOrder > maxOrder;
+            if (!cutOrder && region == null) return;
+            double lon = 0, lat = 0, fov = 0;
+            if (region != null) {
+                double[] v = toVec(region.ra, region.dec);
+                if (galactic) v = icrsToGal(v);
+                lon = Math.toDegrees(Math.atan2(v[1], v[0]));
+                if (lon < 0) lon += 360;
+                lat = Math.toDegrees(Math.asin(Math.max(-1, Math.min(1, v[2]))));
+                fov = Math.max(0.01, Math.min(60, region.radius * 1.6));
+            }
+            StringBuilder out = new StringBuilder();
+            try (BufferedReader r = new BufferedReader(new FileReader(propFile))) {
+                String line;
+                while ((line = r.readLine()) != null) {
+                    int i = line.indexOf('=');
+                    String k = i > 0 ? line.substring(0, i).trim() : "";
+                    if (region != null && (k.equals("hips_initial_ra") || k.equals("hips_initial_dec") || k.equals("hips_initial_fov"))) continue;
+                    if (cutOrder && k.equals("hips_order")) continue;
+                    out.append(line).append('\n');
+                }
+            }
+            if (cutOrder) out.append("hips_order            = ").append(maxOrder).append('\n');
+            if (region != null) out.append(String.format(java.util.Locale.US, "hips_initial_ra       = %.6f\nhips_initial_dec      = %.6f\nhips_initial_fov      = %.5f\n", lon, lat, fov));
+            File part = new File(propFile.getPath() + ".part");
+            try (FileOutputStream fos = new FileOutputStream(part)) { fos.write(out.toString().getBytes("UTF-8")); }
+            if (propFile.exists()) propFile.delete();
+            part.renameTo(propFile);
+        } catch (Exception e) { /* the survey's own initial view is kept */ }
+    }
+
+    /** ICRS -> Galactic (the standard rotation matrix). */
+    private static double[] icrsToGal(double[] i) {
+        return new double[] {
+            -0.0548755604162154 * i[0] - 0.8734370902348850 * i[1] - 0.4838350155487132 * i[2],
+             0.4941094278755837 * i[0] - 0.4448296299600112 * i[1] + 0.7469822444972189 * i[2],
+            -0.8676661490190047 * i[0] - 0.1980763734312015 * i[1] + 0.4559837761750669 * i[2] };
+    }
+
+    /** Best-effort download of a small file of the HiPS (no error if the survey does not have it). */
+    private void fetchOptional(String rel) {
+        try {
+            File dest = new File(targetDir, rel);
+            if (dest.isFile() && dest.length() > 0) return;
+            dest.getParentFile().mkdirs();
+            fetchTile(new URL(baseUrl + rel), dest);
+        } catch (Exception e) { /* optional */ }
     }
 
     private HttpURLConnection open(URL url) throws IOException {

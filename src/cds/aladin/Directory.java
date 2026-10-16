@@ -411,6 +411,7 @@ public class Directory extends JPanel implements Iterable<MocItem>, GrabItFrame 
       panelControl.setBackground(cbg);
       panelControl.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
       panelControl.add(panelFilter, BorderLayout.NORTH);
+      panelControl.add(new OfflineBar(aladin, cbg), BorderLayout.CENTER);   // Astrovia: Source selector + offline collections
       panelControl.add(pControl, BorderLayout.SOUTH);
 
       JPanel panelTree = new JPanel(new BorderLayout(0, 0));
@@ -2156,7 +2157,17 @@ public class Directory extends JPanel implements Iterable<MocItem>, GrabItFrame 
       
 //      for( MocItem mi : this ) populateProp(listReg, mi.prop);
       Iterator<MocItem> it = multiProp.iterator(true);
-      while( it.hasNext() ) populateProp(listReg, (it.next()).prop);
+      int src = OfflineCollections.getSourceMode();
+      while( it.hasNext() ) {
+         MyProperties p = (it.next()).prop;
+         // Source selector of the panel: show everything, only the online collections or only the offline ones
+         if( src != OfflineCollections.ALL ) {
+            boolean off = OfflineCollections.isOffline(p);
+            if( src == OfflineCollections.ONLINE && off ) continue;
+            if( src == OfflineCollections.OFFLINE && !off ) continue;
+         }
+         populateProp(listReg, p);
+      }
       
       Collections.sort(listReg, TreeObj.getComparator());
       return listReg;
@@ -2335,7 +2346,7 @@ public class Directory extends JPanel implements Iterable<MocItem>, GrabItFrame 
       boolean local = prop.getProperty("PROP_ORIGIN") != null;
 
       // Rangement dans la branche "Adds" si chargement local
-      if( local && !category.startsWith(DirectorySort.ADDS+"/") ) {
+      if( local && prop.getProperty(OfflineCollections.KEY)==null && !category.startsWith(DirectorySort.ADDS+"/") ) {
          category = DirectorySort.ADDS+"/" + category;
          prop.replaceValue(Constante.KEY_CLIENT_CATEGORY, category);
       }
@@ -2894,7 +2905,57 @@ public class Directory extends JPanel implements Iterable<MocItem>, GrabItFrame 
          }).start();
       }
 
+      injectOffline();
       this.dirList = populateMultiProp();
+   }
+
+   // ---------------------------------------------------------------- Astrovia: offline collections
+
+   /**
+    * Puts the offline collections (HiPS folders and catalogue files remembered in ~/.astrovia/offline.txt)
+    * into the MultiMoc. Stale offline records that came back from the cache are removed first.
+    */
+   private void injectOffline() {
+      try {
+         for( String id : OfflineCollections.offlineIds(multiProp.iterator(true)) ) multiProp.remove(id);
+         String recs = OfflineCollections.allRecords();
+         if( recs.length() > 0 ) loadMultiProp(new InputStreamReader(OfflineCollections.asStream(recs), "UTF-8"), true, null);
+      } catch( Exception e ) {
+         if( aladin.levelTrace >= 3 ) e.printStackTrace();
+      }
+   }
+
+   /** Adds offline records to the tree right now (a folder or file was just added or downloaded). */
+   protected void addOfflineRecords(String records) {
+      try {
+         addHipsProp(new InputStreamReader(OfflineCollections.asStream(records), "UTF-8"), true, null);
+      } catch( Exception e ) {
+         if( aladin.levelTrace >= 3 ) e.printStackTrace();
+      }
+   }
+
+   /** Removes one offline collection from the tree right now. */
+   protected void removeOfflineRecord(String id) {
+      try {
+         multiProp.remove(id);
+         ArrayList<TreeObjDir> tmp = populateMultiProp();
+         rebuildTree(tmp, false, true, true);
+         dirList = tmp;
+      } catch( Exception e ) {
+         if( aladin.levelTrace >= 3 ) e.printStackTrace();
+      }
+   }
+
+   /** The source selector (All / Online / Offline) changed: rebuild the tree with the matching collections. */
+   protected void applySourceMode(int mode) {
+      OfflineCollections.setSourceMode(mode);
+      try {
+         ArrayList<TreeObjDir> tmp = populateMultiProp();
+         rebuildTree(tmp, false, true, true);
+         dirList = tmp;
+      } catch( Exception e ) {
+         if( aladin.levelTrace >= 3 ) e.printStackTrace();
+      }
    }
    
    /** Ajout de nouvelles collections */
@@ -2984,6 +3045,9 @@ public class Directory extends JPanel implements Iterable<MocItem>, GrabItFrame 
          try {
             int i=0;
             for( MocItem mi : this ) {
+               // Offline collections are ours, not the MocServer's: if they were listed it would answer
+               // "unknown" and ask for their removal, so after every update they vanished from the tree.
+               if( mi.prop != null && mi.prop.getProperty(OfflineCollections.KEY) != null ) continue;
                String s = mi.mocId + "=" + (flagReload ? "0":mi.getPropTimeStamp()) + "\n";
                fo.write(s.toCharArray());
             }
