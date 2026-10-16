@@ -28,3 +28,8 @@ release/
 
 build/
 !lib/*.jar
+
+# Editor swap files and local flatpak build dirs
+*.swp
+build-flatpak/
+.flatpak-builder/

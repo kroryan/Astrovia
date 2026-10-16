@@ -9,7 +9,7 @@
 # Needs: JDK 11+, dpkg-deb, apt-ftparchive, zip, ImageMagick (convert), python3, curl, unzip, tar.
 set -euo pipefail
 cd "$(dirname "$0")"
-VER=${ASTROVIA_VERSION:-0.5.0}
+VER=${ASTROVIA_VERSION:-0.5.1}
 WINVER="$VER.0"
 export ASTROVIA_VERSION=$VER
 REL=release/desktop
@@ -134,5 +134,5 @@ NSISDIR="$ABS/$CACHE/nsis/usr/share/nsis" "$CACHE/nsis/usr/bin/makensis" -V1 \
 python3 -I desktop/make_msix.py "$W" desktop/icons "$REL/Astrovia-$VER-x64.msix" "$WINVER"
 
 echo "== checksums"
-( cd "$REL" && find . -maxdepth 1 -type f -printf '%f\n' | sort | xargs sha256sum > SHA256SUMS.txt )
+( cd "$REL" && rm -f SHA256SUMS.txt && find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -printf '%f\n' | sort | xargs sha256sum > SHA256SUMS.txt )
 ls -la "$REL"

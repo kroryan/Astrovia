@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.kroryan.Astrovia</id>
+  <name>Astrovia</name>
+  <summary>Open-source sky atlas for exploring the universe</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <developer id="io.github.kroryan">
+    <name>kroryan</name>
+  </developer>
+  <description>
+    <p>
+      Astrovia is a free and open-source sky atlas. Browse images of any part of the sky,
+      overlay astronomical catalogues and query SIMBAD and VizieR, all in one fast, dark interface.
+    </p>
+    <ul>
+      <li>Progressive HiPS surveys: DSS, PanSTARRS, SDSS, 2MASS, GALEX, Gaia and thousands more</li>
+      <li>Search objects by name or position, with SIMBAD and VizieR catalogue overlays</li>
+      <li>Open local FITS images, VOTable catalogues and MOC coverage files</li>
+      <li>Multi-view layouts, coordinate grids, contours, pixel tools and more</li>
+      <li>No accounts, no advertising, no analytics and no tracking</li>
+    </ul>
+    <p>
+      Astrovia is an independent community project based on the Aladin Sky Atlas developed by the
+      Centre de Donnees astronomiques de Strasbourg (CDS). It is not affiliated with or endorsed by the CDS.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.kroryan.Astrovia.desktop</launchable>
+  <url type="homepage">https://github.com/kroryan/Astrovia</url>
+  <url type="bugtracker">https://github.com/kroryan/Astrovia/issues</url>
+  <url type="vcs-browser">https://github.com/kroryan/Astrovia</url>
+  <url type="faq">https://github.com/kroryan/Astrovia#readme</url>
+  <categories>
+    <category>Science</category>
+    <category>Astronomy</category>
+  </categories>
+  <keywords>
+    <keyword>astronomy</keyword>
+    <keyword>sky</keyword>
+    <keyword>atlas</keyword>
+    <keyword>HiPS</keyword>
+    <keyword>FITS</keyword>
+    <keyword>SIMBAD</keyword>
+    <keyword>VizieR</keyword>
+  </keywords>
+  <content_rating type="oars-1.1"/>
+  <branding>
+    <color type="primary" scheme_preference="light">#3F6FB0</color>
+    <color type="primary" scheme_preference="dark">#0B1020</color>
+  </branding>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/kroryan/Astrovia/master/docs/screenshots/main.png</image>
+      <caption>Browse HiPS sky surveys</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/kroryan/Astrovia/master/docs/screenshots/downloader.png</image>
+      <caption>Download HiPS surveys for offline use</caption>
+    </screenshot>
+  </screenshots>
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <provides>
+    <binary>astrovia</binary>
+  </provides>
+  <releases>
+    <release version="0.5.1" date="2026-10-16">
+      <description>
+        <ul>
+          <li>Fixed unreadable dialogs and server windows in the dark theme</li>
+          <li>Corrected the wording of the "already loaded" prompt</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.5.0" date="2026-10-15">
+      <description>
+        <p>First Astrovia release for Linux, Windows and Android.</p>
+      </description>
+    </release>
+  </releases>
+</component>

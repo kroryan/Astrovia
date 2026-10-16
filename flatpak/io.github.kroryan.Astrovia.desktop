@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Astrovia
+GenericName=Sky Atlas
+Comment=Open-source sky atlas: HiPS, FITS, MOC, Simbad, VizieR
+Exec=astrovia %F
+Icon=io.github.kroryan.Astrovia
+Terminal=false
+Categories=Science;Astronomy;
+Keywords=astronomy;sky;atlas;hips;fits;simbad;vizier;
+StartupWMClass=cds-astrovia-Astrovia
+MimeType=application/fits;application/x-votable+xml;
