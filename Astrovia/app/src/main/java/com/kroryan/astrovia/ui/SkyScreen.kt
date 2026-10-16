@@ -118,6 +118,11 @@ fun SkyScreen(vm: SkyViewModel) {
     val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
+    // Downloads made since the list was loaded show up as "(offline)" as soon as the menu is opened.
+    LaunchedEffect(drawerState.currentValue) {
+        if (drawerState.currentValue == androidx.compose.material3.DrawerValue.Open) vm.refreshOfflineSurveys()
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -130,7 +135,7 @@ fun SkyScreen(vm: SkyViewModel) {
                 OutlinedTextField(
                     value = surveySearch,
                     onValueChange = { surveySearch = it },
-                    label = { Text("Search collections, e.g. PanSTARRS") },
+                    label = { Text("Search, e.g. PanSTARRS or offline") },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     singleLine = true
                 )

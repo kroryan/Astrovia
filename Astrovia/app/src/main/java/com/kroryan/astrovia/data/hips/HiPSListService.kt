@@ -26,20 +26,11 @@ object HiPSListService {
                 if (seenIds.add(s.id)) list.add(s)
             }
 
-            // Local datasets
-            val seenUrls = mutableSetOf<String>()
-            localDirs.forEach { localDir ->
-                if (localDir.exists() && localDir.isDirectory) {
-                    val candidates = if (File(localDir, "properties").exists()) listOf(localDir)
-                    else localDir.listFiles()?.filter { it.isDirectory && File(it, "properties").length() > 0 } ?: emptyList()
-                    for (dir in candidates) {
-                        val baseUrl = "file://" + dir.absolutePath
-                        if (!seenUrls.add(baseUrl)) continue
-                        val id = dir.name
-                        list.add(HiPSSurvey(id + "_local", id.replace("_", " ") + " (local)", baseUrl, true, "Local dataset"))
-                    }
-                }
-            }
+            // Datasets downloaded on this device go first, labelled "(offline)" so they can be found by
+            // typing "offline" in the search box.
+            val offline = scanLocal(localDirs)
+            offline.forEach { seenIds.add(it.id) }
+            list.addAll(0, offline)
 
             val json = downloadList() ?: cacheFile?.takeIf { it.exists() }?.let { readCache(it) }
             if (json != null) {
@@ -73,11 +64,56 @@ object HiPSListService {
                 }
             }
 
-            // Built-in entries stay on top; the rest are alphabetical.
-            val head = list.take(SurveyRegistry.builtIn.size.coerceAtMost(list.size))
+            // Offline copies, then the built-in entries; the rest are alphabetical.
+            val head = list.take((offline.size + SurveyRegistry.builtIn.size).coerceAtMost(list.size))
             val rest = list.drop(head.size).sortedBy { it.title.lowercase() }
             head + rest
         }
+
+    const val OFFLINE_SUFFIX = " (offline)"
+    const val OFFLINE_DESC = "Offline: downloaded on this device"
+
+    fun isOffline(s: HiPSSurvey) = s.id.endsWith("_local")
+
+    /**
+     * HiPS folders found in [localDirs] (each directory is a HiPS, or contains HiPS folders), as
+     * "<title> (offline)". The title, frame and tile formats come from the folder's `properties`;
+     * the folder name is the fallback.
+     */
+    fun scanLocal(localDirs: List<File>): List<HiPSSurvey> {
+        val out = mutableListOf<HiPSSurvey>()
+        val seen = HashSet<String>()
+        for (localDir in localDirs) {
+            if (!localDir.isDirectory) continue
+            val candidates = if (File(localDir, "properties").length() > 0) listOf(localDir)
+            else localDir.listFiles()?.filter { it.isDirectory && File(it, "properties").length() > 0 } ?: emptyList()
+            for (dir in candidates) {
+                val baseUrl = "file://" + dir.absolutePath
+                if (!seen.add(baseUrl)) continue
+                val p = readProps(File(dir, "properties"))
+                val name = p["obs_title"]?.takeIf { it.isNotBlank() } ?: dir.name.replace("_", " ")
+                out.add(
+                    HiPSSurvey(
+                        id = dir.name + "_local",
+                        title = name + OFFLINE_SUFFIX,
+                        baseUrl = baseUrl,
+                        isColor = (p["dataproduct_subtype"] ?: "").contains("color", true) || name.contains("color", true),
+                        description = OFFLINE_DESC,
+                        frame = p["hips_frame"]?.takeIf { it.isNotBlank() } ?: "equatorial",
+                        formats = p["hips_tile_format"] ?: "",
+                    ),
+                )
+            }
+        }
+        return out.sortedBy { it.title.lowercase() }
+    }
+
+    private fun readProps(f: File): Map<String, String> = try {
+        f.readLines().mapNotNull { l ->
+            val i = l.indexOf('=')
+            if (i <= 0 || l.trimStart().startsWith("#")) null else l.substring(0, i).trim() to l.substring(i + 1).trim()
+        }.toMap()
+    } catch (e: Exception) { emptyMap() }
 
     internal fun upgradeToHttps(url: String): String =
         if (url.startsWith("http://", ignoreCase = true)) "https://" + url.substring(7) else url

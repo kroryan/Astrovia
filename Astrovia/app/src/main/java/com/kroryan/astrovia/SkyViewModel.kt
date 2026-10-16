@@ -92,6 +92,21 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
         fetchSurveys()
     }
 
+    private fun localDirs(): List<java.io.File> =
+        listOf(java.io.File(app.getExternalFilesDir(null), "HiPS_Downloads")) + settings.customHiPSDirs.map { java.io.File(it) }
+
+    /** Rescans the downloaded HiPS (no network): call it after a download so it shows up as "(offline)". */
+    fun refreshOfflineSurveys() {
+        viewModelScope.launch {
+            val offline = withContext(Dispatchers.IO) { com.kroryan.astrovia.data.hips.HiPSListService.scanLocal(localDirs()) }
+            _state.update { st ->
+                val rest = st.availableSurveys.filterNot { com.kroryan.astrovia.data.hips.HiPSListService.isOffline(it) }
+                if (offline.map { it.id } == st.availableSurveys.filter { com.kroryan.astrovia.data.hips.HiPSListService.isOffline(it) }.map { it.id }) st
+                else st.copy(availableSurveys = offline + rest)
+            }
+        }
+    }
+
     fun fetchSurveys() {
         _state.update { it.copy(surveysLoading = true) }
         viewModelScope.launch {

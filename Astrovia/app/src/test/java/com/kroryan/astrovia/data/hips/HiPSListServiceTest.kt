@@ -19,4 +19,20 @@ class HiPSListServiceTest {
         assertEquals("[{\"obs_title\":\"café\"}]", HiPSListService.decode(utf8))
         assertNull(HiPSListService.decode(null))
     }
+
+    @Test
+    fun downloadedHipsAreListedAsOffline() {
+        val root = java.nio.file.Files.createTempDirectory("hips").toFile()
+        val d = java.io.File(root, "CDS_P_DSS2_color").also { it.mkdirs() }
+        java.io.File(d, "properties").writeText("obs_title = DSS colored\nhips_frame = equatorial\nhips_tile_format = jpeg\n")
+        java.io.File(root, "Other_Survey").also { it.mkdirs() }.let { java.io.File(it, "properties").writeText("hips_frame = galactic\n") }
+        java.io.File(root, "empty").mkdirs()
+        val l = HiPSListService.scanLocal(listOf(root))
+        assertEquals(listOf("DSS colored (offline)", "Other Survey (offline)"), l.map { it.title })
+        assertEquals("galactic", l[1].frame)
+        assertEquals("CDS_P_DSS2_color_local", l[0].id)
+        assertEquals(true, l.all { HiPSListService.isOffline(it) && it.description.contains("Offline") })
+        assertEquals(true, l[0].baseUrl.startsWith("file://"))
+        root.deleteRecursively()
+    }
 }

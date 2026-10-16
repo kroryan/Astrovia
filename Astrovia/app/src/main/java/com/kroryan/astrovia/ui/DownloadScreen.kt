@@ -90,8 +90,13 @@ fun DownloadSheet(
             }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
-        
+        Text(
+            "Downloads are saved on this device. Open the menu (top left) and your HiPS appear in the list with \"(offline)\" after the name: type \"offline\" in the search box to find them. Catalogues: use \"Show it on the sky\" when the download ends.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+
         TabRow(selectedTabIndex = selectedTabIndex) {
             Tab(selected = selectedTabIndex == 0, onClick = { selectedTabIndex = 0 }, text = { Text("HiPS Tiles") })
             Tab(selected = selectedTabIndex == 1, onClick = { selectedTabIndex = 1 }, text = { Text("Catalogs") })

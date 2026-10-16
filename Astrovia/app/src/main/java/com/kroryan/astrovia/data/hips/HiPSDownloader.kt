@@ -221,7 +221,8 @@ class HiPSDownloader(private val context: Context) {
                 if (notFound.get() > 0) append(", ${notFound.get()} outside the survey coverage")
                 if (failed.get() > 0) append(", ${failed.get()} FAILED - run it again to fetch the missing ones")
             }
-            publish(false, if (isActive) summary else "Stopped. $summary")
+            val where = "Find it in the menu (top left) as \"${survey.title.removeSuffix(HiPSListService.OFFLINE_SUFFIX)}${HiPSListService.OFFLINE_SUFFIX}\"."
+            publish(false, if (isActive) "$summary. $where" else "Stopped. $summary. $where")
         }
         jobs[survey.id] = launched
         launched.invokeOnCompletion { DownloadForeground.end(fgId) }
