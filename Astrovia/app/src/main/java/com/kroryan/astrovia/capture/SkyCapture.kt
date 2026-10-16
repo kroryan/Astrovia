@@ -24,6 +24,7 @@ import com.kroryan.astrovia.sky.DisplayFilter
 import com.kroryan.astrovia.sky.Healpix
 import com.kroryan.astrovia.sky.Projection
 import com.kroryan.astrovia.sky.SkyRenderer
+import com.kroryan.astrovia.sky.TileMeshPainter
 import com.kroryan.astrovia.sky.VisibleTile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -203,24 +204,8 @@ object SkyCapture {
 
     private fun drawTile(canvas: Canvas, proj: Projection, tile: VisibleTile, bmp: Bitmap, paint: Paint) {
         // A fine mesh (>= 8 cells per side) keeps the shared edges between tiles seamless.
-        val cells = SkyRenderer.placementMesh(proj, tile, bmp.width, bmp.height, minCells = 8) ?: return
-        val m = Matrix()
-        val src = Rect()
-        val dst = RectF()
-        for (c in cells) {
-            val a = c.matrix
-            // compose 4x4 layout [ax ay 0 0 | bx by 0 0 | 0 0 1 0 | ox oy 0 1] -> android 3x3
-            m.setValues(floatArrayOf(a[0], a[4], a[12], a[1], a[5], a[13], 0f, 0f, 1f))
-            // 1 px of bleed on the far sides hides hairline gaps between neighbouring cells.
-            val sw = min(c.srcW + 1, bmp.width - c.srcX)
-            val sh = min(c.srcH + 1, bmp.height - c.srcY)
-            src.set(c.srcX, c.srcY, c.srcX + sw, c.srcY + sh)
-            dst.set(0f, 0f, sw.toFloat(), sh.toFloat())
-            canvas.save()
-            canvas.concat(m)
-            canvas.drawBitmap(bmp, src, dst, paint)
-            canvas.restore()
-        }
+        val mesh = SkyRenderer.placementTriangles(proj, tile, bmp.width, bmp.height, minCells = 8) ?: return
+        TileMeshPainter.draw(canvas, bmp, mesh, paint)
     }
 
     private suspend fun paintFromAncestor(

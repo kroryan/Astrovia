@@ -72,7 +72,8 @@ object CoordGrid {
         var prevX = 0f
         var prevY = 0f
         var hasPrev = false
-        val maxJump = max(w, h) * 1.5f
+        // The oval's seam (the far side of the sky) puts neighbouring samples on opposite edges.
+        val maxJump = if (proj.kind == ProjectionKind.HAMMER) w * 0.3f else max(w, h) * 1.5f
 
         fun addPoint(p: FloatArray?) {
             if (p == null) {

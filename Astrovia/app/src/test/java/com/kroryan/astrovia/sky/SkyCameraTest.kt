@@ -206,16 +206,16 @@ class SkyCameraTest {
     }
 
     @Test
-    fun fovLimitKeepsTheScreenCornersOnTheSphere() {
-        val portrait = SkyCamera.maxFovFor(1080f, 2400f)
-        val landscape = SkyCamera.maxFovFor(2400f, 1080f)
-        assertEquals(SkyCamera.MAX_FOV, portrait, 1e-9)
-        assertTrue("landscape limit $landscape", landscape in 50.0..90.0)
+fun fovLimitFitsTheWholeOvalAndTheWholeDisc() {
         for ((ww, hh) in listOf(2400f to 1080f, 2560f to 1600f, 1080f to 2400f)) {
-            val cam = SkyCamera.looking(SkyPosition(0.0, 0.0), 140.0).clampedTo(ww, hh)
-            val p = cam.projection(ww, hh)
-            val rhoCorner = hypot((ww / 2) * p.radPerPixel, (hh / 2) * p.radPerPixel)
-            assertTrue("corner rho $rhoCorner", rhoCorner <= Projection.RHO_CUTOFF + 1e-6)
+            val ham = SkyCamera.looking(SkyPosition(0.0, 0.0), 1000.0).clampedTo(ww, hh)
+            val p = ham.projection(ww, hh)
+            // the oval (half extents 2*sqrt2 x sqrt2 projection units) fits inside the screen
+            assertTrue("oval wider than the screen", Projection.HAMMER_HALF_W / p.radPerPixel <= ww / 2 + 1)
+            assertTrue("oval taller than the screen", Projection.HAMMER_HALF_H / p.radPerPixel <= hh / 2 + 1)
+            val zea = SkyCamera.looking(SkyPosition(0.0, 0.0), 1000.0, ProjectionKind.ZEA).clampedTo(ww, hh)
+            val q = zea.projection(ww, hh)
+            assertTrue("disc bigger than the screen", Projection.RHO_CUTOFF / q.radPerPixel <= minOf(ww, hh) / 2 + 1)
         }
     }
 

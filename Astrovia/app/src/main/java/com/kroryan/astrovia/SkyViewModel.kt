@@ -196,12 +196,18 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
                     // jump to that survey's initial position, losing whatever the user was
                     // looking at (impossible to compare DSS and 2MASS on the same object); the
                     // catalogue overlay was cleared too although it does not depend on the survey.
+                    // Planets are shown as a disc (ZEA); sky surveys as the all-sky oval (Hammer-Aitoff).
+                    val kind = if (props.skyFrame == com.kroryan.astrovia.sky.SkyFrame.BODY) {
+                        com.kroryan.astrovia.sky.ProjectionKind.ZEA
+                    } else {
+                        com.kroryan.astrovia.sky.ProjectionKind.HAMMER
+                    }
                     val cam = if (it.cameraPlaced) {
-                        it.camera
+                        it.camera.copy(kind = kind).clampedTo(viewW, viewH)
                     } else {
                         val ic = props.initialIcrs
                         val fov = props.initialFov.coerceIn(SkyCamera.MIN_FOV, MAX_INITIAL_FOV)
-                        SkyCamera.looking(SkyPosition(ic[0], ic[1]), fov).clampedTo(viewW, viewH)
+                        SkyCamera.looking(SkyPosition(ic[0], ic[1]), fov, kind).clampedTo(viewW, viewH)
                     }
                     it.copy(
                         survey = survey,

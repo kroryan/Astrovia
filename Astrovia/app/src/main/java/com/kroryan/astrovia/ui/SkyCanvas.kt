@@ -17,10 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
-import androidx.compose.ui.graphics.Matrix
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.asAndroidColorFilter
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import com.kroryan.astrovia.sky.TileMeshPainter
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -296,6 +297,10 @@ fun SkyCanvas(
         // Color filter for view modes (brightness/contrast/inversion).
         // Null if all at defaults -> zero cost.
         val tileColorFilter = SkyCanvasColorFilter.fromSettings(state.settings)
+        val tilePaint = android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG).apply {
+            isAntiAlias = false
+            colorFilter = tileColorFilter?.asAndroidColorFilter()
+        }
         if (props != null) {
             for (t in visibleTiles) {
                 val sample = TileRepository.sampleSizeFor(t.scalePx)
@@ -303,25 +308,11 @@ fun SkyCanvas(
                 // Guard: a recycled bitmap (evicted from cache between frames)
                 // would cause a native crash on draw; skip it this frame.
                 if (bmp.isRecycled) continue
-                // Cell mesh with LIVE camera: each cell is placed with its
-                // own affine (parallelogram) and its corresponding bitmap slice.
-                // This way tile edges match (no gaps) and the tile moves
-                // smoothly on pan/zoom without waiting to recalculate the set.
-                val cells = SkyRenderer.placementMesh(proj, t, bmp.width, bmp.height) ?: continue
-                val img = bmp.asImageBitmap()
-                for (cell in cells) {
-                    withTransform({
-                        transform(Matrix(cell.matrix))
-                    }) {
-                        drawImage(
-                            image = img,
-                            srcOffset = IntOffset(cell.srcX, cell.srcY),
-                            srcSize = IntSize(cell.srcW, cell.srcH),
-                            dstOffset = IntOffset.Zero,
-                            dstSize = IntSize(cell.srcW, cell.srcH),
-                            colorFilter = tileColorFilter,
-                        )
-                    }
+                // Triangle mesh with the LIVE camera: the tile moves smoothly on pan/zoom without
+                // waiting to recalculate the set, and its vertices are shared so there are no cracks.
+                val mesh = SkyRenderer.placementTriangles(proj, t, bmp.width, bmp.height) ?: continue
+                drawIntoCanvas { c ->
+                    TileMeshPainter.draw(c.nativeCanvas, bmp, mesh, tilePaint)
                 }
             }
         }

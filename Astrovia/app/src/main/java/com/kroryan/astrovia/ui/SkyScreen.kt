@@ -331,7 +331,7 @@ fun SkyScreen(vm: SkyViewModel) {
                         StatusItem("RA", AstroMath.formatRa(state.camera.center.raDeg))
                         StatusItem("Dec", AstroMath.formatDec(state.camera.center.decDeg))
                     }
-                    StatusItem("FoV", "%.2f°".format(state.camera.fovDeg))
+                    StatusItem("FoV", if (state.camera.fovDeg >= 180.0) "All sky" else "%.2f°".format(state.camera.fovDeg))
                 }
             }
 

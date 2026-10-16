@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Astrovia</string>
+    <string name="app_name">Astrovia: Sky Atlas</string>
     <string name="search_hint">Search object (M31, NGC 224, coords…)</string>
     <string name="surveys">Surveys</string>
     <string name="catalogs">Catalogs</string>

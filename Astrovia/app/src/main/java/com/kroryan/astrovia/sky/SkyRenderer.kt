@@ -27,36 +27,13 @@ data class VisibleTile(
 )
 
 /**
- * A cell in the mesh into which a tile is subdivided for placement: the 4x4
- * affine matrix that places it on screen and the bitmap slice (srcOffset/srcSize)
- * to paint in it.
+ * A tile as a triangle mesh: a (n+1)x(n+1) grid of vertices shared by all its triangles, so a tile has no
+ * cracks inside, and tiles of the same order share identical vertices along common edges (the grid size
+ * depends only on the order and zoom, never on the individual tile).
+ *
+ * [positions] are screen px (x, y pairs), [texCoords] are bitmap px (x, y pairs), [indices] triangles.
  */
-data class MeshCell(
-    val matrix: FloatArray,
-    val srcX: Int,
-    val srcY: Int,
-    val srcW: Int,
-    val srcH: Int,
-)
-
-/**
- * Tile placement on screen as a 4x4 affine matrix (16 floats, layout of
- * `androidx.compose.ui.graphics.Matrix`). The bitmap is drawn at (0,0) and the
- * matrix maps its pixel coordinates to the screen.
- */
-private fun affineMatrix(o: FloatArray, e1: FloatArray, e3: FloatArray, w: Float, h: Float): FloatArray {
-    // x' = ax*u + bx*v + ox ; y' = ay*u + by*v + oy  (u,v = bitmap pixel coords)
-    val ax = (e1[0] - o[0]) / w
-    val ay = (e1[1] - o[1]) / w
-    val bx = (e3[0] - o[0]) / h
-    val by = (e3[1] - o[1]) / h
-    return floatArrayOf(
-        ax, ay, 0f, 0f,
-        bx, by, 0f, 0f,
-        0f, 0f, 1f, 0f,
-        o[0], o[1], 0f, 1f,
-    )
-}
+class TileMesh(val positions: FloatArray, val texCoords: FloatArray, val indices: ShortArray)
 
 /**
  * Computes which HiPS tiles to draw for a given projection, by recursing
@@ -119,6 +96,7 @@ object SkyRenderer {
         // before subdividing to the next, so a wide FoV simply stays at a coarser
         // order showing the COMPLETE sky instead of black parts. This is also
         // what Aladin desktop does (PlanBG.drawLosangesAsync iterates order by order, cmin..max).
+        val visible = VisibleCone.of(proj)
         var level = ArrayList<Long>(Healpix.npix(startOrder).toInt().coerceAtMost(12))
         for (ipix in 0 until Healpix.npix(startOrder)) level.add(ipix)
 
@@ -127,8 +105,13 @@ object SkyRenderer {
         while (level.isNotEmpty()) {
             val survivors = ArrayList<Long>()
             for (ipix in level) {
-                val corners = Healpix.corners(order, ipix, frame)
                 val centerRadec = Healpix.center(order, ipix, frame)
+                // Angular prefilter: a tile farther from the view centre than the screen reaches (plus the
+                // tile's own radius) cannot be visible. Needed with the all-sky oval, where every point of
+                // the sphere has a screen position, so "behind the view" can no longer be told by the
+                // projection returning null.
+                if (!visible.mayContain(centerRadec[0], centerRadec[1], tileRadiusRad(order))) continue
+                val corners = Healpix.corners(order, ipix, frame)
                 val pts = ArrayList<FloatArray>(4)
                 for (c in corners) proj.forward(c[0], c[1])?.let { pts.add(it) }
                 val centerPx = proj.forward(centerRadec[0], centerRadec[1])
@@ -254,120 +237,83 @@ object SkyRenderer {
         return filtered
     }
 
+    /** Grid size (cells per side) for tiles of [order]: about 40 px per cell, so a cell is almost flat. */
+    internal fun meshCells(order: Int, radPerPixel: Double, minCells: Int = 1): Int {
+        val sidePx = HEALPIX_SIDE_RAD / (1L shl order).toDouble() / radPerPixel
+        return maxOf(minCells, kotlin.math.ceil(sidePx / CELL_PX).toInt().coerceIn(MIN_CELLS, MAX_CELLS))
+    }
+
     /**
-     * Subdivides the tile into an NxN mesh and returns one cell per subquadrant,
-     * each with its affine matrix (parallelogram) and the corresponding bitmap
-     * slice.
+     * Triangle mesh of the tile for placement on screen.
      *
-     * Bitmap orientation (HiPS convention, identical to Aladin desktop —see
-     * CDSHealpix.corners() which returns [S,E,W,N] and HealpixKey.drawTriangle
-     * which maps TL=S, TR=W, BL=E, BR=N): the bitmap X axis runs along +fy
-     * (corner S->W) and the Y axis along +fx (corner S->E). Thus the grid is
-     * indexed as grid[fy_i][fx_j] (NOT the other way around): if the axes are
-     * swapped, each tile will be rotated 90° and misaligned with its neighbors.
+     * Bitmap orientation (HiPS convention, identical to Aladin desktop, see CDSHealpix.corners() which
+     * returns [S,E,W,N] and HealpixKey.drawTriangle which maps TL=S, TR=W, BL=E, BR=N): the bitmap X axis
+     * runs along +fy (corner S->W) and the Y axis along +fx (corner S->E). The grid is indexed
+     * [fy_i][fx_j]; if the axes were swapped each tile would be rotated 90 deg.
      *
-     * `n` is adaptive: 1 cell if the tile hardly deforms (near the center of
-     * the FoV), 4x4=16 if distortion is noticeable (near the FoV edge).
-     * With n=1 the only cell is the whole parallelogram (anchors S, W, E exact).
+     * Vertices use [Projection.forwardClamped] (never null), so a tile straddling the edge of the ZEA
+     * disc still gets a mesh. Triangles with an edge far longer than a cell are dropped: they are the
+     * ones that cross the seam of the oval (opposite side of the sky) or the limb of the disc.
      */
-    fun placementMesh(
+    fun placementTriangles(
         proj: Projection,
         tile: VisibleTile,
         bmpW: Int,
         bmpH: Int,
         minCells: Int = 1,
-    ): List<MeshCell>? {
-        val n = meshSubdivisions(proj, tile, minCells)
-        // grid[i][j] = projected point at (fy=i/n, fx=j/n) of the tile. Uses
-        // forwardClamped (never null) so tiles straddling the edge of the visible
-        // hemisphere still get a full mesh instead of dropping cells into a gap
-        // (see Projection.forwardClamped for why).
-        val grid = Array(n + 1) { i ->
-            Array(n + 1) { j ->
+    ): TileMesh? {
+        val n = meshCells(tile.order, proj.radPerPixel, minCells)
+        val positions = FloatArray((n + 1) * (n + 1) * 2)
+        val tex = FloatArray(positions.size)
+        for (i in 0..n) {
+            for (j in 0..n) {
                 val ra = Healpix.radecAt(tile.order, tile.npix, j.toDouble() / n, i.toDouble() / n, tile.frame)
-                proj.forwardClamped(ra[0], ra[1])
+                val p = proj.forwardClamped(ra[0], ra[1])
+                val v = (i * (n + 1) + j) * 2
+                positions[v] = p[0]
+                positions[v + 1] = p[1]
+                // Integer cell boundaries from the full bitmap size, so the n cells cover the WHOLE tile.
+                tex[v] = (bmpW * i / n).toFloat()
+                tex[v + 1] = (bmpH * j / n).toFloat()
             }
         }
-        val cells = ArrayList<MeshCell>(n * n)
+        val sidePx = HEALPIX_SIDE_RAD / (1L shl tile.order).toDouble() / proj.radPerPixel
+        // A normal cell edge is ~sidePx/n; distortion (oval border, ZEA limb) stretches it a few times.
+        val maxEdge = (6.0 * sidePx / n + 24.0).toFloat()
+        val margin = 600f
+        val idx = ArrayList<Short>(n * n * 6)
+        fun ok(a: Int, b: Int, c: Int): Boolean {
+            val ax = positions[a * 2]; val ay = positions[a * 2 + 1]
+            val bx = positions[b * 2]; val by = positions[b * 2 + 1]
+            val cx = positions[c * 2]; val cy = positions[c * 2 + 1]
+            if (hypot(bx - ax, by - ay) > maxEdge || hypot(cx - ax, cy - ay) > maxEdge || hypot(cx - bx, cy - by) > maxEdge) return false
+            // skip triangles entirely off screen (cheap and keeps the draw call small when zoomed in)
+            return !(maxOf(ax, bx, cx) < -margin || minOf(ax, bx, cx) > proj.widthPx + margin ||
+                maxOf(ay, by, cy) < -margin || minOf(ay, by, cy) > proj.heightPx + margin)
+        }
         for (i in 0 until n) {
-            // Integer cell boundaries computed from the full bitmap size (bmp * k / n) so the
-            // n cells always cover the WHOLE tile. `bmp / n` truncated: with n = 6 and a 128 px
-            // bitmap the cells covered 126 px and the content was stretched 1.6 %.
-            val sx0 = bmpW * i / n
-            val sx1 = bmpW * (i + 1) / n
             for (j in 0 until n) {
-                val sy0 = bmpH * j / n
-                val sy1 = bmpH * (j + 1) / n
-                val cw = sx1 - sx0
-                val ch = sy1 - sy0
-                if (cw <= 0 || ch <= 0) continue
-                val o = grid[i][j]       // (fy=i/n,   fx=j/n)
-                val e1 = grid[i + 1][j]  // +fy  -> bitmap X axis
-                val e3 = grid[i][j + 1]  // +fx  -> bitmap Y axis
-                // Anti-limb safeguard: a cell that projects to a parallelogram MUCH larger than
-                // the screen is an edge artifact; its valid neighbours cover the real area.
-                val spanW = hypot(e1[0] - o[0], e1[1] - o[1])
-                val spanH = hypot(e3[0] - o[0], e3[1] - o[1])
-                val maxSpan = 1.5f * maxOf(proj.widthPx, proj.heightPx)
-                if (spanW > maxSpan || spanH > maxSpan) continue
-                cells.add(
-                    MeshCell(
-                        affineMatrix(o, e1, e3, cw.toFloat(), ch.toFloat()),
-                        sx0, sy0, cw, ch,
-                    )
-                )
+                val v00 = i * (n + 1) + j
+                val v10 = (i + 1) * (n + 1) + j
+                val v11 = (i + 1) * (n + 1) + j + 1
+                val v01 = i * (n + 1) + j + 1
+                if (ok(v00, v10, v11)) { idx.add(v00.toShort()); idx.add(v10.toShort()); idx.add(v11.toShort()) }
+                if (ok(v00, v11, v01)) { idx.add(v00.toShort()); idx.add(v11.toShort()); idx.add(v01.toShort()) }
             }
         }
-        return if (cells.isEmpty()) null else cells
+        if (idx.isEmpty()) return null
+        return TileMesh(positions, tex, idx.toShortArray())
     }
 
-    /**
-     * Decides how many subdivisions (per axis) the tile needs.
-     *
-     * Two independent reasons to subdivide more:
-     * 1. Local flatness: does a single affine (parallelogram) already match the
-     *    tile's own 4 true corners closely? (predicted 4th vertex vs actual).
-     * 2. Screen size: ZEA is only LOCALLY close to affine. A coarse (low-order)
-     *    tile at a wide FoV can pass check 1 -- its own 4 corners fit a flat
-     *    parallelogram fine -- while still curving away from that parallelogram
-     *    *between* the corners enough to visibly diverge from a neighboring
-     *    tile's shared edge (which that neighbor computes independently along
-     *    the same true curve). That showed up as tiles looking "not joined"
-     *    specifically at wide FoV, where base HEALPix tiles span hundreds of
-     *    screen px: neither reported error nor a black gap, just a seam where
-     *    two flat approximations of the same curve don't quite meet. Forcing
-     *    more subdivisions once a tile's screen footprint is large enough keeps
-     *    both sides of a shared edge close enough to the true curve to visually
-     *    coincide, regardless of how "flat" the tile looks on its own.
-     */
-    private fun meshSubdivisions(proj: Projection, tile: VisibleTile, minCells: Int = 1): Int {
-        // forwardClamped: never null, so the size/flatness estimate below always
-        // has all 4 corners even for a tile straddling the render cutoff.
-        val p = Array(4) { i ->
-            val c = tile.cornersRadec[i]
-            proj.forward(c[0], c[1]) ?: proj.forwardClamped(c[0], c[1])
-        }
-        val a = p[0]; val b = p[1]; val c2 = p[2]; val d = p[3]
-        val predX = b[0] + d[0] - a[0]
-        val predY = b[1] + d[1] - a[1]
-        val flatnessErr = hypot(predX - c2[0], predY - c2[1])
-        val nFromFlatness = if (flatnessErr < 1.5f) 1 else 4
+    private const val CELL_PX = 40.0
+    private const val MAX_CELLS = 24
+    private const val MIN_CELLS = 6 // smooth borders of the oval and the disc when zoomed out
 
-        val maxSpan = maxOf(
-            hypot(b[0] - a[0], b[1] - a[1]),
-            hypot(d[0] - a[0], d[1] - a[1]),
-        )
-        val nFromSize = when {
-            maxSpan > 600f -> 8
-            maxSpan > 300f -> 6
-            maxSpan > 150f -> 4
-            else -> 1
-        }
-        return maxOf(nFromFlatness, nFromSize, minCells)
-    }
+    /** Upper bound of the angular radius of a HEALPix tile of [order] (centre to farthest corner), radians. */
+    internal fun tileRadiusRad(order: Int): Double = 1.15 * HEALPIX_SIDE_RAD / (1L shl order).toDouble()
 
     /** Side of a HEALPix pixel in radians at nside = 1: sqrt(4*pi / 12). */
-    private val HEALPIX_SIDE_RAD = kotlin.math.sqrt(Math.PI / 3.0)
+    internal val HEALPIX_SIDE_RAD = kotlin.math.sqrt(Math.PI / 3.0)
 
     /** Screen pixels per native tile pixel for a tile of [order] under an equal-area projection. */
     internal fun tileScale(order: Int, radPerPixel: Double, tileW: Float): Float =
@@ -386,5 +332,37 @@ object SkyRenderer {
             if (p[1] > maxY) maxY = p[1]
         }
         return floatArrayOf(minX, minY, maxX, maxY)
+    }
+}
+
+/**
+ * The cone of directions the screen can show: the largest angle between the view centre and any
+ * screen point (corners and edge middles, grown by the culling margin).
+ */
+internal class VisibleCone(private val center: Vec3, private val maxAngleRad: Double) {
+    fun mayContain(raDeg: Double, decDeg: Double, tileRadiusRad: Double): Boolean {
+        if (maxAngleRad >= Math.PI) return true
+        val d = Vec3.fromRaDec(raDeg, decDeg)
+        val ang = Math.acos((center dot d).coerceIn(-1.0, 1.0))
+        return ang <= maxAngleRad + tileRadiusRad
+    }
+
+    companion object {
+        fun of(proj: Projection, marginPx: Float = 520f): VisibleCone {
+            val w = proj.widthPx
+            val h = proj.heightPx
+            var maxAng = 0.0
+            val xs = floatArrayOf(-marginPx, w / 2f, w + marginPx)
+            val ys = floatArrayOf(-marginPx, h / 2f, h + marginPx)
+            for (x in xs) for (y in ys) {
+                val v = proj.inverseVec(x, y)
+                val a = Math.acos((proj.center dot v).coerceIn(-1.0, 1.0))
+                if (a > maxAng) maxAng = a
+            }
+            // sample points beyond the oval/disc clamp to its border: if any sample was clamped the
+            // whole sphere (or hemisphere) can be on screen, so do not cut anything
+            val whole = proj.kind == ProjectionKind.HAMMER && proj.hammerBorderVisible(marginPx)
+            return VisibleCone(proj.center, if (whole) Math.PI else maxAng + 0.02)
+        }
     }
 }

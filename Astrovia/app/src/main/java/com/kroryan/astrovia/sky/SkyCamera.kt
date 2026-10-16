@@ -1,9 +1,7 @@
 package com.kroryan.astrovia.sky
 
 import com.kroryan.astrovia.model.SkyPosition
-import kotlin.math.asin
 import kotlin.math.atan2
-import kotlin.math.hypot
 
 /**
  * Sky camera: an orthonormal frame ([c] = where we look, [u] = screen up) plus the vertical FoV.
@@ -20,6 +18,8 @@ data class SkyCamera(
     val c: Vec3 = Vec3.fromRaDec(0.0, 0.0),
     val u: Vec3 = Vec3.NORTH,
     val fovDeg: Double = 60.0,
+    /** Projection family: [ProjectionKind.HAMMER] for sky surveys, [ProjectionKind.ZEA] for planets. */
+    val kind: ProjectionKind = ProjectionKind.HAMMER,
 ) {
     init {
         require(fovDeg > 0.0)
@@ -52,6 +52,7 @@ data class SkyCamera(
         radPerPixel = Projection.radPerPixelFromFov(fovDeg, heightPx),
         widthPx = widthPx,
         heightPx = heightPx,
+        kind = kind,
     )
 
     /** Rotates the whole camera frame by a rotation of the sphere (axis, angle). */
@@ -113,11 +114,11 @@ data class SkyCamera(
     }
 
     /** Largest FoV for which the screen corners stay inside the render cutoff. */
-    fun maxFovDeg(widthPx: Float, heightPx: Float): Double = maxFovFor(widthPx, heightPx)
+    fun maxFovDeg(widthPx: Float, heightPx: Float): Double = maxFovFor(widthPx, heightPx, kind)
 
     /** This camera with the FoV clamped for a (possibly rotated) viewport. */
     fun clampedTo(widthPx: Float, heightPx: Float): SkyCamera {
-        val f = fovDeg.coerceIn(MIN_FOV, maxFovFor(widthPx, heightPx))
+        val f = fovDeg.coerceIn(MIN_FOV, maxFovFor(widthPx, heightPx, kind))
         return if (f == fovDeg) this else copy(fovDeg = f)
     }
 
@@ -128,11 +129,12 @@ data class SkyCamera(
 
     companion object {
         const val MIN_FOV = 0.005 // ~18 arcsec
-        const val MAX_FOV = 140.0
+        /** Largest FoV (deg) of the vertical extent: only used when the screen size is unknown. */
+        const val MAX_FOV = 360.0
 
         /** Camera looking at [pos] with the given vertical FoV and north up (when possible). */
-        fun looking(pos: SkyPosition, fovDeg: Double): SkyCamera =
-            SkyCamera(Vec3.fromRaDec(pos.raDeg, pos.decDeg), Vec3.NORTH, fovDeg).let { cam ->
+        fun looking(pos: SkyPosition, fovDeg: Double, kind: ProjectionKind = ProjectionKind.HAMMER): SkyCamera =
+            SkyCamera(Vec3.fromRaDec(pos.raDeg, pos.decDeg), Vec3.NORTH, fovDeg, kind).let { cam ->
                 val n = Vec3.NORTH - cam.c * (Vec3.NORTH dot cam.c)
                 if (n.norm() < 1e-9) {
                     // On a pole: any perpendicular direction will do.
@@ -143,17 +145,21 @@ data class SkyCamera(
             }
 
         /**
-         * The FoV limit keeps the corners of the screen within rho <= RHO_CUTOFF:
-         * rho_corner = 2 sin(fov/4) * hypot(1, width/height) <= RHO_CUTOFF.
-         * In portrait this never bites (limit is [MAX_FOV]); in landscape it prevents the
-         * "ring of squashed far-side tiles" that appears when the screen leaves the sphere.
+         * Zoom-out limit: the whole oval (Hammer) or disc (ZEA, the visible hemisphere) just fits the
+         * screen, with a small margin. One projection unit is one radian at the centre, so the FoV
+         * (vertical extent) for a given scale is `radPerPixel * heightPx`.
          */
-        fun maxFovFor(widthPx: Float, heightPx: Float): Double {
+        fun maxFovFor(widthPx: Float, heightPx: Float, kind: ProjectionKind = ProjectionKind.HAMMER): Double {
             if (widthPx <= 0f || heightPx <= 0f) return MAX_FOV
-            val k = hypot(1.0, (widthPx / heightPx).toDouble())
-            val s = (Projection.RHO_CUTOFF / (2.0 * k)).coerceAtMost(1.0)
-            val limit = Math.toDegrees(4.0 * asin(s))
-            return limit.coerceIn(MIN_FOV * 2, MAX_FOV)
+            val margin = 0.96
+            val radPerPx = when (kind) {
+                ProjectionKind.HAMMER -> maxOf(
+                    2.0 * Projection.HAMMER_HALF_W / (widthPx * margin),
+                    2.0 * Projection.HAMMER_HALF_H / (heightPx * margin),
+                )
+                ProjectionKind.ZEA -> 2.0 * Projection.RHO_CUTOFF / (minOf(widthPx, heightPx) * margin)
+            }
+            return Math.toDegrees(radPerPx * heightPx).coerceIn(MIN_FOV * 2, MAX_FOV * 4)
         }
     }
 }

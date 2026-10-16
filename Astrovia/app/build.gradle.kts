@@ -23,7 +23,7 @@ android {
         applicationId = "com.kroryan.astrovia"
         minSdk = 24
         targetSdk = 36
-        versionCode = 4
+        versionCode = 5
         versionName = "0.6.1"
         vectorDrawables { useSupportLibrary = true }
     }

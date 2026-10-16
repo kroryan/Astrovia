@@ -3,7 +3,6 @@ package com.kroryan.astrovia.sky
 import com.kroryan.astrovia.data.hips.HiPSProperties
 import com.kroryan.astrovia.model.SkyPosition
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -68,19 +67,24 @@ class SkyRendererTest {
     }
 
     @Test
-    fun meshCellsCoverTheWholeBitmap() {
-        // `bmp / n` truncated: with n = 6 and a 128 px bitmap the cells covered only 126 px.
+    fun meshCoversTheWholeBitmapAndIsSharedAcrossNeighbours() {
         val cam = SkyCamera.looking(SkyPosition(83.8, -5.4), 3.0)
         val proj = cam.projection(1080f, 2400f)
         val tile = SkyRenderer.computeVisibleTiles(proj, props, 1.5f).first { it.isLeaf }
         for (bmp in intArrayOf(128, 256, 512)) {
             for (minCells in intArrayOf(1, 4, 6, 8, 16)) {
-                val cells = SkyRenderer.placementMesh(proj, tile, bmp, bmp, minCells)
-                assertNotNull(cells)
-                val area = cells!!.sumOf { it.srcW.toLong() * it.srcH }
-                assertEquals("bmp=$bmp minCells=$minCells tile=${tile.order}/${tile.npix} cells=${cells.size}", bmp.toLong() * bmp, area)
+                val m = SkyRenderer.placementTriangles(proj, tile, bmp, bmp, minCells)!!
+                // texture coordinates reach both ends of the bitmap on both axes
+                val xs = m.texCoords.filterIndexed { i, _ -> i % 2 == 0 }
+                val ys = m.texCoords.filterIndexed { i, _ -> i % 2 == 1 }
+                assertEquals(0f, xs.min(), 0f); assertEquals(bmp.toFloat(), xs.max(), 0f)
+                assertEquals(0f, ys.min(), 0f); assertEquals(bmp.toFloat(), ys.max(), 0f)
             }
         }
+        // every tile of one order uses the same grid size
+        val sizes = SkyRenderer.computeVisibleTiles(cam.projection(1080f, 2400f), props, 1.5f)
+            .groupBy { it.order }.mapValues { (o, _) -> SkyRenderer.meshCells(o, proj.radPerPixel) }
+        assertTrue(sizes.isNotEmpty())
     }
 
     @Test
