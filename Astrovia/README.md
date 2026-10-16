@@ -1,6 +1,6 @@
-# Astrovia
+# Astrovia: Sky Atlas (Android)
 
-**Astrovia** is a free, ad-free, open-source sky atlas for Android (Kotlin + Jetpack Compose),
+**Astrovia: Sky Atlas** is a free, ad-free, open-source sky atlas for Android (Kotlin + Jetpack Compose),
 based on the concept of the [Aladin Sky Atlas](https://aladin.cds.unistra.fr/) developed by the
 Centre de Données astronomiques de Strasbourg (CDS). It has a UI designed for mobile: it is **not**
 a port of the Aladin Desktop (Swing) UI, but a new touch interface.

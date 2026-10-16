@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="Astrovia/store/feature-graphic-PC-1024x500.png" alt="Astrovia - Open-source sky atlas" width="100%">
+  <img src="Astrovia/store/feature-graphic-PC-1024x500.png" alt="Astrovia: Sky Atlas - Open-source sky atlas" width="100%">
 </p>
 
 <h1 align="center">
-  <img src="Astrovia/store/icon-512.png" alt="" width="64" align="absmiddle"> Astrovia
+  <img src="Astrovia/store/icon-512.png" alt="" width="64" align="absmiddle"> Astrovia: Sky Atlas
 </h1>
 
 <p align="center"><b>Open-source sky atlas for Windows, Linux and Android.</b></p>
@@ -14,7 +14,7 @@
   <img alt="License GPL-3.0" src="https://img.shields.io/badge/License-GPL--3.0-green?style=for-the-badge">
 </p>
 
-Astrovia lets you explore the sky with HiPS surveys, overlay Simbad and VizieR catalogues, and work with
+**Astrovia: Sky Atlas** (Astrovia for short) lets you explore the sky with HiPS surveys, overlay Simbad and VizieR catalogues, and work with
 FITS images and MOC coverage, in a modern dark interface. Free, no ads, no tracking.
 
 > **Astrovia is an independent community project based on the [Aladin Sky Atlas](https://aladin.cds.unistra.fr/)**
@@ -32,10 +32,15 @@ FITS images and MOC coverage, in a modern dark interface. Free, no ads, no track
 
 ## Highlights (0.6.2)
 
-- **Correct sky orientation** (north up, east left, like a sky chart) and a camera with no singularity at the poles: you can drag straight over a pole and around the whole sphere (Android).
-- **Capture the sky**: a camera button saves *only* the survey picture of the current view (no panels, toolbars or crosshair) at up to 3-4x the screen size, using the finest tiles available. PNG (lossless) or JPEG. You choose the folder (Android: in Settings or in the capture dialog; desktop: it remembers the last one).
-- **Galactic and planetary surveys** are supported (Mellinger, IRIS, Mars, the Moon, Venus, Titan...), as well as FITS-only surveys.
-- **Name search** (SIMBAD), catalogues from VizieR/SIMBAD that can be downloaded and shown on the sky, and offline HiPS download of just the area in view, with a size estimate before you start.
+- **All-sky view like Aladin Desktop** (Android): zoom all the way out and a sky survey becomes the whole-sky oval, a planet becomes a disc you can rotate. You can zoom and navigate inside both. Tiles are drawn as one continuous mesh, so there are no gaps between them at any zoom.
+- **Offline collections**:
+  - *Desktop:* add HiPS folders (or folders that contain HiPS) and catalogue files, and they appear under "HiPS offline" / "Catalogs offline" in Available data. A *Source* selector switches between all, online-only and offline-only collections, and downloads can be added automatically with a checkbox.
+  - *Android:* every downloaded HiPS shows up at the top of the collections menu as "<name> (offline)": type "offline" in the search box to find them.
+- **Downloads that survive the background** (Android): a progress notification with a Stop button. HiPS downloads can be limited to the area in view, with a size estimate before you start.
+- **Capture the sky**: a camera button saves *only* the survey picture of the current view (no panels, toolbars or crosshair) at up to 3-4x the screen size, using the finest tiles available. PNG (lossless) or JPEG. You choose the folder.
+- **Correct sky orientation** (north up, east left, like a sky chart) and a camera with no singularity at the poles (Android).
+- **Galactic and planetary surveys** (Mellinger, IRIS, Mars, the Moon, Venus, Titan...) and FITS-only surveys.
+- **Name search** (SIMBAD) and catalogues from VizieR/SIMBAD that can be downloaded and shown on the sky.
 
 ## Install (desktop)
 

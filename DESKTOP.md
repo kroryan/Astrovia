@@ -1,4 +1,4 @@
-# Astrovia desktop (Linux / Windows)
+# Astrovia: Sky Atlas - desktop (Linux / Windows)
 
 Java/Swing desktop edition of Astrovia, based on the Aladin Sky Atlas (CDS, GPL v3).
 Independent community project, not affiliated with the CDS.
