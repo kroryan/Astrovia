@@ -22,6 +22,8 @@ data class VisibleTile(
     /** True if this tile stopped subdividing here: it's the correct resolution for its
      * on-screen size, not just an intermediate progressive-refinement base layer. */
     val isLeaf: Boolean = true,
+    /** Frame the tile's HEALPix grid is published in (corners/centre are already in ICRS). */
+    val frame: SkyFrame = SkyFrame.ICRS,
 )
 
 /**
@@ -97,7 +99,9 @@ object SkyRenderer {
         proj: Projection,
         props: HiPSProperties,
         targetScale: Float = DEFAULT_TARGET_SCALE,
+        maxTiles: Int = MAX_TILES,
     ): List<VisibleTile> {
+        val frame = props.skyFrame
         val startOrder = props.orderMin.coerceIn(0, props.order.coerceAtLeast(props.orderMin))
         val maxOrder = props.order
         val tileW = props.tileWidth.toFloat()
@@ -123,8 +127,8 @@ object SkyRenderer {
         while (level.isNotEmpty()) {
             val survivors = ArrayList<Long>()
             for (ipix in level) {
-                val corners = Healpix.corners(order, ipix)
-                val centerRadec = Healpix.center(order, ipix)
+                val corners = Healpix.corners(order, ipix, frame)
+                val centerRadec = Healpix.center(order, ipix, frame)
                 val pts = ArrayList<FloatArray>(4)
                 for (c in corners) proj.forward(c[0], c[1])?.let { pts.add(it) }
                 val centerPx = proj.forward(centerRadec[0], centerRadec[1])
@@ -154,15 +158,16 @@ object SkyRenderer {
                     bbox[3] >= -margin && bbox[1] <= proj.heightPx + margin
                 if (!intersects) continue
 
-                // Representative scale (screen px per native tile px). Using boundsCorners
-                // ensures a reliable scale even for tiles along the visible horizon where
-                // plain forward() returns null for some corners.
-                val scalePx = if (boundsCorners.size >= 2) {
-                    val len = hypot(boundsCorners[1][0] - boundsCorners[0][0], boundsCorners[1][1] - boundsCorners[0][1])
-                    if (len > 0f) len / tileW else 1f
-                } else {
-                    1f
-                }
+                // Representative scale (screen px per native tile px).
+                //
+                // The projection is EQUAL-AREA (ZEA: area element rho d(rho) d(phi) = dOmega), so a
+                // HEALPix tile of a given order covers the same number of screen pixels wherever it
+                // is on screen. Its scale is therefore a function of the order alone, which gives a
+                // uniform level of detail across the screen by construction. (It used to be measured
+                // on ONE tile edge, which the projection distorts by up to 2.5x depending on the
+                // tile's orientation: neighbouring tiles picked different orders and zoomed-out views
+                // came out as a patchwork of resolutions.)
+                val scalePx = tileScale(order, proj.radPerPixel, tileW)
 
                 // Leaf when the tile is at native resolution or finer (scalePx <= targetScale).
                 // Previously, tiles straddling the horizon (pts.size < 4) were forced to keep
@@ -178,7 +183,7 @@ object SkyRenderer {
 
                 // We emit ALL on-screen nodes (not just leaves): draw uses the
                 // coarse ancestor as a base for progressive refinement.
-                out.add(VisibleTile(order, ipix, corners, centerRadec, scalePx, isLeaf))
+                out.add(VisibleTile(order, ipix, corners, centerRadec, scalePx, isLeaf, frame))
 
                 if (willSubdivide) {
                     survivors.add(ipix)
@@ -188,7 +193,7 @@ object SkyRenderer {
             // (never halfway): this way a coarse level is always complete, without
             // gaps, even if it slightly exceeds MAX_TILES (e.g. order 3 = 768
             // base tiles on the whole sphere, > 600, but still allowed).
-            if (survivors.isEmpty() || out.size >= MAX_TILES) break
+            if (survivors.isEmpty() || out.size >= maxTiles) break
             val nextLevel = ArrayList<Long>(survivors.size * 4)
             for (p in survivors) {
                 nextLevel.add(4 * p); nextLevel.add(4 * p + 1)
@@ -270,31 +275,37 @@ object SkyRenderer {
         tile: VisibleTile,
         bmpW: Int,
         bmpH: Int,
+        minCells: Int = 1,
     ): List<MeshCell>? {
-        val n = meshSubdivisions(proj, tile)
-        val cw = bmpW / n
-        val ch = bmpH / n
+        val n = meshSubdivisions(proj, tile, minCells)
         // grid[i][j] = projected point at (fy=i/n, fx=j/n) of the tile. Uses
         // forwardClamped (never null) so tiles straddling the edge of the visible
         // hemisphere still get a full mesh instead of dropping cells into a gap
         // (see Projection.forwardClamped for why).
         val grid = Array(n + 1) { i ->
             Array(n + 1) { j ->
-                val ra = Healpix.radecAt(tile.order, tile.npix, j.toDouble() / n, i.toDouble() / n)
+                val ra = Healpix.radecAt(tile.order, tile.npix, j.toDouble() / n, i.toDouble() / n, tile.frame)
                 proj.forwardClamped(ra[0], ra[1])
             }
         }
         val cells = ArrayList<MeshCell>(n * n)
         for (i in 0 until n) {
+            // Integer cell boundaries computed from the full bitmap size (bmp * k / n) so the
+            // n cells always cover the WHOLE tile. `bmp / n` truncated: with n = 6 and a 128 px
+            // bitmap the cells covered 126 px and the content was stretched 1.6 %.
+            val sx0 = bmpW * i / n
+            val sx1 = bmpW * (i + 1) / n
             for (j in 0 until n) {
+                val sy0 = bmpH * j / n
+                val sy1 = bmpH * (j + 1) / n
+                val cw = sx1 - sx0
+                val ch = sy1 - sy0
+                if (cw <= 0 || ch <= 0) continue
                 val o = grid[i][j]       // (fy=i/n,   fx=j/n)
                 val e1 = grid[i + 1][j]  // +fy  -> bitmap X axis
                 val e3 = grid[i][j + 1]  // +fx  -> bitmap Y axis
-                // Anti-limb safeguard: if the cell projects to a parallelogram
-                // MUCH larger than the screen, it's an edge/extreme artifact
-                // (tile near the gnomonic horizon that stretches brutally).
-                // Drawing it would paint a "weird texture" across the whole view.
-                // We skip it; its valid neighbor cells cover the actual area.
+                // Anti-limb safeguard: a cell that projects to a parallelogram MUCH larger than
+                // the screen is an edge artifact; its valid neighbours cover the real area.
                 val spanW = hypot(e1[0] - o[0], e1[1] - o[1])
                 val spanH = hypot(e3[0] - o[0], e3[1] - o[1])
                 val maxSpan = 1.5f * maxOf(proj.widthPx, proj.heightPx)
@@ -302,7 +313,7 @@ object SkyRenderer {
                 cells.add(
                     MeshCell(
                         affineMatrix(o, e1, e3, cw.toFloat(), ch.toFloat()),
-                        i * cw, j * ch, cw, ch,
+                        sx0, sy0, cw, ch,
                     )
                 )
             }
@@ -329,7 +340,7 @@ object SkyRenderer {
      *    both sides of a shared edge close enough to the true curve to visually
      *    coincide, regardless of how "flat" the tile looks on its own.
      */
-    private fun meshSubdivisions(proj: Projection, tile: VisibleTile): Int {
+    private fun meshSubdivisions(proj: Projection, tile: VisibleTile, minCells: Int = 1): Int {
         // forwardClamped: never null, so the size/flatness estimate below always
         // has all 4 corners even for a tile straddling the render cutoff.
         val p = Array(4) { i ->
@@ -352,8 +363,15 @@ object SkyRenderer {
             maxSpan > 150f -> 4
             else -> 1
         }
-        return maxOf(nFromFlatness, nFromSize)
+        return maxOf(nFromFlatness, nFromSize, minCells)
     }
+
+    /** Side of a HEALPix pixel in radians at nside = 1: sqrt(4*pi / 12). */
+    private val HEALPIX_SIDE_RAD = kotlin.math.sqrt(Math.PI / 3.0)
+
+    /** Screen pixels per native tile pixel for a tile of [order] under an equal-area projection. */
+    internal fun tileScale(order: Int, radPerPixel: Double, tileW: Float): Float =
+        (HEALPIX_SIDE_RAD / (1L shl order).toDouble() / radPerPixel / tileW).toFloat()
 
     private fun bbox(pts: List<FloatArray>): FloatArray? {
         if (pts.isEmpty()) return null

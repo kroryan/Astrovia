@@ -5,8 +5,10 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
 /**
- * Minimal VOTable parser: extracts rows from the first <TABLE> in TABLEDATA format.
- * Returns each row as Map<fieldName, value>. Sufficient for Simbad.
+ * Minimal VOTable parser: extracts rows from the FIRST <TABLE>, which must use the TABLEDATA
+ * serialization (what SIMBAD and VizieR send by default). Returns each row as
+ * Map<fieldName, value>. A BINARY/BINARY2/FITS table raises [IllegalArgumentException] instead of
+ * silently yielding 0 rows.
  */
 object VotableParser {
     fun parse(text: String): List<Map<String, String>> {
@@ -32,11 +34,18 @@ object VotableParser {
                         fieldName = parser.getAttributeValue(null, "name")
                     }
                     "DATA" -> if (inTable) inData = true
+                    "BINARY", "BINARY2", "FITS" -> if (inTable) {
+                        throw IllegalArgumentException("Unsupported VOTable serialization: ${parser.name}")
+                    }
                     "TR" -> if (inData) { inTr = true; currentValues.clear() }
                     "TD" -> if (inTr) currentValues.add(parser.nextText())
                 }
                 XmlPullParser.END_TAG -> when (parser.name) {
-                    "TABLE" -> { inTable = false; inData = false }
+                    "TABLE" -> {
+                        inTable = false
+                        inData = false
+                        return rows // only the first table is read
+                    }
                     "FIELD" -> {
                         inField = false
                         fields.add(fieldName ?: "col${fields.size + 1}")

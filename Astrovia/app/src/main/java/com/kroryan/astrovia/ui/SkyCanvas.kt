@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -20,9 +21,8 @@ import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -30,111 +30,52 @@ import com.kroryan.astrovia.SkyUiState
 import com.kroryan.astrovia.SkyViewModel
 import com.kroryan.astrovia.data.hips.TileRepository
 import com.kroryan.astrovia.model.SkyPosition
+import com.kroryan.astrovia.sky.CoordGrid
+import com.kroryan.astrovia.sky.DisplayFilter
 import com.kroryan.astrovia.sky.SkyRenderer
 import com.kroryan.astrovia.sky.VisibleTile
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.kroryan.astrovia.ui.theme.GridLine
 import com.kroryan.astrovia.ui.theme.MarkerGreen
 import com.kroryan.astrovia.ui.theme.MarkerRed
 import com.kroryan.astrovia.ui.theme.SkyBlack
 import com.kroryan.astrovia.ui.theme.TextPrimary
+import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.hypot
 
 /**
- * Builds the Compose `ColorFilter` for view modes
- * (brightness/contrast/inversion) from settings. Returns null if everything
- * is at defaults (no cost in draw).
- *
- * The matrix operates on colors in [0,1]: out = sign·c·(v - 0.5) + 0.5 + b,
- * with sign = -1 if inverted, c = contrast, b = brightness. Identity with
- * default values (sign=1, c=1, b=0).
+ * Builds the Compose `ColorFilter` for view modes (brightness/contrast/inversion) from settings.
+ * Returns null if everything is at defaults (no cost in draw). The matrix itself lives in
+ * [DisplayFilter] so the screenshot export applies exactly the same transformation.
  */
 private object SkyCanvasColorFilter {
-    fun fromSettings(s: com.kroryan.astrovia.AppSettings): ColorFilter? {
-        val invert = s.invert
-        val c = s.contrast
-        val b = s.brightness
-        if (!invert && c == 1f && b == 0f) return null
-        val sign = if (invert) -1f else 1f
-        val off = -sign * c * 0.5f + 0.5f + b
-        val m = floatArrayOf(
-            sign * c, 0f, 0f, 0f, off,
-            0f, sign * c, 0f, 0f, off,
-            0f, 0f, sign * c, 0f, off,
-            0f, 0f, 0f, 1f, 0f,
-        )
-        return ColorFilter.colorMatrix(ColorMatrix(m))
-    }
-}
-
-/** Grid steps in degrees; chooses the smallest one that leaves ~6 lines on screen. */
-private val GRID_STEPS_DEG = doubleArrayOf(0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 30.0, 45.0, 90.0)
-
-private fun gridStepDeg(fovDeg: Double): Double {
-    for (s in GRID_STEPS_DEG) if (fovDeg / s <= 6.0) return s
-    return 90.0
+    fun fromSettings(s: com.kroryan.astrovia.AppSettings): ColorFilter? =
+        DisplayFilter.matrix(s.invert, s.contrast, s.brightness)?.let { ColorFilter.colorMatrix(ColorMatrix(it)) }
 }
 
 /**
- * Draws meridians (constant RA) and parallels (constant Dec) projected with the
- * live camera. The step adapts to the FoV (like the Aladin desktop grid, see
- * `ViewSimple.calculGrid`): the more zoom-out, the more spaced the lines. Each
- * curve is approximated by segments between sampled points; segments with a
- * huge screen jump (passing through the limb/antipode or RA wrap) are discarded
- * to avoid crossing the view with a spurious line.
+ * Draws the RA/Dec grid. The segments come from [CoordGrid], which only samples the part of the
+ * sphere that is on screen (the old code projected ~780,000 points per frame at high zoom).
  */
+private const val LONG_PRESS_RADIUS_PX = 28f
+
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawCoordGrid(
     proj: com.kroryan.astrovia.sky.Projection,
     fovDeg: Double,
 ) {
-    val step = gridStepDeg(fovDeg)
-    val sampleStep = step.coerceAtLeast(2.0) / 6.0
-    val maxJump = maxOf(size.width, size.height) * 1.5f
-    val marginPx = 200f
-    val minX = -marginPx; val maxX = size.width + marginPx
-    val minY = -marginPx; val maxY = size.height + marginPx
-
-    fun onScreen(p: Offset) = p.x in minX..maxX && p.y in minY..maxY
-
-    fun drawCurve(points: List<FloatArray?>) {
-        var prev: Offset? = null
-        for (raw in points) {
-            val pt = raw?.let { Offset(it[0], it[1]) }
-            if (prev != null && pt != null) {
-                if (hypot(pt.x - prev.x, pt.y - prev.y) < maxJump && (onScreen(prev) || onScreen(pt))) {
-                    drawLine(GridLine.copy(alpha = 0.35f), prev, pt, strokeWidth = 1f)
-                }
-            }
-            prev = pt
-        }
-    }
-
-    // Meridians: constant RA, Dec from -90 to 90.
-    var ra = 0.0
-    while (ra < 360.0) {
-        val pts = ArrayList<FloatArray?>()
-        var dec = -90.0
-        while (dec <= 90.0) {
-            pts.add(proj.forward(ra, dec))
-            dec += sampleStep
-        }
-        drawCurve(pts)
-        ra += step
-    }
-
-    // Parallels: constant Dec (without exact poles), RA from 0 to 360.
-    var dec = -90.0 + step
-    while (dec < 90.0) {
-        val pts = ArrayList<FloatArray?>()
-        var raS = 0.0
-        while (raS <= 360.0) {
-            pts.add(proj.forward(raS, dec))
-            raS += sampleStep
-        }
-        drawCurve(pts)
-        dec += step
+    val seg = CoordGrid.segments(proj, fovDeg)
+    val color = GridLine.copy(alpha = 0.35f)
+    var i = 0
+    while (i + 3 < seg.size) {
+        drawLine(color, Offset(seg[i], seg[i + 1]), Offset(seg[i + 2], seg[i + 3]), strokeWidth = 1f)
+        i += 4
     }
 }
 
@@ -152,6 +93,7 @@ fun SkyCanvas(
     modifier: Modifier = Modifier,
 ) {
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+    val scope = rememberCoroutineScope()
     val camera = state.camera
     val props = state.props
     val survey = state.survey
@@ -170,18 +112,28 @@ fun SkyCanvas(
     // increases order (more quality), just like the original Aladin.
     var visibleTiles by remember { mutableStateOf(emptyList<VisibleTile>()) }
     LaunchedEffect(canvasSize) {
-        vm.state.collect { s ->
-            val p = s.props
-            if (p != null && canvasSize.width > 0 && canvasSize.height > 0) {
-                val proj = s.camera.projection(canvasSize.width.toFloat(), canvasSize.height.toFloat())
-                val tiles = withContext(Dispatchers.Default) {
-                    SkyRenderer.computeVisibleTiles(proj, p, s.settings.quality.targetScale)
-                }
-                visibleTiles = tiles
-            } else {
-                visibleTiles = emptyList()
-            }
+        if (canvasSize.width > 0 && canvasSize.height > 0) {
+            vm.setViewport(canvasSize.width.toFloat(), canvasSize.height.toFloat())
         }
+    }
+    LaunchedEffect(canvasSize) {
+        // Recompute the tile set ONLY when the camera, survey or quality change. It used to run
+        // on every state change (each arriving tile, messages, catalogue...), i.e. a full HEALPix
+        // traversal every 80 ms while loading.
+        vm.state
+            .map { Triple(it.camera, it.props, it.settings.quality) }
+            .distinctUntilChanged()
+            .collect { (camera, p, quality) ->
+                if (p != null && canvasSize.width > 0 && canvasSize.height > 0) {
+                    val proj = camera.projection(canvasSize.width.toFloat(), canvasSize.height.toFloat())
+                    val tiles = withContext(Dispatchers.Default) {
+                        SkyRenderer.computeVisibleTiles(proj, p, quality.targetScale)
+                    }
+                    visibleTiles = tiles
+                } else {
+                    visibleTiles = emptyList()
+                }
+            }
     }
 
     // Request missing tiles (outside draw). Re-runs when the visible set changes.
@@ -190,7 +142,7 @@ fun SkyCanvas(
             for (t in visibleTiles) {
                 val sample = TileRepository.sampleSizeFor(t.scalePx)
                 if (tileRepo.get(survey.id, t.order, t.npix, sample) == null) {
-                    tileRepo.request(survey, props.ext, t.order, t.npix, t.scalePx)
+                    tileRepo.request(survey, props, t.order, t.npix, t.scalePx)
                 }
             }
         }
@@ -210,18 +162,24 @@ fun SkyCanvas(
             // detector conflicts that made pinch be interpreted as pan.
             // Standard image-viewer behavior.
             .pointerInput(Unit) {
-                // Double-tap state persistent across gestures (for standard
-                // image-viewer zoom: double tap zooms in/out).
+                // Double-tap state persistent across gestures.
                 var lastTapTime = 0L
                 var lastTapPos = Offset.Zero
+                var pendingMeasure: kotlinx.coroutines.Job? = null
                 awaitEachGesture {
                     val first = awaitFirstDown(requireUnconsumed = false)
                     val downTime = System.currentTimeMillis()
                     val firstPos = first.position
                     var lastCentroid = firstPos
-                    var lastPinchDist = 0f
+                    var lastDist = 0f
+                    var lastAngle = 0f
                     var totalMove = 0f
                     var lastCount = 1
+                    var twistEngaged = false
+                    var twistAccum = 0f
+                    val velocity = VelocityTracker()
+                    velocity.addPosition(first.uptimeMillis, firstPos)
+                    var wasMultiTouch = false
 
                     while (true) {
                         val event = awaitPointerEvent()
@@ -231,83 +189,101 @@ fun SkyCanvas(
                         val cnt = active.size
                         val centroid = if (cnt == 1) active[0].position
                         else active.fold(Offset.Zero) { acc, c -> acc + c.position } / cnt.toFloat()
+                        if (cnt >= 2) wasMultiTouch = true
 
-                        // Finger count changed (2nd finger down / one lifted): the centroid
-                        // jumps to a different point, so re-anchor it or the map would
-                        // suddenly shift. A multi-touch gesture is never a tap either.
+                        // Finger count changed: re-anchor so the picture does not jump, and
+                        // restart the distance/angle references.
                         if (cnt != lastCount) {
                             lastCentroid = centroid
-                            lastPinchDist = 0f
+                            lastDist = 0f
+                            lastAngle = 0f
+                            twistEngaged = false
+                            twistAccum = 0f
                             lastCount = cnt
                             if (cnt >= 2) totalMove = Float.MAX_VALUE
+                            velocity.resetTracking()
                         }
 
-                        if (canvasSize.width > 0 && canvasSize.height > 0) {
-                            val w = canvasSize.width.toFloat()
-                            val h = canvasSize.height.toFloat()
+                        val w = canvasSize.width.toFloat()
+                        val h = canvasSize.height.toFloat()
+                        if (w > 0f && h > 0f) {
+                            var zoom = 1f
+                            var twist = 0.0
                             if (cnt >= 2) {
-                                // Pinch: zoom by the distance variation between 2 fingers.
-                                val dist = (active[0].position - active[1].position).getDistance()
-                                if (lastPinchDist > 1f && dist > 1f) {
-                                    val zoomFactor = (dist / lastPinchDist).coerceIn(0.5f, 2.5f)
-                                    if (zoomFactor != 1f) {
-                                        vm.zoomBy(zoomFactor, w, h, centroid.x, centroid.y)
-                                    }
+                                val d = active[1].position - active[0].position
+                                val dist = d.getDistance()
+                                val angle = atan2(d.y, d.x) // screen y points down: increasing = clockwise
+                                if (lastDist > 1f && dist > 1f) {
+                                    zoom = (dist / lastDist).coerceIn(0.5f, 2.5f)
+                                    var dA = Math.toDegrees((angle - lastAngle).toDouble()).toFloat()
+                                    while (dA > 180f) dA -= 360f
+                                    while (dA < -180f) dA += 360f
+                                    // Twist only engages after ~8 deg so a plain pinch never rotates the sky.
+                                    twistAccum += dA
+                                    if (!twistEngaged && abs(twistAccum) > 8f) twistEngaged = true
+                                    if (twistEngaged) twist = dA.toDouble()
                                 }
-                                // Pan by the displacement of the 2 fingers' centroid.
-                                val panDelta = centroid - lastCentroid
-                                if (panDelta != Offset.Zero) vm.panBy(panDelta.x, panDelta.y, w, h)
-                                lastPinchDist = dist
-                            } else {
-                                // 1 finger: pan.
-                                val panDelta = centroid - lastCentroid
-                                if (panDelta != Offset.Zero) {
-                                    vm.panBy(panDelta.x, panDelta.y, w, h)
-                                    totalMove += panDelta.getDistance()
-                                }
+                                lastDist = dist
+                                lastAngle = angle
+                            }
+                            if (zoom != 1f || twist != 0.0 || centroid != lastCentroid) {
+                                // Zoom and twist are anchored at the previous centroid, then the picture
+                                // is dragged to the new one: the sky under the fingers stays under them.
+                                vm.transform(lastCentroid.x, lastCentroid.y, centroid.x, centroid.y, zoom, twist, w, h)
+                            }
+                            if (cnt == 1) {
+                                totalMove += (centroid - lastCentroid).getDistance()
+                                velocity.addPosition(event.changes[0].uptimeMillis, centroid)
                             }
                         }
                         lastCentroid = centroid
                     }
-                    // Tap or Long press: little movement.
+
+                    val w = canvasSize.width
+                    val h = canvasSize.height
                     val duration = System.currentTimeMillis() - downTime
-                    if (totalMove < 24f) {
+
+                    // Inertia after a one-finger drag.
+                    if (!wasMultiTouch && totalMove >= 24f && w > 0 && h > 0) {
+                        val v = velocity.calculateVelocity()
+                        vm.fling(v.x, v.y, w.toFloat(), h.toFloat())
+                    }
+
+                    // Tap or long press: little movement.
+                    if (totalMove < 24f && w > 0 && h > 0) {
                         if (duration < 300) {
                             val now = System.currentTimeMillis()
                             val isDouble = (now - lastTapTime < 320) &&
                                 (firstPos - lastTapPos).getDistance() < 48f
                             if (isDouble) {
-                                // Double tap: standard image-viewer zoom.
-                                val w = canvasSize.width.toFloat()
-                                val h = canvasSize.height.toFloat()
-                                if (w > 0 && h > 0) {
-                                    val factor = if (cameraState.value.fovDeg <= 1.0) 0.4f else 2.5f
-                                    vm.zoomBy(factor, w, h, firstPos.x, firstPos.y)
-                                }
+                                // Second tap of a double tap: cancel the measurement point the first
+                                // tap was about to add (it used to be added immediately).
+                                pendingMeasure?.cancel()
+                                val factor = if (cameraState.value.fovDeg <= 1.0) 0.4f else 2.5f
+                                vm.zoomBy(factor, w.toFloat(), h.toFloat(), firstPos.x, firstPos.y)
                                 lastTapTime = 0L
                             } else {
-                                // Single tap (possible first of a double): identify/measure.
                                 lastTapTime = now
                                 lastTapPos = firstPos
-                                val w = canvasSize.width; val h = canvasSize.height
-                                val p = propsState.value
-                                if (w > 0 && h > 0 && p != null) {
+                                if (measureModeState.value && propsState.value != null) {
                                     val proj = cameraState.value.projection(w.toFloat(), h.toFloat())
                                     val radec = proj.inverse(firstPos.x, firstPos.y)
                                     val pos = SkyPosition(radec[0], radec[1])
-                                    if (measureModeState.value) vm.measureTap(pos)
+                                    // Wait out the double-tap window before committing the point.
+                                    pendingMeasure?.cancel()
+                                    pendingMeasure = scope.launch {
+                                        delay(330)
+                                        vm.measureTap(pos)
+                                    }
                                 }
                             }
-                        } else if (duration >= 400) {
-                            // Long press: identify catalog object
-                            val w = canvasSize.width; val h = canvasSize.height
-                            val p = propsState.value
-                            if (w > 0 && h > 0 && p != null) {
-                                val proj = cameraState.value.projection(w.toFloat(), h.toFloat())
-                                val radec = proj.inverse(firstPos.x, firstPos.y)
-                                val pos = SkyPosition(radec[0], radec[1])
-                                vm.longPressAt(pos)
-                            }
+                        } else if (duration >= 400 && propsState.value != null) {
+                            val cam = cameraState.value
+                            val proj = cam.projection(w.toFloat(), h.toFloat())
+                            val radec = proj.inverse(firstPos.x, firstPos.y)
+                            // A finger-sized radius (28 px) converted to degrees at the current zoom.
+                            val radiusDeg = LONG_PRESS_RADIUS_PX * cam.fovDeg / h
+                            vm.longPressAt(SkyPosition(radec[0], radec[1]), radiusDeg)
                         }
                     }
                 }

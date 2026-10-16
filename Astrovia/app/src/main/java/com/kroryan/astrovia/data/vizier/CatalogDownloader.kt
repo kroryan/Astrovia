@@ -2,6 +2,7 @@
 package com.kroryan.astrovia.data.vizier
 
 import android.content.Context
+import com.kroryan.astrovia.data.hips.HiPSDownloader
 import com.kroryan.astrovia.data.net.HttpClient
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +18,9 @@ data class CatalogDownloadState(
     val catalogName: String = "",
     val bytesDownloaded: Long = 0L,
     val isSuccess: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    /** Set when the download succeeded but the server cut the table short (row limit). */
+    val warning: String? = null,
 )
 
 class CatalogDownloader(private val context: Context) {
@@ -25,6 +28,7 @@ class CatalogDownloader(private val context: Context) {
     val state: StateFlow<CatalogDownloadState> = _state.asStateFlow()
 
     private var downloadJob: Job? = null
+    @Volatile private var activeCall: okhttp3.Call? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     fun startVizieRDownload(catalogId: String, raDeg: Double, decDeg: Double, radiusArcmin: Double, allSky: Boolean = false) {
@@ -59,7 +63,11 @@ class CatalogDownloader(private val context: Context) {
                 }
 
                 downloadFile(url, outputFile)
-                _state.update { it.copy(isRunning = false, isSuccess = true) }
+                val warning = detectOverflow(outputFile)
+                _state.update { it.copy(isRunning = false, isSuccess = true, warning = warning) }
+            } catch (e: CancellationException) {
+                outputFile.delete()
+                throw e
             } catch (e: Exception) {
                 outputFile.delete() // never leave a truncated catalog behind
                 _state.update { it.copy(isRunning = false, errorMessage = e.message) }
@@ -90,7 +98,11 @@ class CatalogDownloader(private val context: Context) {
                 val url = "$tapUrl?REQUEST=doQuery&LANG=ADQL&FORMAT=votable/td&QUERY=${URLEncoder.encode(adql, "UTF-8")}"
 
                 downloadFile(url, outputFile)
-                _state.update { it.copy(isRunning = false, isSuccess = true) }
+                val warning = detectOverflow(outputFile)
+                _state.update { it.copy(isRunning = false, isSuccess = true, warning = warning) }
+            } catch (e: CancellationException) {
+                outputFile.delete()
+                throw e
             } catch (e: Exception) {
                 outputFile.delete() // never leave a truncated catalog behind
                 _state.update { it.copy(isRunning = false, errorMessage = e.message) }
@@ -100,22 +112,43 @@ class CatalogDownloader(private val context: Context) {
 
     private fun downloadFile(url: String, outputFile: File) {
         val req = Request.Builder().url(url).build()
-        HttpClient.client.newCall(req).execute().use { resp ->
-            if (!resp.isSuccessful) {
-                throw Exception("HTTP Error ${resp.code}")
-            }
-            val body = resp.body ?: throw Exception("Empty response body")
-            outputFile.outputStream().use { out ->
-                val buf = ByteArray(8192)
-                var len: Int
-                val inStream = body.byteStream()
-                while (inStream.read(buf).also { len = it } != -1) {
-                    out.write(buf, 0, len)
-                    _state.update {
-                        it.copy(bytesDownloaded = it.bytesDownloaded + len)
+        val call = HttpClient.client.newCall(req)
+        activeCall = call
+        try {
+            call.execute().use { resp ->
+                if (!resp.isSuccessful) {
+                    throw Exception("HTTP Error ${resp.code}")
+                }
+                val body = resp.body ?: throw Exception("Empty response body")
+                var total = 0L
+                var lastPublish = 0L
+                var lastSpaceCheck = 0L
+                outputFile.outputStream().use { out ->
+                    val buf = ByteArray(64 * 1024)
+                    var len: Int
+                    val inStream = body.byteStream()
+                    while (inStream.read(buf).also { len = it } != -1) {
+                        out.write(buf, 0, len)
+                        total += len
+                        val now = System.currentTimeMillis()
+                        // One UI update every 250 ms instead of one per chunk.
+                        if (now - lastPublish > 250) {
+                            lastPublish = now
+                            _state.update { it.copy(bytesDownloaded = total) }
+                        }
+                        // A full catalogue can be gigabytes: stop before the phone runs out of space.
+                        if (total - lastSpaceCheck > 8L * 1024 * 1024) {
+                            lastSpaceCheck = total
+                            if (HiPSDownloader.freeBytes(outputFile.parentFile ?: outputFile) < MIN_FREE_BYTES) {
+                                throw java.io.IOException("Not enough free storage to continue this download")
+                            }
+                        }
                     }
                 }
+                _state.update { it.copy(bytesDownloaded = total) }
             }
+        } finally {
+            activeCall = null
         }
         detectVotableError(outputFile)?.let { error ->
             outputFile.delete()
@@ -124,6 +157,8 @@ class CatalogDownloader(private val context: Context) {
     }
 
     companion object {
+        private const val MIN_FREE_BYTES = 50L * 1024 * 1024
+        private val OVERFLOW = Regex("name=\"QUERY_STATUS\"\\s+value=\"OVERFLOW\"")
         private val VOTABLE_ERROR = Regex("name=\"Error\"\\s+value=\"([^\"]*)\"")
 
         // VizieR's ASU service reports invalid catalog names (and similar errors) as an
@@ -131,6 +166,30 @@ class CatalogDownloader(private val context: Context) {
         // instead of a non-2xx status. Detect that so we don't report success with a
         // garbage file. Errors always appear near the top of the document, so peeking
         // at the first few KB is enough even for multi-megabyte catalog downloads.
+        /**
+         * SIMBAD/VizieR cut a table at their row limit and say so at the END of the document
+         * (`<INFO name="QUERY_STATUS" value="OVERFLOW">`), which the head-only check never saw:
+         * a truncated catalogue was reported as complete.
+         */
+        internal fun detectOverflow(file: File): String? {
+            val tail = try {
+                java.io.RandomAccessFile(file, "r").use { raf ->
+                    val n = minOf(raf.length(), 16L * 1024).toInt()
+                    raf.seek(raf.length() - n)
+                    val b = ByteArray(n)
+                    raf.readFully(b)
+                    String(b, Charsets.UTF_8)
+                }
+            } catch (e: Exception) {
+                return null
+            }
+            return if (OVERFLOW.containsMatchIn(tail)) {
+                "The server stopped at its row limit: this table is INCOMPLETE. Use a smaller radius."
+            } else {
+                null
+            }
+        }
+
         internal fun detectVotableError(file: File): String? {
             val head = file.inputStream().use { input ->
                 val buf = ByteArray(8192)
@@ -145,6 +204,7 @@ class CatalogDownloader(private val context: Context) {
 
     fun stopDownload() {
         downloadJob?.cancel()
+        activeCall?.cancel() // do not wait for the next read timeout
         _state.update { it.copy(isRunning = false) }
     }
 }

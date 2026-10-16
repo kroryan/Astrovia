@@ -15,7 +15,8 @@ import kotlin.math.sqrt
  * orden N son 4*ipix + {0,1,2,3} en orden N+1, así que el render por recursión
  * nunca necesita la dirección inversa (ang2pix).
  *
- * Devuelve grados (ra, dec) ICRS.
+ * Devuelve grados (ra, dec) ICRS. Si el survey esta en otro frame (p. ej. galactico),
+ * `frame` rota el resultado a ICRS.
  */
 object Healpix {
     private val JRLL = intArrayOf(2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4)
@@ -78,14 +79,16 @@ object Healpix {
         return doubleArrayOf(st * cos(phi), st * sin(phi), z)
     }
 
-    private fun vecToRadec(v: DoubleArray): DoubleArray {
+    /** Unit vector in [frame] -> (raDeg, decDeg) in ICRS. */
+    private fun vecToRadec(v0: DoubleArray, frame: SkyFrame): DoubleArray {
+        val v = if (frame == SkyFrame.ICRS) v0 else frame.toIcrs(v0[0], v0[1], v0[2])
         val ra = ((Math.toDegrees(atan2(v[1], v[0])) % 360.0) + 360.0) % 360.0
         val dec = Math.toDegrees(kotlin.math.asin(v[2].coerceIn(-1.0, 1.0)))
         return doubleArrayOf(ra, dec)
     }
 
     /** Centro (raDeg, decDeg) del píxel anidado (order, ipix). */
-    fun center(order: Int, ipix: Long): DoubleArray {
+    fun center(order: Int, ipix: Long, frame: SkyFrame = SkyFrame.ICRS): DoubleArray {
         val nside = nside(order)
         val npface = nside.toLong() * nside
         val face = (ipix / npface).toInt()
@@ -93,7 +96,7 @@ object Healpix {
         val (ix, iy) = decompose(ipf)
         val fx = (ix + 0.5) / nside
         val fy = (iy + 0.5) / nside
-        return vecToRadec(toVec3(fx, fy, face))
+        return vecToRadec(toVec3(fx, fy, face), frame)
     }
 
     /**
@@ -104,7 +107,7 @@ object Healpix {
      * puntos celestes reales, los bordes compartidos entre tiles vecinos coinciden
      * exactamente (sin huecos por la distorsión perspectivica de la gnomónica).
      */
-    fun radecAt(order: Int, ipix: Long, fx: Double, fy: Double): DoubleArray {
+    fun radecAt(order: Int, ipix: Long, fx: Double, fy: Double, frame: SkyFrame = SkyFrame.ICRS): DoubleArray {
         val nside = nside(order)
         val npface = nside.toLong() * nside
         val face = (ipix / npface).toInt()
@@ -112,14 +115,14 @@ object Healpix {
         val (ix, iy) = decompose(ipf)
         val fxFace = (ix + fx) / nside
         val fyFace = (iy + fy) / nside
-        return vecToRadec(toVec3(fxFace, fyFace, face))
+        return vecToRadec(toVec3(fxFace, fyFace, face), frame)
     }
 
     /**
      * 4 esquinas (raDeg, decDeg) del píxel, en sentido horario según la
      * parametrización (fx,fy): (x0,y0),(x1,y0),(x1,y1),(x0,y1).
      */
-    fun corners(order: Int, ipix: Long): Array<DoubleArray> {
+    fun corners(order: Int, ipix: Long, frame: SkyFrame = SkyFrame.ICRS): Array<DoubleArray> {
         val nside = nside(order)
         val npface = nside.toLong() * nside
         val face = (ipix / npface).toInt()
@@ -130,10 +133,10 @@ object Healpix {
         val y0 = iy.toDouble() / nside
         val y1 = (iy + 1).toDouble() / nside
         return arrayOf(
-            vecToRadec(toVec3(x0, y0, face)),
-            vecToRadec(toVec3(x1, y0, face)),
-            vecToRadec(toVec3(x1, y1, face)),
-            vecToRadec(toVec3(x0, y1, face)),
+            vecToRadec(toVec3(x0, y0, face), frame),
+            vecToRadec(toVec3(x1, y0, face), frame),
+            vecToRadec(toVec3(x1, y1, face), frame),
+            vecToRadec(toVec3(x0, y1, face), frame),
         )
     }
 }

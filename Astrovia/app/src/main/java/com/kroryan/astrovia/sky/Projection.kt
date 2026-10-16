@@ -1,151 +1,119 @@
-@file:Suppress("EmptyCatchBlock", "TooGenericExceptionThrown", "VariableNaming", "ImplicitDefaultLocale", "WildcardImport", "MagicNumber", "MaxLineLength", "ComplexCondition", "CyclomaticComplexMethod", "LongMethod", "ReturnCount", "LongParameterList", "SwallowedException", "TooGenericExceptionCaught", "NestedBlockDepth", "FunctionNaming", "LoopWithTooManyJumpStatements", "TooManyFunctions")
 package com.kroryan.astrovia.sky
 
-import kotlin.math.PI
-import kotlin.math.atan2
+import kotlin.math.asin
 import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
- * Zenithal Equal Area projection (ZEA / Lambert azimuthal), the same one
- * Aladin desktop uses for most of the zoom range (see
- * `Projection.getDefaultType` in the desktop code: TAN only below
- * ~4° FoV, ZEA up to ~120°, AIT beyond). Near the center (small angles)
- * ZEA and TAN match almost exactly, so using ZEA across the whole range
- * changes nothing at high zoom and avoids the TAN problem at low zoom:
- * the gnomonic diverges near its horizon (90° from center) and gives the
- * feeling of being "inside a ball" that you have to rotate; ZEA remains
- * well-behaved (bounded radius) almost to the antipode, so zooming out
- * reveals progressively more real sky instead of an endlessly stretching horizon.
+ * Zenithal Equal Area projection (ZEA / Lambert azimuthal), the same one Aladin desktop
+ * uses for most of the zoom range. Near the centre it matches TAN almost exactly and,
+ * unlike TAN, its radius stays bounded, so zooming out reveals progressively more sky.
  *
- * The projection center is (ra0, dec0) in degrees, with a rotation angle
- * (position) to orient the sky (default north up, rot = 0).
- * `radPerPixel` = projection units per pixel (defined by vertical FoV and height).
+ * The view is defined by an orthonormal frame:
+ *  - [center]: unit vector of the sky point at the screen centre;
+ *  - [up]: unit vector perpendicular to [center] that points towards the top of the screen.
+ * The screen "right" axis is `center x up`. With this convention the sky is seen from the
+ * inside of the celestial sphere, as in a sky chart: with north up, EAST IS ON THE LEFT.
+ * (An earlier version mapped east to the right, which mirrored the whole sky.)
+ *
+ * `radPerPixel` = projection units (rho = 2 sin(theta/2)) per screen pixel.
  */
-data class Projection(
-    val ra0: Double,
-    val dec0: Double,
-    val rotationDeg: Double = 0.0,
+class Projection(
+    val center: Vec3,
+    val up: Vec3,
     val radPerPixel: Double,
     val widthPx: Float,
     val heightPx: Float,
 ) {
     val cxPx get() = widthPx / 2f
     val cyPx get() = heightPx / 2f
-    private val rot = Math.toRadians(rotationDeg)
-    private val cosRot = cos(rot)
-    private val sinRot = sin(rot)
-    private val ra0Rad = Math.toRadians(ra0)
-    private val dec0Rad = Math.toRadians(dec0)
-    private val sinDec0 = sin(dec0Rad)
-    private val cosDec0 = cos(dec0Rad)
 
-    /** (raDeg, decDeg) -> (screenX, screenY) or null if at the antipode (undefined). */
-    fun forward(raDeg: Double, decDeg: Double): FloatArray? = forwardInternal(raDeg, decDeg, clamp = false)
+    private val right: Vec3 = center cross up
+
+    /** (raDeg, decDeg) -> (screenX, screenY), or null if the point is on the far side of the view. */
+    fun forward(raDeg: Double, decDeg: Double): FloatArray? {
+        val d = Math.toRadians(decDeg)
+        val a = Math.toRadians(raDeg)
+        val cd = cos(d)
+        return project(cd * cos(a), cd * sin(a), sin(d), clamp = false)
+    }
+
+    /** Unit-vector variant of [forward]. */
+    fun forwardVec(v: Vec3): FloatArray? = project(v.x, v.y, v.z, clamp = false)
 
     /**
-     * Same as [forward] but never returns null for points beyond the [forward] cutoff:
-     * instead it clamps z to the cutoff, projecting them onto the boundary circle.
-     *
-     * Used only for the tile mesh grid (see SkyRenderer.placementMesh). A HEALPix tile
-     * near the edge of the visible hemisphere straddles the z cutoff, so some of its mesh
-     * grid points fall outside it; with plain [forward] those points are null and the
-     * whole mesh cell touching them gets dropped, leaving a HEALPix-rhombus-shaped black
-     * gap right at the edge of the view. Clamping instead gives every grid point a
-     * (possibly distorted, but on-screen) position, so the tile's texture still covers
-     * the gap instead of leaving a hole. The tile is already being culled/leveled based
-     * on [forward]'s stricter cutoff, so this only affects a thin sliver of pixels right
-     * at the visible boundary — never the choice of which tiles to draw.
+     * Same as [forward] but never returns null for points beyond the render cutoff: they are
+     * pushed radially onto the boundary circle. Used only for tile meshes so a tile straddling
+     * the visible hemisphere still gets a mesh instead of a hole.
      */
-    fun forwardClamped(raDeg: Double, decDeg: Double): FloatArray = forwardInternal(raDeg, decDeg, clamp = true)!!
+    fun forwardClamped(raDeg: Double, decDeg: Double): FloatArray {
+        val d = Math.toRadians(decDeg)
+        val a = Math.toRadians(raDeg)
+        val cd = cos(d)
+        return project(cd * cos(a), cd * sin(a), sin(d), clamp = true)!!
+    }
 
-    private fun forwardInternal(raDeg: Double, decDeg: Double, clamp: Boolean): FloatArray? {
-        val dec = Math.toRadians(decDeg)
-        var dra = Math.toRadians(raDeg) - ra0Rad
-        if (dra > PI) dra -= 2 * PI
-        else if (dra < -PI) dra += 2 * PI
-        val cosDec = cos(dec)
-        var x = cosDec * sin(dra)
-        var y = sin(dec) * cosDec0 - cosDec * sinDec0 * cos(dra)
-        var z = sin(dec) * sinDec0 + cosDec * cosDec0 * cos(dra)
+    private fun project(px: Double, py: Double, pz: Double, clamp: Boolean): FloatArray? {
+        var x = px * right.x + py * right.y + pz * right.z
+        var y = px * up.x + py * up.y + pz * up.z
+        var z = px * center.x + py * center.y + pz * center.z
 
-        // ZEA can mathematically project the entire sphere (except the exact antipode),
-        // but rendering flat parallelograms across the back hemisphere causes massive
-        // distortion and overlapping polygons over the front view.
-        // We restrict rendering to the front hemisphere + a margin for the screen corners.
-        // z < -0.15 corresponds to an angle > ~98.6 degrees from the center.
-        if (z < -0.15) {
+        // Render only the front hemisphere plus a margin: z < -0.15 is more than ~98.6 deg
+        // from the centre. Flat parallelograms over the back hemisphere would overlap the view.
+        if (z < Z_CUTOFF) {
             if (!clamp) return null
-            // Project onto the boundary circle along the radial vector in the xy-plane
-            // instead of modifying z alone (which mapped antipode points to the screen center).
-            val rCut = sqrt(1.0 - 0.15 * 0.15)
-            val r = sqrt(x * x + y * y)
+            val rCut = sqrt(1.0 - Z_CUTOFF * Z_CUTOFF)
+            val r = hypot(x, y)
             if (r > 1e-9) {
-                val scale = rCut / r
-                x *= scale
-                y *= scale
+                val k = rCut / r
+                x *= k
+                y *= k
             } else {
                 x = rCut
                 y = 0.0
             }
-            z = -0.15
+            z = Z_CUTOFF
         }
-
-        // ZEA (Zenithal Equal Area): w = sqrt((1+z)/2)
         val w = sqrt((1.0 + z) / 2.0)
-        if (w < 1e-9) return null // exact antipode: undefined
-        val xi = x / w
-        val eta = y / w
-        val xr = xi * cosRot - eta * sinRot
-        val yr = xi * sinRot + eta * cosRot
-        val sx = cxPx + (xr / radPerPixel).toFloat()
-        val sy = cyPx - (yr / radPerPixel).toFloat()
-        return floatArrayOf(sx, sy)
+        if (w < 1e-9) return null
+        return floatArrayOf(
+            (cxPx + (x / w) / radPerPixel).toFloat(),
+            (cyPx - (y / w) / radPerPixel).toFloat(),
+        )
     }
 
     /** (screenX, screenY) -> (raDeg, decDeg). */
-    fun inverse(sx: Float, sy: Float): DoubleArray {
-        val xr = (sx - cxPx) * radPerPixel.toFloat()
-        val yr = -(sy - cyPx) * radPerPixel.toFloat()
-        val xi = xr * cosRot + yr * sinRot
-        val eta = -xr * sinRot + yr * cosRot
-        val rho = sqrt(xi * xi + eta * eta)
-        // ZEA: rho = 2*sin(c/2) -> c = 2*asin(rho/2). rho can reach up to 2
-        // (antipode); coerceIn avoids NaN due to rounding when rho touches that limit.
-        val c = 2.0 * kotlin.math.asin((rho / 2.0).coerceIn(-1.0, 1.0))
+    fun inverse(sx: Float, sy: Float): DoubleArray = inverseVec(sx, sy).toRaDec()
+
+    /** (screenX, screenY) -> unit vector. Points beyond the antipode radius are clamped to it. */
+    fun inverseVec(sx: Float, sy: Float): Vec3 {
+        val xi = (sx - cxPx).toDouble() * radPerPixel
+        val eta = -(sy - cyPx).toDouble() * radPerPixel
+        val rho = hypot(xi, eta)
+        if (rho < 1e-15) return center
+        // ZEA: rho = 2 sin(c/2) -> c = 2 asin(rho/2)
+        val c = 2.0 * asin((rho / 2.0).coerceAtMost(1.0))
         val sinC = sin(c)
-        val cosC = cos(c)
-        val dec: Double
-        val dra: Double
-        if (rho < 1e-12) {
-            dec = Math.toDegrees(dec0Rad)
-            dra = 0.0
-        } else {
-            dec = Math.toDegrees(
-                kotlin.math.asin((cosC * sinDec0 + eta * sinC * cosDec0 / rho).coerceIn(-1.0, 1.0))
-            )
-            dra = Math.toDegrees(atan2(xi * sinC, rho * cosDec0 * cosC - eta * sinDec0 * sinC))
-        }
-        var ra = (Math.toDegrees(ra0Rad) + dra + 360.0) % 360.0
-        if (ra < 0) ra += 360.0
-        return doubleArrayOf(ra, dec)
+        val dir = (right * (xi / rho)) + (up * (eta / rho))
+        return (center * cos(c) + dir * sinC).unit()
     }
 
     companion object {
+        /** z of the render cutoff (about 98.6 deg from the centre). */
+        const val Z_CUTOFF = -0.15
+
+        /** Largest rho (projection radius) that is still inside the render cutoff. */
+        val RHO_CUTOFF: Double = 2.0 * sin(Math.acos(Z_CUTOFF) / 2.0)
+
         /**
-         * Projection units (rho) per pixel for a given vertical FoV.
-         * In ZEA, rho = 2*sin(theta/2) where theta is the angular distance to
-         * the center (see `inverse`: c = 2*asin(rho/2) is exactly that distance).
-         * At the vertical screen edge theta = fovDeg/2, so the projection radius
-         * there is rho_edge = 2*sin(fovDeg/4). (We previously used
-         * tan(fovRad/2), the TAN/gnomonic formula; with ZEA the edge never goes
-         * to infinity, which is exactly what allows zooming out without artifacts.)
+         * Projection units per pixel for a given vertical FoV: at the vertical screen edge
+         * theta = fov/2, so rho_edge = 2 sin(fov/4).
          */
         fun radPerPixelFromFov(fovDeg: Double, heightPx: Float): Double {
             val fovRad = Math.toRadians(fovDeg.coerceIn(0.0001, 179.99))
-            val half = 2.0 * sin(fovRad / 4.0)
-            return half / (heightPx / 2.0)
+            return 2.0 * sin(fovRad / 4.0) / (heightPx / 2.0)
         }
     }
 }

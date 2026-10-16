@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kroryan.astrovia.data.hips.HiPSDownloader
+import com.kroryan.astrovia.data.hips.HiPSPropertiesParser
+import com.kroryan.astrovia.data.hips.SkyRegion
 import com.kroryan.astrovia.data.hips.HiPSSurvey
 import com.kroryan.astrovia.data.vizier.CatalogDownloader
 import com.kroryan.astrovia.model.SkyPosition
@@ -25,6 +27,7 @@ fun DownloadSheet(
     catalogDownloader: CatalogDownloader,
     currentSurvey: HiPSSurvey,
     cameraCenter: SkyPosition,
+    cameraFovDeg: Double = 10.0,
     onDismiss: () -> Unit,
     onAddCustomDir: (String) -> Unit = {}
 ) {
@@ -60,7 +63,7 @@ fun DownloadSheet(
         Spacer(modifier = Modifier.height(16.dp))
 
         if (selectedTabIndex == 0) {
-            HiPSTabContent(downloader, currentSurvey, onDismiss, onAddCustomDir)
+            HiPSTabContent(downloader, currentSurvey, cameraCenter, cameraFovDeg, onDismiss, onAddCustomDir)
         } else {
             CatalogTabContent(catalogDownloader, cameraCenter)
         }
@@ -71,11 +74,15 @@ fun DownloadSheet(
 fun HiPSTabContent(
     downloader: HiPSDownloader,
     currentSurvey: HiPSSurvey,
+    cameraCenter: SkyPosition,
+    cameraFovDeg: Double,
     onDismiss: () -> Unit,
     onAddCustomDir: (String) -> Unit
 ) {
     val state by downloader.getState(currentSurvey.id).collectAsState()
-    var selectedOrder by remember { mutableFloatStateOf(3f) }
+    var selectedOrder by remember { mutableFloatStateOf(6f) }
+    // Only the area in view by default: the whole sky to a useful order is hundreds of GB.
+    var onlyVisibleArea by remember { mutableStateOf(true) }
     var maxThreads by remember { mutableFloatStateOf(8f) }
     var fastCheck by remember { mutableStateOf(true) }
     var customPath by remember { mutableStateOf("") }
@@ -90,6 +97,8 @@ fun HiPSTabContent(
         Text("Tiles ready (downloaded + skipped): ${state.tilesDownloaded}")
         Text("Data downloaded: ${formatBytes(state.bytesDownloaded)}")
         Text("Active threads: ${state.activeThreads}")
+        if (state.tilesNotFound > 0) Text("Outside the survey coverage: ${state.tilesNotFound}")
+        if (state.tilesFailed > 0) Text("Failed (will be retried on the next run): ${state.tilesFailed}", color = MaterialTheme.colorScheme.error)
         
         Spacer(modifier = Modifier.height(16.dp))
         Button(
@@ -102,16 +111,36 @@ fun HiPSTabContent(
     } else {
         Text("Target Dataset: ${currentSurvey.title}", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
+        state.message?.let {
+            Text(it, color = if (state.incomplete || it.startsWith("Needs") || it.startsWith("About") || it.startsWith("Cannot") || it.startsWith("Could not")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(8.dp))
+        }
         Text("Select Maximum Order (Depth): ${selectedOrder.toInt()}")
         Slider(
             value = selectedOrder,
             onValueChange = { selectedOrder = it },
-            valueRange = 0f..8f,
-            steps = 7,
+            valueRange = 0f..14f,
+            steps = 13,
             modifier = Modifier.fillMaxWidth()
         )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = onlyVisibleArea, onCheckedChange = { onlyVisibleArea = it })
+            Text("Only the area in view (${"%.1f".format(visibleRadius(cameraFovDeg))}\u00b0 around the centre)")
+        }
+        val ext = HiPSPropertiesParser.pickFormat(currentSurvey.formats.ifBlank { "jpeg" }).let { if (it == "jpeg") "jpg" else it }
+        val region = if (onlyVisibleArea) SkyRegion(cameraCenter.raDeg, cameraCenter.decDeg, visibleRadius(cameraFovDeg)) else null
+        val est = remember(selectedOrder, onlyVisibleArea, cameraCenter, cameraFovDeg, ext) {
+            HiPSDownloader.estimate(selectedOrder.toInt(), region, ext)
+        }
+        val free = remember(selectedOrder) { HiPSDownloader.freeBytes(downloader.defaultDir(currentSurvey)) }
+        val tooBig = est.bytes > free * 0.9 || est.tiles > HiPSDownloader.MAX_TILES_PER_RUN
         Text(
-            "Higher order means more detail, but exponentially more files. Max order 3-4 is recommended for offline.",
+            "About ${est.tiles} tiles, ${HiPSDownloader.human(est.bytes)} (${HiPSDownloader.human(free)} free)",
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (tooBig) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            "Higher order means more detail, but exponentially more files. Limiting it to the area in view lets you go much deeper.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -154,8 +183,9 @@ fun HiPSTabContent(
             Button(
                 onClick = { 
                     if (customPath.isNotBlank()) onAddCustomDir(customPath)
-                    downloader.startDownload(currentSurvey, selectedOrder.toInt(), "jpg", fastCheck, maxThreads.toInt(), customPath.ifBlank { null }) 
+                    downloader.startDownload(currentSurvey, selectedOrder.toInt(), fastCheck, maxThreads.toInt(), customPath.ifBlank { null }, region)
                 },
+                enabled = !tooBig,
                 modifier = Modifier.weight(1f)
             ) {
                 Text("Start Download")
@@ -195,6 +225,7 @@ fun CatalogTabContent(
     } else {
         if (state.isSuccess) {
             Text("Download Complete!", color = MaterialTheme.colorScheme.primary)
+            state.warning?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
         if (state.errorMessage != null) {
             Text("Error: ${state.errorMessage}", color = MaterialTheme.colorScheme.error)
@@ -203,6 +234,13 @@ fun CatalogTabContent(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = allSky, onCheckedChange = { allSky = it })
             Text("Download Full Catalog (All-Sky)")
+        }
+        if (allSky) {
+            Text(
+                "Full catalogues can be gigabytes (Gaia has billions of rows). The download stops by itself if the storage runs low.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
         }
         
         OutlinedTextField(
@@ -263,6 +301,9 @@ fun CatalogTabContent(
         }
     }
 }
+
+/** Radius (deg) of the circle that covers the screen: half the vertical FoV with margin for the corners. */
+private fun visibleRadius(fovDeg: Double): Double = (fovDeg / 2.0 * 1.25).coerceIn(0.01, 90.0)
 
 fun formatBytes(bytes: Long): String {
     if (bytes < 1024) return "$bytes B"

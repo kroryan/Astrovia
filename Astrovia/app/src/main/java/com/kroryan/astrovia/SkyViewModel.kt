@@ -2,6 +2,8 @@
 package com.kroryan.astrovia
 
 import android.app.Application
+import android.net.Uri
+import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.kroryan.astrovia.data.hips.HiPSProperties
@@ -15,8 +17,18 @@ import com.kroryan.astrovia.data.vizier.VizieRService
 import com.kroryan.astrovia.model.CatalogRow
 import com.kroryan.astrovia.model.Marker
 import com.kroryan.astrovia.model.Measurement
+import com.kroryan.astrovia.capture.CaptureFormat
+import com.kroryan.astrovia.capture.CaptureOptions
+import com.kroryan.astrovia.capture.CaptureState
+import com.kroryan.astrovia.capture.RenderedCapture
+import com.kroryan.astrovia.capture.SkyCapture
 import com.kroryan.astrovia.model.SkyPosition
 import com.kroryan.astrovia.sky.SkyCamera
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlin.math.abs
+import kotlin.math.hypot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +39,9 @@ import kotlinx.coroutines.withContext
 
 data class SkyUiState(
     val camera: SkyCamera = SkyCamera(),
+    /** False until the first survey has positioned the camera; later surveys keep the user's view. */
+    val cameraPlaced: Boolean = false,
+    val capture: CaptureState = CaptureState.Idle,
     val survey: HiPSSurvey = SurveyRegistry.builtIn.first(),
     val availableSurveys: List<HiPSSurvey> = SurveyRegistry.builtIn,
     val surveysLoading: Boolean = false,
@@ -84,7 +99,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
             localDirs.add(java.io.File(app.getExternalFilesDir(null), "HiPS_Downloads"))
             settings.customHiPSDirs.forEach { localDirs.add(java.io.File(it)) }
             
-            val list = com.kroryan.astrovia.data.hips.HiPSListService.fetchAvailableSurveys(localDirs)
+            val list = com.kroryan.astrovia.data.hips.HiPSListService.fetchAvailableSurveys(localDirs, java.io.File(app.filesDir, "surveys-cache.json"))
             
             _state.update { 
                 // If offline and properties failed, auto-select local
@@ -158,18 +173,27 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
             val props = fetchProperties(survey)
             _state.update {
                 if (props != null) {
-                    // Atomic swap of survey+props+camera. The old survey remains
-                    // visible until exactly here; from here on the draw and fetch
-                    // use the new survey (and its new cache key, see TileRepository).
+                    // Atomic swap of survey+props. The old survey remains visible until exactly
+                    // here; from here on the draw and fetch use the new survey (and its new
+                    // cache key, see TileRepository).
+                    //
+                    // The camera is only placed for the FIRST survey. Changing survey used to
+                    // jump to that survey's initial position, losing whatever the user was
+                    // looking at (impossible to compare DSS and 2MASS on the same object); the
+                    // catalogue overlay was cleared too although it does not depend on the survey.
+                    val cam = if (it.cameraPlaced) {
+                        it.camera
+                    } else {
+                        val ic = props.initialIcrs
+                        val fov = props.initialFov.coerceIn(SkyCamera.MIN_FOV, MAX_INITIAL_FOV)
+                        SkyCamera.looking(SkyPosition(ic[0], ic[1]), fov).clampedTo(viewW, viewH)
+                    }
                     it.copy(
                         survey = survey,
                         props = props,
                         propsLoading = false,
-                        catalogRows = emptyList(),
-                        camera = SkyCamera(
-                            center = SkyPosition(props.initialRa, props.initialDec),
-                            fovDeg = props.initialFov.coerceIn(SkyCamera.MIN_FOV, MAX_INITIAL_FOV),
-                        ),
+                        camera = cam,
+                        cameraPlaced = true,
                     )
                 } else {
                     // Failed fetch
@@ -221,16 +245,81 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
         }
 
     // --- Camera ---
-    fun panBy(dx: Float, dy: Float, w: Float, h: Float) {
-        _state.update { it.copy(camera = it.camera.panBy(dx, dy, w, h)) }
+    private var viewW = 0f
+    private var viewH = 0f
+    private var flingJob: Job? = null
+    private var northJob: Job? = null
+
+    /** Viewport size changed (first layout or rotation): keep the FoV inside what the screen can show. */
+    fun setViewport(w: Float, h: Float) {
+        viewW = w
+        viewH = h
+        _state.update { it.copy(camera = it.camera.clampedTo(w, h)) }
     }
 
+    /**
+     * One gesture step: the previous centroid (px, py) moved to (nx, ny) while the fingers changed
+     * their distance by [zoom] and their angle by [twistDeg] (clockwise). The sky point under the
+     * previous centroid follows the fingers exactly.
+     */
+    fun transform(px: Float, py: Float, nx: Float, ny: Float, zoom: Float, twistDeg: Double, w: Float, h: Float) {
+        stopMotion()
+        _state.update { s ->
+            var cam = s.camera
+            if (zoom != 1f) cam = cam.zoom(zoom, w, h, px, py)
+            if (twistDeg != 0.0) cam = cam.twist(twistDeg, w, h, px, py)
+            cam = cam.drag(px, py, nx, ny, w, h)
+            s.copy(camera = cam)
+        }
+    }
+
+    /** Pure zoom (double tap): [factor] > 1 zooms in around (fx, fy). */
     fun zoomBy(factor: Float, w: Float, h: Float, fx: Float, fy: Float) {
+        stopMotion()
         _state.update { it.copy(camera = it.camera.zoom(factor, w, h, fx, fy)) }
     }
 
     fun recenter(pos: SkyPosition) {
+        stopMotion()
         _state.update { it.copy(camera = it.camera.recenterTo(pos)) }
+    }
+
+    /** Inertia after a drag. (vx, vy) is the finger velocity in px/s; it decays on its own. */
+    fun fling(vx: Float, vy: Float, w: Float, h: Float) {
+        stopMotion()
+        if (hypot(vx, vy) < 250f) return
+        flingJob = viewModelScope.launch {
+            var x = vx
+            var y = vy
+            val dt = 16L
+            while (hypot(x, y) > 40f) {
+                val dx = x * dt / 1000f
+                val dy = y * dt / 1000f
+                _state.update { it.copy(camera = it.camera.drag(w / 2f, h / 2f, w / 2f + dx, h / 2f + dy, w, h)) }
+                x *= 0.94f
+                y *= 0.94f
+                delay(dt)
+            }
+        }
+    }
+
+    /** Compass button: smoothly rotate the picture so celestial north points up. */
+    fun alignNorth() {
+        stopMotion()
+        northJob = viewModelScope.launch {
+            repeat(14) {
+                val a = _state.value.camera.northAngleDeg
+                if (abs(a) < 0.05) return@repeat
+                _state.update { it.copy(camera = it.camera.rolledBy(-a * 0.3)) }
+                delay(16)
+            }
+            _state.update { it.copy(camera = it.camera.alignedNorthUp()) }
+        }
+    }
+
+    private fun stopMotion() {
+        flingJob?.cancel()
+        northJob?.cancel()
     }
 
     // --- Simbad Search ---
@@ -238,63 +327,100 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
         if (query.isBlank()) return
         _state.update { it.copy(searching = true, message = null) }
         viewModelScope.launch {
-            val results = simbad.search(query)
-            val first = results.firstOrNull()
-            val msg = if (first != null) "Found ${first.mainId}" else app.getString(R.string.no_results)
+            var first: SimbadObject? = null
+            var msg: String
+            try {
+                first = simbad.search(query).firstOrNull()
+                msg = if (first != null) "Found ${first.mainId}" else app.getString(R.string.no_results)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: java.io.IOException) {
+                // Not the same as "no results": the service could not be reached.
+                msg = "Could not reach SIMBAD (${e.message ?: "no connection"})"
+            } catch (e: Exception) {
+                msg = "Search failed: ${e.message}"
+            }
+            val found = first
+            stopMotion()
             _state.update {
                 it.copy(
                     searching = false,
-                    selected = first,
+                    selected = found,
                     message = msg,
-                    camera = if (first != null) it.camera.recenterTo(first.position) else it.camera
+                    camera = if (found != null) it.camera.recenterTo(found.position) else it.camera,
                 )
             }
-            viewModelScope.launch {
-                kotlinx.coroutines.delay(3000)
-                _state.update { if (it.message == msg) it.copy(message = null) else it }
-            }
+            clearMessageLater(msg)
         }
     }
 
-    fun identifyAt(raDeg: Double, decDeg: Double) {
+    private fun clearMessageLater(msg: String) {
+        viewModelScope.launch {
+            delay(3500)
+            _state.update { if (it.message == msg) it.copy(message = null) else it }
+        }
+    }
+
+    fun identifyAt(raDeg: Double, decDeg: Double, radiusArcmin: Double = 0.5) {
         _state.update { it.copy(identifying = true, message = null) }
         viewModelScope.launch {
-            val obj = simbad.coneSearch(raDeg, decDeg, radiusArcmin = 0.5)
-            _state.update { it.copy(identifying = false, selected = obj) }
+            var obj: SimbadObject? = null
+            var msg: String? = null
+            try {
+                obj = simbad.coneSearch(raDeg, decDeg, radiusArcmin = radiusArcmin)
+                if (obj == null) msg = "No SIMBAD object near that point"
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                msg = "Could not reach SIMBAD (${e.message ?: "no connection"})"
+            }
+            _state.update { it.copy(identifying = false, selected = obj, message = msg ?: it.message) }
+            msg?.let { clearMessageLater(it) }
         }
     }
 
     fun clearSelected() = _state.update { it.copy(selected = null) }
 
     // --- VizieR Catalogs ---
-    fun longPressAt(pos: SkyPosition) {
-        if (!_state.value.catalogVisible) return
+    /**
+     * Long press: picks the nearest catalogue source within [radiusDeg] (the caller converts a
+     * finger-sized radius in pixels to degrees, so it works at any zoom; it used to be a fixed
+     * 0.5 deg: at high zoom everything matched, at low zoom nothing could). With no catalogue
+     * loaded, it asks SIMBAD what is there.
+     */
+    fun longPressAt(pos: SkyPosition, radiusDeg: Double) {
         val rows = _state.value.catalogRows
-        if (rows.isEmpty()) return
-        val closest = rows.minByOrNull { SkyPosition.separation(pos, SkyPosition(it.raDeg, it.decDeg)) }
-        if (closest != null) {
-            val dist = SkyPosition.separation(pos, SkyPosition(closest.raDeg, closest.decDeg))
-            if (dist < 0.5) {
-                val obj = com.kroryan.astrovia.data.simbad.SimbadObject(
-                    mainId = closest.id,
-                    otype = closest.columns["otype"] ?: "Catalog Source",
-                    position = SkyPosition(closest.raDeg, closest.decDeg),
-                    magV = closest.mag,
-                    raw = closest.columns
-                )
-                _state.update { it.copy(selected = obj) }
-            }
+        if (rows.isEmpty() || !_state.value.catalogVisible) {
+            identifyAt(pos.raDeg, pos.decDeg, radiusArcmin = (radiusDeg * 60.0).coerceIn(0.02, 30.0))
+            return
+        }
+        val closest = rows.minByOrNull { SkyPosition.separation(pos, SkyPosition(it.raDeg, it.decDeg)) } ?: return
+        val dist = SkyPosition.separation(pos, SkyPosition(closest.raDeg, closest.decDeg))
+        if (dist <= radiusDeg) {
+            val obj = SimbadObject(
+                mainId = closest.id,
+                otype = closest.columns["otype"] ?: "Catalog Source",
+                position = SkyPosition(closest.raDeg, closest.decDeg),
+                magV = closest.mag,
+                raw = closest.columns,
+            )
+            _state.update { it.copy(selected = obj) }
         }
     }
 
     fun loadCatalog(catalogId: String, maxRows: Int = 500) {
         val s = _state.value
+        if (s.props?.skyFrame == com.kroryan.astrovia.sky.SkyFrame.BODY) {
+            // Catalogues are lists of SKY objects: on a planetary map they will not line up with anything.
+            val note = "Note: catalogues describe the sky, not this planetary map"
+            _state.update { it.copy(message = note) }
+            clearMessageLater(note)
+        }
         val radius = (s.camera.fovDeg / 2.0).coerceIn(0.05, 60.0) * 60.0 // arcmin
         _state.update { it.copy(catalogLoading = true, message = null, activeCatalogId = catalogId) }
         viewModelScope.launch {
             try {
                 val rows = if (catalogId == "SIMBAD") {
-                    val simbad = com.kroryan.astrovia.data.simbad.SimbadService()
                     simbad.searchRegion(s.camera.center.raDeg, s.camera.center.decDeg, radius, maxRows).map { simbad.toCatalogRow(it) }
                 } else {
                     vizier.coneSearch(catalogId, s.camera.center.raDeg, s.camera.center.decDeg, radius, maxRows)
@@ -325,6 +451,86 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
     fun clearCatalog() = _state.update { it.copy(catalogRows = emptyList(), catalogVisible = true, activeCatalogId = null) }
 
     fun toggleCatalogVisibility() = _state.update { it.copy(catalogVisible = !it.catalogVisible) }
+
+    // --- Sky capture (screenshot of the HiPS only) ---
+    private var captureJob: Job? = null
+    private var pendingCapture: RenderedCapture? = null
+    private var pendingFormat: CaptureFormat = CaptureFormat.PNG
+
+    /** Sizes (scale -> pixels) the current screen can export on this device. */
+    fun captureScales(): List<Int> = SkyCapture.availableScales(viewW.toInt(), viewH.toInt())
+
+    fun captureSize(scale: Int): Pair<Int, Int> = SkyCapture.outputSize(viewW.toInt(), viewH.toInt(), scale)
+
+    /**
+     * Renders the sky picture currently on screen (and nothing else) at up to 3x the screen size,
+     * with the finest tiles available, and saves it. See [SkyCapture].
+     */
+    fun captureSky(options: CaptureOptions) {
+        if (captureJob?.isActive == true) return
+        val snapshot = _state.value
+        if (snapshot.props == null || viewW <= 0f || viewH <= 0f) {
+            _state.update { it.copy(capture = CaptureState.Failed("Nothing to capture yet: wait for the sky to load.")) }
+            return
+        }
+        captureJob = viewModelScope.launch {
+            try {
+                val r = SkyCapture.render(tileRepo, snapshot, viewW.toInt(), viewH.toInt(), options) { p ->
+                    _state.update { it.copy(capture = p) }
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    _state.update { it.copy(capture = CaptureState.Running(com.kroryan.astrovia.capture.CapturePhase.ENCODING, 0, 0)) }
+                    val (uri, bytes) = SkyCapture.saveToGallery(app, r, options.format)
+                    val w = r.bitmap.width
+                    val h = r.bitmap.height
+                    r.bitmap.recycle()
+                    _state.update { it.copy(capture = CaptureState.Saved(uri, w, h, bytes, r.missingTiles)) }
+                } else {
+                    // Android 7-9: ask where to save (no storage permission needed that way).
+                    pendingCapture = r
+                    pendingFormat = options.format
+                    _state.update { it.copy(capture = CaptureState.AwaitingLocation(r.name, r.bitmap.width, r.bitmap.height, options.format)) }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: OutOfMemoryError) {
+                _state.update { it.copy(capture = CaptureState.Failed("Not enough memory for that size. Choose a smaller scale.")) }
+            } catch (e: Exception) {
+                _state.update { it.copy(capture = CaptureState.Failed(e.message ?: "The capture failed")) }
+            }
+        }
+    }
+
+    /** Android 7-9: the user picked a destination (null = cancelled). */
+    fun saveCaptureTo(uri: Uri?) {
+        val r = pendingCapture
+        if (r == null) return
+        if (uri == null) {
+            dismissCapture()
+            return
+        }
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(capture = CaptureState.Running(com.kroryan.astrovia.capture.CapturePhase.ENCODING, 0, 0)) }
+                val bytes = SkyCapture.saveToUri(app, r, pendingFormat, uri)
+                val w = r.bitmap.width
+                val h = r.bitmap.height
+                r.bitmap.recycle()
+                pendingCapture = null
+                _state.update { it.copy(capture = CaptureState.Saved(uri, w, h, bytes, r.missingTiles)) }
+            } catch (e: Exception) {
+                _state.update { it.copy(capture = CaptureState.Failed(e.message ?: "Could not save the image")) }
+            }
+        }
+    }
+
+    /** Cancels a running capture or closes its result. */
+    fun dismissCapture() {
+        captureJob?.cancel()
+        pendingCapture?.bitmap?.recycle()
+        pendingCapture = null
+        _state.update { it.copy(capture = CaptureState.Idle) }
+    }
 
     // --- Markers and Measurements ---
     fun addMarker(pos: SkyPosition, label: String = "M${state.value.markers.size + 1}") {

@@ -21,25 +21,34 @@ data class SimbadObject(
 
 /**
  * Consulta Simbad por nombre de objeto o por coordenadas (query = "ra dec" en grados).
- * Endpoint: simbad/sim-all?Ident=...&Radius=...&Radius.unit=arcmin&Votable=...
+ * Endpoints: simbad/sim-id (name) and simbad/sim-tap (cone search)
  * (Véase cds/aladin/ServerSimbad.java y el diccionario GLU SimbadXML1.)
  */
 class SimbadService {
     private val client = HttpClient.client
 
-    private val columns = "main_id,otype,ra,dec,flux(V),sp"
+    // `sim-id?...&Votable=...` (the old query) answers with an HTML page and HTTP 200, not a VOTable:
+    // the parser found no rows and name search looked like "SIMBAD does not respond".
+    // `output.format=VOTABLE&output.params=...` returns the real table.
+    private val outputParams = "main_id,otype,ra(d),dec(d),flux(V),sp"
 
+    /**
+     * Resolves an object name (M42, NGC 7000, Betelgeuse...). Returns an empty list when SIMBAD
+     * does not know the name; throws [java.io.IOException] when the service cannot be reached,
+     * so the UI can tell "not found" from "no connection".
+     */
     suspend fun search(query: String): List<SimbadObject> =
         withContext(Dispatchers.IO) {
             val ident = URLEncoder.encode(query.trim(), "UTF-8")
-            val url = "https://simbad.u-strasbg.fr/simbad/sim-id?Ident=$ident&Votable=$columns"
-            val text = fetchText(url) ?: return@withContext emptyList()
+            val url = "https://simbad.cds.unistra.fr/simbad/sim-id?Ident=$ident" +
+                "&output.format=VOTABLE&output.params=" + URLEncoder.encode(outputParams, "UTF-8")
+            val text = fetchTextOrThrow(url)
             VotableParser.parse(text).mapNotNull { row -> row.toSimbad() }
         }
 
     suspend fun searchRegion(raDeg: Double, decDeg: Double, radiusArcmin: Double = 10.0, maxRows: Int = 500): List<SimbadObject> =
         withContext(Dispatchers.IO) {
-            val tapUrl = "https://simbad.u-strasbg.fr/simbad/sim-tap/sync"
+            val tapUrl = "https://simbad.cds.unistra.fr/simbad/sim-tap/sync"
             val radiusDegrees = radiusArcmin / 60.0
             val rStr = String.format(java.util.Locale.US, "%.6f", raDeg)
             val dStr = String.format(java.util.Locale.US, "%.6f", decDeg)
@@ -47,7 +56,7 @@ class SimbadService {
             val topClause = if (maxRows > 0) "TOP $maxRows " else ""
             val adql = "SELECT $topClause b.main_id, b.otype, b.ra, b.dec, f.flux as flux_V, b.sp_type FROM basic AS b LEFT JOIN flux AS f ON b.oid = f.oidref AND f.filter = 'V' WHERE CONTAINS(POINT('ICRS', b.ra, b.dec), CIRCLE('ICRS', $rStr, $dStr, $radStr))=1 ORDER BY flux_V ASC"
             val url = "$tapUrl?REQUEST=doQuery&LANG=ADQL&FORMAT=votable/td&QUERY=${URLEncoder.encode(adql, "UTF-8")}"
-            val text = fetchText(url) ?: return@withContext emptyList()
+            val text = fetchTextOrThrow(url)
             VotableParser.parse(text).mapNotNull { row -> row.toSimbad() }
         }
 
@@ -68,38 +77,36 @@ class SimbadService {
         columns = obj.raw,
     )
 
+    /**
+     * Column names differ between endpoints (`RA_d`/`FLUX_V` in sim-id, `ra`/`flux_v` in TAP), so
+     * they are matched case-insensitively. (The old exact-case match missed TAP's `flux_v`, so
+     * region searches never carried a magnitude.)
+     */
     fun Map<String, String>.toSimbad(): SimbadObject? {
-        fun firstValue(keys: List<String>): String? = keys.firstOrNull { this.containsKey(it) }?.let { this[it] }
+        val m = entries.associate { it.key.lowercase() to it.value }
+        fun first(vararg keys: String): String? = keys.firstNotNullOfOrNull { k -> m[k]?.takeIf { it.isNotBlank() } }
 
-        val mainId = firstValue(listOf("main_id", "MAIN_ID")) ?: return null
-        val otype = firstValue(listOf("otype", "OTYPE")) ?: "Unknown"
-        val raStr = firstValue(listOf("ra", "RA"))?.toDoubleOrNull() ?: return null
-        val decStr = firstValue(listOf("dec", "DEC"))?.toDoubleOrNull() ?: return null
-        val fluxV = firstValue(listOf("flux_V", "FLUX_V", "flux(V)"))?.toDoubleOrNull()
-        val sp = firstValue(listOf("sp_type", "SP_TYPE", "sp")) ?: ""
-        
+        val mainId = first("main_id") ?: return null
+        val otype = first("otype", "otype_s") ?: "Unknown"
+        val ra = first("ra_d", "ra")?.toDoubleOrNull() ?: return null
+        val dec = first("dec_d", "dec")?.toDoubleOrNull() ?: return null
+        val fluxV = first("flux_v", "flux(v)")?.toDoubleOrNull()
+        val sp = first("sp_type", "sp") ?: ""
+
         return SimbadObject(
-            mainId = mainId,
+            mainId = mainId.trim(),
             otype = otype,
-            position = SkyPosition(raStr, decStr),
+            position = SkyPosition(ra, dec),
             magV = fluxV,
             spectralType = sp,
             raw = this,
         )
     }
 
-    private fun fetchText(url: String): String? = try {
+    /** Like [fetchText] but reports connectivity and server problems as exceptions. */
+    private fun fetchTextOrThrow(url: String): String =
         client.newCall(okhttp3.Request.Builder().url(url).build()).execute().use { r ->
-            if (r.isSuccessful) {
-                val body = r.body?.string()
-                body
-            } else {
-                android.util.Log.e("Simbad", "HTTP Error: ${r.code}")
-                null
-            }
+            if (!r.isSuccessful) throw java.io.IOException("SIMBAD answered HTTP ${r.code}")
+            r.body?.string() ?: throw java.io.IOException("SIMBAD sent an empty answer")
         }
-    } catch (e: Exception) { 
-        android.util.Log.e("Simbad", "Network Error", e)
-        null 
-    }
 }

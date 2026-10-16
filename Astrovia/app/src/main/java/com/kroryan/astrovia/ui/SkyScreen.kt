@@ -17,12 +17,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Visibility
@@ -92,6 +100,11 @@ fun SkyScreen(vm: SkyViewModel) {
 
     var surveySearch by remember { mutableStateOf("") }
     var showAbout by remember { mutableStateOf(false) }
+    var showCaptureDialog by remember { mutableStateOf(false) }
+    var searchOpen by remember { mutableStateOf(false) }
+    var searchText by remember { mutableStateOf("") }
+    val focusManager = LocalFocusManager.current
+    val searchFocus = remember { FocusRequester() }
 
     // Edge-to-edge: offsets follow the real system-bar insets (they differ per
     // device: notches, gesture/3-button navigation, Android 15 forced edge-to-edge).
@@ -195,10 +208,7 @@ fun SkyScreen(vm: SkyViewModel) {
                 }
             }
 
-            // Top bar: menu (HiPS surveys) + VizieR catalogs.
-            // The name search bar (Simbad) was removed: the Simbad endpoint
-            // does not respond from the device, so a broken bar only confuses.
-            // The VizieR catalog (which does work) is kept.
+            // Top bar: menu (HiPS surveys), object search (SIMBAD), settings, downloads, catalogues.
             Surface(
                 color = SkyPanel,
                 shape = RoundedCornerShape(28.dp),
@@ -214,52 +224,79 @@ fun SkyScreen(vm: SkyViewModel) {
                     IconButton(onClick = { scope.launch { drawerState.open() } }) {
                         Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.surveys), tint = androidx.compose.ui.graphics.Color.White)
                     }
-                    Spacer(Modifier.weight(1f))
-                    IconButton(onClick = { showSettingsSheet = true }) {
-                        Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = androidx.compose.ui.graphics.Color.White)
-                    }
-                    IconButton(onClick = { showDownloadSheet = true }) {
-                        Icon(Icons.Filled.CloudDownload, contentDescription = "Download HiPS", tint = androidx.compose.ui.graphics.Color.White)
-                    }
-                    IconButton(onClick = { showCatalogSheet = true }) {
-                        Icon(Icons.Filled.TableChart, contentDescription = stringResource(R.string.catalogs), tint = androidx.compose.ui.graphics.Color.White)
+                    if (searchOpen) {
+                        // Name search. It had been removed because SIMBAD "did not respond": the
+                        // real problem was the request format (it answered HTML), now fixed.
+                        LaunchedEffect(Unit) { searchFocus.requestFocus() }
+                        OutlinedTextField(
+                            value = searchText,
+                            onValueChange = { searchText = it },
+                            placeholder = { Text("Object name, e.g. M42") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(onSearch = {
+                                vm.searchObject(searchText)
+                                focusManager.clearFocus()
+                            }),
+                            modifier = Modifier.weight(1f).focusRequester(searchFocus),
+                        )
+                        if (state.searching) {
+                            androidx.compose.material3.CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp).padding(horizontal = 2.dp),
+                                strokeWidth = 2.dp, color = TextPrimary,
+                            )
+                        }
+                        IconButton(onClick = { searchOpen = false; focusManager.clearFocus() }) {
+                            Icon(Icons.Filled.Close, contentDescription = "Close search", tint = androidx.compose.ui.graphics.Color.White)
+                        }
+                    } else {
+                        IconButton(onClick = { searchOpen = true }) {
+                            Icon(Icons.Filled.Search, contentDescription = "Search an object", tint = androidx.compose.ui.graphics.Color.White)
+                        }
+                        Spacer(Modifier.weight(1f))
+                        IconButton(onClick = { showSettingsSheet = true }) {
+                            Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = androidx.compose.ui.graphics.Color.White)
+                        }
+                        IconButton(onClick = { showDownloadSheet = true }) {
+                            Icon(Icons.Filled.CloudDownload, contentDescription = "Download HiPS", tint = androidx.compose.ui.graphics.Color.White)
+                        }
+                        IconButton(onClick = { showCatalogSheet = true }) {
+                            Icon(Icons.Filled.TableChart, contentDescription = stringResource(R.string.catalogs), tint = androidx.compose.ui.graphics.Color.White)
+                        }
                     }
                 }
             }
 
-            // Action FABs
-            Column(
-                horizontalAlignment = Alignment.End,
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 16.dp, top = topInset + 84.dp, bottom = bottomInset + 84.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Fab(Icons.Filled.Straighten, "Measure", state.measureMode) { vm.toggleMeasureMode() }
-                Fab(Icons.Filled.Add, "Marker") {
-                    vm.addMarker(state.camera.center)
-                }
-                Fab(
-                    icon = if (state.catalogVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                    desc = "Toggle catalog",
-                    highlighted = !state.catalogVisible
-                ) {
-                    vm.toggleCatalogVisibility()
-                }
-                val activeCatId = state.activeCatalogId
-                if (activeCatId != null) {
-                    Fab(Icons.Filled.Refresh, "Reload catalog") {
-                        val limit = maxRowsInput.toIntOrNull() ?: 500
-                        vm.loadCatalog(activeCatId, limit)
-                    }
-                }
-                if (state.markers.isNotEmpty()) {
-                    Fab(Icons.Filled.Delete, "Clear markers") { vm.clearMarkers() }
-                }
-                if (state.measurements.isNotEmpty()) {
-                    Fab(Icons.Filled.Clear, "Clear measurements") { vm.clearMeasurements() }
-                }
+            // Compass: only when the picture is not north-up.
+            if (kotlin.math.abs(state.camera.northAngleDeg) > 0.5) {
+                CompassButton(
+                    northAngleDeg = state.camera.northAngleDeg,
+                    onClick = { vm.alignNorth() },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = topInset + 84.dp, end = 16.dp),
+                )
             }
+
+            // Tools: ONE button that unfolds into capture / measure / marker / catalogue visibility
+            // (+ reload / clear when relevant). It replaces the 3-6 loose buttons mid-screen.
+            val activeCatId = state.activeCatalogId
+            ActionDial(
+                actions = skyDialActions(
+                    onCapture = { showCaptureDialog = true },
+                    measureMode = state.measureMode,
+                    onMeasure = { vm.toggleMeasureMode() },
+                    onMarker = { vm.addMarker(state.camera.center) },
+                    catalogVisible = state.catalogVisible,
+                    onToggleCatalog = { vm.toggleCatalogVisibility() },
+                    onReloadCatalog = if (activeCatId != null) ({ vm.loadCatalog(activeCatId, maxRowsInput.toIntOrNull() ?: 500) }) else null,
+                    onClearMarkers = if (state.markers.isNotEmpty()) ({ vm.clearMarkers() }) else null,
+                    onClearMeasurements = if (state.measurements.isNotEmpty()) ({ vm.clearMeasurements() }) else null,
+                ),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = bottomInset + 84.dp),
+            )
 
             // Bottom status bar
             Surface(
@@ -274,8 +311,14 @@ fun SkyScreen(vm: SkyViewModel) {
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    StatusItem("RA", AstroMath.formatRa(state.camera.center.raDeg))
-                    StatusItem("Dec", AstroMath.formatDec(state.camera.center.decDeg))
+                    if (state.props?.skyFrame == com.kroryan.astrovia.sky.SkyFrame.BODY) {
+                        // planetary map: its own longitude / latitude, not RA / Dec
+                        StatusItem("Lon", "%.2f°".format(state.camera.center.raDeg))
+                        StatusItem("Lat", "%+.2f°".format(state.camera.center.decDeg))
+                    } else {
+                        StatusItem("RA", AstroMath.formatRa(state.camera.center.raDeg))
+                        StatusItem("Dec", AstroMath.formatDec(state.camera.center.decDeg))
+                    }
                     StatusItem("FoV", "%.2f°".format(state.camera.fovDeg))
                 }
             }
@@ -317,6 +360,16 @@ fun SkyScreen(vm: SkyViewModel) {
     }
 
     if (showAbout) AboutDialog(onDismiss = { showAbout = false })
+    if (showCaptureDialog) {
+        CaptureOptionsDialog(
+            vm = vm,
+            hasCatalog = state.catalogRows.isNotEmpty(),
+            hasMarkers = state.markers.isNotEmpty() || state.measurements.isNotEmpty(),
+            gridOn = state.settings.showGrid,
+            onDismiss = { showCaptureDialog = false },
+        )
+    }
+    CaptureStatusDialogs(vm, state.capture)
 
     // Bottom sheet: selected object info
     val selected = state.selected
@@ -410,6 +463,7 @@ fun SkyScreen(vm: SkyViewModel) {
                 catalogDownloader = vm.catalogDownloader,
                 currentSurvey = state.survey,
                 cameraCenter = state.camera.center,
+                cameraFovDeg = state.camera.fovDeg,
                 onDismiss = { showDownloadSheet = false },
                 onAddCustomDir = { vm.addCustomHiPSDir(it) }
             )

@@ -68,9 +68,9 @@ private class LongLruCache<K, V>(private val maxBytes: Long, private val sizeOf:
  * - Downsampling via `inSampleSize` based on on-screen tile size: a
  *   tile viewed at 140 px is decoded to 128x128 (32 KB) instead of 512x512
  *   (512 KB) -> up to 16x less memory.
- * - Reuse of recycled bitmaps via `inBitmap` (without allocating new ones).
- * - Stream decoding (without materializing the body into a ByteArray) and in
- *   RGB_565 (HiPS tiles are opaque): half the memory of ARGB_8888.
+ * - Stream decoding (without materializing the body into a ByteArray). JPEG tiles (opaque)
+ *   are decoded as RGB_565 (half the memory); PNG/WebP/FITS tiles keep ARGB_8888 so
+ *   transparency and colour depth are not lost.
  * - Limited concurrency (semaphore) to avoid decoding many tiles at once.
  * - Bitmap recycling when evicted from cache (frees native memory).
  * - Coalesced invalidation: a burst of tiles produces a single UI notification.
@@ -95,6 +95,9 @@ class TileRepository(
     // cooldown every repaint would re-request them and, since each failure triggers
     // a repaint, the app would retry in a tight loop (battery and data drain).
     private val failedAt: MutableMap<String, Long> = java.util.concurrent.ConcurrentHashMap()
+    // Tiles the server says do not exist (HTTP 404: outside a sparse survey's coverage) are
+    // not retried for a long time; other failures (timeouts, 5xx) are retried sooner.
+    private val missing: MutableSet<String> = Collections.synchronizedSet(mutableSetOf())
     // Fetch/decode concurrency. The CDS server tolerates ~12 parallel connections
     // without rate-limit (tested: 12 tiles in parallel all 200 in ~4s).
     // With 12 slots, the coarse base (few tiles) arrives in the first batch and
@@ -137,6 +140,7 @@ class TileRepository(
         // which every request would throw IllegalStateException until app restart.
         try { client.cache?.evictAll() } catch (_: Exception) {}
         failedAt.clear()
+        missing.clear()
     }
 
     /** Coalesced callback to the main thread when new tiles arrive. */
@@ -173,12 +177,17 @@ class TileRepository(
      * `scalePx` = screen pixels per native tile pixel. Used to decide the
      * `inSampleSize`: lower zoom means more downsampling -> less memory.
      */
-    fun request(survey: HiPSSurvey, ext: String, order: Int, npix: Long, scalePx: Float) {
+    fun request(survey: HiPSSurvey, props: HiPSProperties, order: Int, npix: Long, scalePx: Float) {
         val sample = sampleSizeFor(scalePx)
         for (s in intArrayOf(1, 2, 4)) {
             if (s <= sample && memCache.get(key(survey.id, order, npix, s)) != null) return
         }
         val k = key(survey.id, order, npix, sample)
+        if (missing.contains(k)) {
+            val lastMiss = failedAt[k]
+            if (lastMiss != null && System.currentTimeMillis() - lastMiss < MISSING_COOLDOWN_MS) return
+            missing.remove(k)
+        }
         val lastFail = failedAt[k]
         if (lastFail != null) {
             if (System.currentTimeMillis() - lastFail < FAIL_COOLDOWN_MS) return
@@ -188,47 +197,83 @@ class TileRepository(
         // We notify when QUEUING (not just on completion) so the loading indicator
         // appears as soon as tiles are requested, not ~80ms+fetch later.
         scheduleInvalidate()
-        val url = survey.tileUrl(order, npix, ext)
+        val url = survey.tileUrl(order, npix, props.ext)
         scope.launch {
-            val bmp = permits.withPermit { fetch(url, sample) }
-            if (bmp != null) memCache.put(k, bmp) else failedAt[k] = System.currentTimeMillis()
+            val result = permits.withPermit { fetch(url, sample, props, highQuality = false) }
+            if (result.bitmap != null) {
+                memCache.put(k, result.bitmap)
+            } else {
+                failedAt[k] = System.currentTimeMillis()
+                if (result.notFound) missing.add(k)
+            }
             inFlight.remove(k)
             scheduleInvalidate()
         }
     }
 
-    private suspend fun fetch(url: String, sampleSize: Int): Bitmap? = withContext(Dispatchers.IO) {
-        try {
-            val opts = BitmapFactory.Options().apply {
-                inPreferredConfig = Bitmap.Config.RGB_565
-                inMutable = false
-                inSampleSize = sampleSize
-            }
-            if (url.startsWith("file://")) {
-                val file = try { java.io.File(java.net.URI(url)) } catch (e: Exception) { java.io.File(url.removePrefix("file://")) }
-                if (file.exists()) {
-                    return@withContext BitmapFactory.decodeFile(file.absolutePath, opts)
-                }
-                return@withContext null
-            }
-            val req = okhttp3.Request.Builder().url(url).build()
-            client.newCall(req).execute().use { resp ->
-                if (!resp.isSuccessful) {
-                    android.util.Log.w("TileRepository", "HTTP ${resp.code} for $url")
-                    return@withContext null
-                }
-                val body = resp.body ?: return@withContext null
-                val decoded = BufferedInputStream(body.byteStream(), 32 * 1024).use { ins ->
-                    BitmapFactory.decodeStream(ins, null, opts)
-                }
-                if (decoded == null) android.util.Log.w("TileRepository", "decodeStream returned null for $url")
-                decoded
-            }
-        } catch (e: Exception) {
-            android.util.Log.w("TileRepository", "fetch failed for $url", e)
-            null
+    /**
+     * Full-resolution, ARGB_8888 tile for exports (screenshots). It reuses the HTTP disk cache,
+     * retries transient failures and is NOT stored in the live LRU cache, so the caller owns it.
+     * Returns null only if the tile does not exist or all attempts failed.
+     */
+    suspend fun fetchFull(survey: HiPSSurvey, props: HiPSProperties, order: Int, npix: Long): Bitmap? {
+        val url = survey.tileUrl(order, npix, props.ext)
+        var attempt = 0
+        while (attempt < FULL_ATTEMPTS) {
+            val r = permits.withPermit { fetch(url, 1, props, highQuality = true) }
+            if (r.bitmap != null) return r.bitmap
+            if (r.notFound) return null
+            attempt++
+            kotlinx.coroutines.delay(400L * attempt)
         }
+        return null
     }
+
+    private class FetchResult(val bitmap: Bitmap?, val notFound: Boolean = false)
+
+    private suspend fun fetch(url: String, sampleSize: Int, props: HiPSProperties, highQuality: Boolean): FetchResult =
+        withContext(Dispatchers.IO) {
+            val ext = props.ext
+            try {
+                // JPEG is opaque: RGB_565 halves the memory in the live view. Everything else
+                // (and any export) keeps full 32-bit colour and alpha.
+                val config = if (ext == "jpg" && !highQuality) Bitmap.Config.RGB_565 else Bitmap.Config.ARGB_8888
+                val opts = BitmapFactory.Options().apply {
+                    inPreferredConfig = config
+                    inMutable = false
+                    inSampleSize = sampleSize
+                }
+                fun decode(ins: java.io.InputStream): Bitmap? {
+                    if (ext == "fits") {
+                        val pic = FitsTileDecoder.decode(ins, props.pixelCutMin, props.pixelCutMax, sampleSize) ?: return null
+                        return Bitmap.createBitmap(pic.argb, pic.width, pic.height, Bitmap.Config.ARGB_8888)
+                    }
+                    return BitmapFactory.decodeStream(ins, null, opts)
+                }
+                if (url.startsWith("file://")) {
+                    val file = try { java.io.File(java.net.URI(url)) } catch (e: Exception) { java.io.File(url.removePrefix("file://")) }
+                    if (!file.exists()) return@withContext FetchResult(null, notFound = true)
+                    val bmp = file.inputStream().buffered(32 * 1024).use { decode(it) }
+                    return@withContext FetchResult(bmp)
+                }
+                val req = okhttp3.Request.Builder().url(url).build()
+                client.newCall(req).execute().use { resp ->
+                    if (!resp.isSuccessful) {
+                        android.util.Log.w("TileRepository", "HTTP ${resp.code} for $url")
+                        return@withContext FetchResult(null, notFound = resp.code == 404)
+                    }
+                    val body = resp.body ?: return@withContext FetchResult(null)
+                    val decoded = BufferedInputStream(body.byteStream(), 32 * 1024).use { decode(it) }
+                    if (decoded == null) android.util.Log.w("TileRepository", "could not decode $url")
+                    FetchResult(decoded)
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                android.util.Log.w("TileRepository", "fetch failed for $url", e)
+                FetchResult(null)
+            }
+        }
 
     /** Cancels all ongoing work (call when destroying the ViewModel). */
     fun shutdown() {
@@ -247,8 +292,14 @@ class TileRepository(
         /** Disk cache (fixed; cannot be hot-resized). */
         private const val DISK_CACHE_BYTES = 64L * 1024 * 1024
 
-        /** Minimum wait before retrying a tile that failed to load. */
+        /** Minimum wait before retrying a tile that failed to load (network error, 5xx...). */
         private const val FAIL_COOLDOWN_MS = 30_000L
+
+        /** A tile that does not exist (404) is asked for again only after this long. */
+        private const val MISSING_COOLDOWN_MS = 10 * 60_000L
+
+        /** Attempts for an export tile before giving up. */
+        private const val FULL_ATTEMPTS = 3
 
         /**
          * Downsampling based on on-screen tile size.
