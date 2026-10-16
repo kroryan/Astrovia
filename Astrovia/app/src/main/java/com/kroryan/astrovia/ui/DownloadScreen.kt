@@ -29,7 +29,8 @@ fun DownloadSheet(
     cameraCenter: SkyPosition,
     cameraFovDeg: Double = 10.0,
     onDismiss: () -> Unit,
-    onAddCustomDir: (String) -> Unit = {}
+    onAddCustomDir: (String) -> Unit = {},
+    onShowCatalogFile: (String) -> Unit = {},
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
@@ -65,7 +66,7 @@ fun DownloadSheet(
         if (selectedTabIndex == 0) {
             HiPSTabContent(downloader, currentSurvey, cameraCenter, cameraFovDeg, onDismiss, onAddCustomDir)
         } else {
-            CatalogTabContent(catalogDownloader, cameraCenter)
+            CatalogTabContent(catalogDownloader, cameraCenter, onDismiss, onShowCatalogFile)
         }
     }
 }
@@ -197,7 +198,9 @@ fun HiPSTabContent(
 @Composable
 fun CatalogTabContent(
     catalogDownloader: CatalogDownloader,
-    cameraCenter: SkyPosition
+    cameraCenter: SkyPosition,
+    onDismiss: () -> Unit = {},
+    onShowFile: (String) -> Unit = {},
 ) {
     val state by catalogDownloader.state.collectAsState()
     var raText by remember { mutableStateOf(cameraCenter.raDeg.toString()) }
@@ -226,6 +229,12 @@ fun CatalogTabContent(
         if (state.isSuccess) {
             Text("Download Complete!", color = MaterialTheme.colorScheme.primary)
             state.warning?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            state.savedPath?.let { path ->
+                Text(path, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Button(onClick = { onShowFile(path); onDismiss() }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Show it on the sky")
+                }
+            }
         }
         if (state.errorMessage != null) {
             Text("Error: ${state.errorMessage}", color = MaterialTheme.colorScheme.error)

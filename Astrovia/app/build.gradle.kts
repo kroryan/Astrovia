@@ -84,6 +84,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
 
     testImplementation("junit:junit:4.13.2")
+    // Android's XmlPullParser is only a stub in JVM unit tests: use the real implementation (already in the repo).
+    testImplementation(files("../../lib/kxml2-2.3.0.jar"))
     testImplementation("io.cucumber:cucumber-java:7.15.0")
     testImplementation("io.cucumber:cucumber-junit:7.15.0")
 }

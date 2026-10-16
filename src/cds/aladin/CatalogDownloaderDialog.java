@@ -19,8 +19,13 @@ public class CatalogDownloaderDialog extends JDialog implements CatalogDownloade
     
     private boolean isDownloading = false;
 
-    public CatalogDownloaderDialog(Window owner) {
+    private final Aladin aladin;
+
+    public CatalogDownloaderDialog(Window owner) { this(owner, null); }
+
+    public CatalogDownloaderDialog(Window owner, Aladin aladin) {
         super(owner, "VizieR / Simbad Downloader", ModalityType.MODELESS);
+        this.aladin = aladin;
         setLayout(new BorderLayout(10, 10));
         
         JPanel inputPanel = new JPanel(new GridBagLayout());
@@ -161,12 +166,28 @@ public class CatalogDownloaderDialog extends JDialog implements CatalogDownloade
         progressLabel.setText("Downloaded: " + sizeStr);
     }
 
+    private String warning = null;
+
+    @Override
+    public void onWarning(String message) { warning = message; }
+
     @Override
     public void onComplete() {
         if (!isDownloading) return;
         resetUI();
-        progressLabel.setText("Completed!");
-        JOptionPane.showMessageDialog(this, "Download successfully completed!", "Success", JOptionPane.INFORMATION_MESSAGE);
+        progressLabel.setText(warning != null ? "Completed with a warning" : "Completed!");
+        JOptionPane.showMessageDialog(this, warning != null ? warning : "Download successfully completed!",
+                warning != null ? "Incomplete table" : "Success",
+                warning != null ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
+        warning = null;
+        // A downloaded catalogue used to be saved with no way to use it: offer to show it on the sky.
+        if (aladin != null) {
+            File saved = new File(fileField.getText());
+            if (saved.isFile() && JOptionPane.showConfirmDialog(this, "Show this catalogue on the sky now?\n" + saved.getName(),
+                    "Show catalogue", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                aladin.execAsyncCommand("load \"" + saved.getAbsolutePath().replace("\\", "/") + "\"");
+            }
+        }
     }
 
     @Override

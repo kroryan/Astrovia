@@ -13,6 +13,7 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.net.Uri
 import android.os.Build
+import android.provider.DocumentsContract
 import android.provider.MediaStore
 import com.kroryan.astrovia.SkyUiState
 import com.kroryan.astrovia.data.hips.HiPSProperties
@@ -70,7 +71,15 @@ sealed interface CaptureState {
 
     /** Android 7-9: the picture is rendered and waits for the user to choose where to save it. */
     data class AwaitingLocation(val suggestedName: String, val width: Int, val height: Int, val format: CaptureFormat) : CaptureState
-    data class Saved(val uri: Uri, val width: Int, val height: Int, val bytes: Long, val missingTiles: Int) : CaptureState
+    data class Saved(
+        val uri: Uri,
+        val width: Int,
+        val height: Int,
+        val bytes: Long,
+        val missingTiles: Int,
+        /** Human-readable place where it was saved ("Pictures/Astrovia" or the folder the user chose). */
+        val location: String,
+    ) : CaptureState
     data class Failed(val message: String) : CaptureState
 }
 
@@ -350,6 +359,36 @@ object SkyCapture {
                 uri to bytes
             } catch (e: Exception) {
                 resolver.delete(uri, null, null)
+                throw e
+            }
+        }
+
+    /** Name shown for the folder the user chose (falls back to the raw id). */
+    fun folderLabel(ctx: Context, tree: Uri): String = try {
+        val doc = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
+        ctx.contentResolver.query(doc, arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME), null, null, null)?.use {
+            if (it.moveToFirst()) it.getString(0) else null
+        } ?: DocumentsContract.getTreeDocumentId(tree)
+    } catch (e: Exception) {
+        tree.lastPathSegment ?: "selected folder"
+    }
+
+    /**
+     * Any Android version: create the file inside the folder the user picked in Settings (a persisted
+     * Storage Access Framework tree), so no per-capture prompt and no storage permission are needed.
+     */
+    suspend fun saveToTree(ctx: Context, r: RenderedCapture, format: CaptureFormat, tree: Uri): Pair<Uri, Long> =
+        withContext(Dispatchers.IO) {
+            val resolver = ctx.contentResolver
+            val parent = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
+            val doc = DocumentsContract.createDocument(resolver, parent, format.mime, r.name)
+                ?: throw java.io.IOException("Could not create the file in the chosen folder")
+            try {
+                val bytes = resolver.openOutputStream(doc)?.use { encode(ctx, r, format, it) }
+                    ?: throw java.io.IOException("Could not open the destination")
+                doc to bytes
+            } catch (e: Exception) {
+                try { DocumentsContract.deleteDocument(resolver, doc) } catch (ignored: Exception) { /* best effort */ }
                 throw e
             }
         }

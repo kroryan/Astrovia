@@ -69,6 +69,15 @@
     <binary>astrovia</binary>
   </provides>
   <releases>
+    <release version="0.6.0" date="2026-10-16">
+      <description>
+        <ul>
+          <li>Capture only the sky picture of the view at high resolution, in a folder you choose</li>
+          <li>Support for galactic and planetary surveys and for FITS tiles</li>
+          <li>Safer HiPS and catalogue downloads, with a size estimate and an option to download only the area in view</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.5.1" date="2026-10-16">
       <description>
         <ul>

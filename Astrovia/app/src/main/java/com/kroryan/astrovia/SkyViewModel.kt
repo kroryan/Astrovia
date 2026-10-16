@@ -425,26 +425,41 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
                 } else {
                     vizier.coneSearch(catalogId, s.camera.center.raDeg, s.camera.center.decDeg, radius, maxRows)
                 }
-                _state.update { 
-                    it.copy(
-                        catalogLoading = false, 
-                        catalogRows = rows,
-                        message = if (rows.isEmpty()) "No objects found in this area" else "Loaded ${rows.size} objects"
-                    ) 
+                val msg = when {
+                    rows.isEmpty() -> "No objects found in this area"
+                    maxRows > 0 && rows.size >= maxRows ->
+                        "Showing the first ${rows.size} objects (the limit): zoom in or raise the limit to see more"
+                    else -> "Loaded ${rows.size} objects"
                 }
-                
-                // Clear message after 3 seconds
-                viewModelScope.launch {
-                    kotlinx.coroutines.delay(3000)
-                    _state.update { if (it.message == (if (rows.isEmpty()) "No objects found in this area" else "Loaded ${rows.size} objects")) it.copy(message = null) else it }
-                }
+                _state.update { it.copy(catalogLoading = false, catalogRows = rows, message = msg) }
+                clearMessageLater(msg)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                _state.update { it.copy(catalogLoading = false, message = "Failed: ${e.message}") }
-                viewModelScope.launch {
-                    kotlinx.coroutines.delay(3000)
-                    _state.update { if (it.message == "Failed: ${e.message}") it.copy(message = null) else it }
-                }
+                val msg = if (e is java.io.IOException) "Could not reach the catalogue service (${e.message ?: "no connection"})" else "Failed: ${e.message}"
+                _state.update { it.copy(catalogLoading = false, message = msg) }
+                clearMessageLater(msg)
             }
+        }
+    }
+
+    /** Shows a catalogue that was downloaded earlier (a VOTable file) as the overlay. */
+    fun showCatalogFile(path: String) {
+        _state.update { it.copy(catalogLoading = true, message = null) }
+        viewModelScope.launch {
+            var msg: String
+            try {
+                val rows = withContext(Dispatchers.IO) { vizier.rowsFromVotable(java.io.File(path).readText()) }
+                _state.update { it.copy(catalogLoading = false, catalogRows = rows, catalogVisible = true, activeCatalogId = null) }
+                msg = if (rows.isEmpty()) "That file has no positions to show" else "Showing ${rows.size} objects from ${java.io.File(path).name}"
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(catalogLoading = false) }
+                msg = "Could not read that catalogue: ${e.message}"
+            }
+            _state.update { it.copy(message = msg) }
+            clearMessageLater(msg)
         }
     }
 
@@ -478,18 +493,37 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
                 val r = SkyCapture.render(tileRepo, snapshot, viewW.toInt(), viewH.toInt(), options) { p ->
                     _state.update { it.copy(capture = p) }
                 }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    _state.update { it.copy(capture = CaptureState.Running(com.kroryan.astrovia.capture.CapturePhase.ENCODING, 0, 0)) }
+                _state.update { it.copy(capture = CaptureState.Running(com.kroryan.astrovia.capture.CapturePhase.ENCODING, 0, 0)) }
+                val w = r.bitmap.width
+                val h = r.bitmap.height
+                // 1) the folder the user chose in Settings (works on every Android version)
+                val tree = settings.captureDirUri?.let { Uri.parse(it) }
+                var saved: Triple<Uri, Long, String>? = null
+                var treeProblem: String? = null
+                if (tree != null) {
+                    try {
+                        val (uri, bytes) = SkyCapture.saveToTree(app, r, options.format, tree)
+                        saved = Triple(uri, bytes, SkyCapture.folderLabel(app, tree))
+                    } catch (e: SecurityException) {
+                        treeProblem = "The chosen capture folder is no longer accessible (choose it again in Settings)."
+                    } catch (e: java.io.IOException) {
+                        treeProblem = "Could not save in the chosen folder: ${e.message}"
+                    }
+                }
+                // 2) default: Pictures/Astrovia (Android 10+, no permission needed)
+                if (saved == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     val (uri, bytes) = SkyCapture.saveToGallery(app, r, options.format)
-                    val w = r.bitmap.width
-                    val h = r.bitmap.height
+                    saved = Triple(uri, bytes, "Pictures/Astrovia" + (treeProblem?.let { " ($it)" } ?: ""))
+                }
+                if (saved != null) {
                     r.bitmap.recycle()
-                    _state.update { it.copy(capture = CaptureState.Saved(uri, w, h, bytes, r.missingTiles)) }
+                    val (uri, bytes, where) = saved
+                    _state.update { it.copy(capture = CaptureState.Saved(uri, w, h, bytes, r.missingTiles, where)) }
                 } else {
-                    // Android 7-9: ask where to save (no storage permission needed that way).
+                    // 3) Android 7-9 with no folder set: ask where to save (no storage permission needed that way).
                     pendingCapture = r
                     pendingFormat = options.format
-                    _state.update { it.copy(capture = CaptureState.AwaitingLocation(r.name, r.bitmap.width, r.bitmap.height, options.format)) }
+                    _state.update { it.copy(capture = CaptureState.AwaitingLocation(r.name, w, h, options.format)) }
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -500,6 +534,38 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
     }
+
+    /**
+     * Chooses (or clears, with null) the folder where captures are saved. The permission is made
+     * persistent so it survives restarts.
+     */
+    fun setCaptureDir(uri: Uri?) {
+        if (uri != null) {
+            try {
+                app.contentResolver.takePersistableUriPermission(
+                    uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                )
+            } catch (e: SecurityException) {
+                _state.update { it.copy(message = "Could not keep access to that folder") }
+                return
+            }
+        }
+        settings.captureDirUri?.let { old ->
+            if (uri == null || old != uri.toString()) {
+                try {
+                    app.contentResolver.releasePersistableUriPermission(
+                        Uri.parse(old), android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                    )
+                } catch (e: Exception) { /* it may already be gone */ }
+            }
+        }
+        setSettings(settings.copy(captureDirUri = uri?.toString()))
+    }
+
+    /** Label of where captures go, for the UI. */
+    fun captureLocationLabel(): String =
+        settings.captureDirUri?.let { SkyCapture.folderLabel(app, Uri.parse(it)) }
+            ?: if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) "Pictures/Astrovia" else "Ask every time"
 
     /** Android 7-9: the user picked a destination (null = cancelled). */
     fun saveCaptureTo(uri: Uri?) {
@@ -517,7 +583,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
                 val h = r.bitmap.height
                 r.bitmap.recycle()
                 pendingCapture = null
-                _state.update { it.copy(capture = CaptureState.Saved(uri, w, h, bytes, r.missingTiles)) }
+                _state.update { it.copy(capture = CaptureState.Saved(uri, w, h, bytes, r.missingTiles, "the location you chose")) }
             } catch (e: Exception) {
                 _state.update { it.copy(capture = CaptureState.Failed(e.message ?: "Could not save the image")) }
             }

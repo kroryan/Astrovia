@@ -30,6 +30,13 @@ FITS images and MOC coverage, in a modern dark interface. Free, no ads, no track
 | **Desktop** (Linux, Windows) | this repository (`src/`) | Java/Swing, based on Aladin Desktop. See [DESKTOP.md](DESKTOP.md) |
 | **Android** | [`Astrovia/`](Astrovia/README.md) | Native Kotlin / Jetpack Compose app |
 
+## Highlights (0.6.0)
+
+- **Correct sky orientation** (north up, east left, like a sky chart) and a camera with no singularity at the poles: you can drag straight over a pole and around the whole sphere (Android).
+- **Capture the sky**: a camera button saves *only* the survey picture of the current view (no panels, toolbars or crosshair) at up to 3-4x the screen size, using the finest tiles available. PNG (lossless) or JPEG. You choose the folder (Android: in Settings or in the capture dialog; desktop: it remembers the last one).
+- **Galactic and planetary surveys** are supported (Mellinger, IRIS, Mars, the Moon, Venus, Titan...), as well as FITS-only surveys.
+- **Name search** (SIMBAD), catalogues from VizieR/SIMBAD that can be downloaded and shown on the sky, and offline HiPS download of just the area in view, with a size estimate before you start.
+
 ## Install (desktop)
 
 ### Debian / Ubuntu / Linux Mint (apt repository)

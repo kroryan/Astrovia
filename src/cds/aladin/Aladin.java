@@ -788,7 +788,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
    RGB,MOSAIC,BLINK,SPECTRUM,MREDO,GREY,SELECT,SELECTTAG,DETAG,TAGSELECT,SELECTALL,UNSELECT,PANEL,
    PANEL1,PANEL2C,PANEL2L,PANEL2T,PANEL4,PANEL9,PANEL16,NTOOL,DIST,DRAW,PHOT,TAG,STATSURF,STATSURFCIRC,
    STATSURFPOLY,CUT,SPECT,TRANSP,TRANSPON,CROP,COPY,CLONE,CLONE1,CLONE2,PLOTCAT,CONCAT,CONCAT1,CONCAT2,TABLEINFO,
-   SAVEVIEW,EXPORTEPS,EXPORT,BACKUP,FOLD,INFOLD,ARITHM,MOC,MOCGENIMG,MOCGENPROBA,TMOCGEN,TMOCGENCAT,TMOCGENOBJ,
+   SAVEVIEW,SAVESKY,EXPORTEPS,EXPORT,BACKUP,FOLD,INFOLD,ARITHM,MOC,MOCGENIMG,MOCGENPROBA,TMOCGEN,TMOCGENCAT,TMOCGENOBJ,
    STMOCGEN,STMOCGENCAT,STMOCGENOBJ,STMOCGENMOC,MOCGEN,MOCPOL,MOCGENIMGS,MOCGENCAT,
    MOCM,MOCTOORDER,MOCSPLIT,MOCFILTERING,MOCCROP,MOCEXTRACTSMOC,MOCEXTRACTTMOC,MOCEXTRACTSTMOC,MOCHELP,MOCLOAD,MOCHIPS,
    HEALPIXARITHM,/*ADD,SUB,MUL,DIV,*/
@@ -1305,6 +1305,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
       CONCAT1 = chaine.getString("VWCONCATUNIQ");
       CONCAT2 = chaine.getString("VWCONCATMULTI");
       SAVEVIEW= chaine.getString("MSAVEVIEW");
+      SAVESKY= chaine.getString("MSAVESKY");
       EXPORTEPS=chaine.getString("MEXPORTEPS");
       EXPORT  = chaine.getString("MEXPORT");
       BACKUP  = chaine.getString("MBACKUP");
@@ -1435,7 +1436,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
                {},{SEARCHDIR+"|"+meta+" E"},{FILTERDIR},
                {},{OPENFILE+"|"+meta+" O"}, {OPENURL}, {LASTFILE,"???"},
                {},{OPENLOAD+"|"+meta+" L"}, {LOADTAP}, {LOADFOV}, 
-               {},{MSAVE+"|"+meta+" S"},{SAVEVIEW,"-"},{EXPORTEPS},{EXPORT},{BACKUP},
+               {},{MSAVE+"|"+meta+" S"},{SAVEVIEW,"-"},{SAVESKY},{EXPORTEPS},{EXPORT},{BACKUP},
                {},{MPRINT+"|"+meta+" P"},
                {},{NEW+"|"+meta+" N"},
                {},{aladinSession>0 || extApplet!=null ? MCLOSE : isApplet()?MDCH1: MQUIT}
@@ -2530,7 +2531,12 @@ DropTargetListener, DragSourceListener, DragGestureListener
       haut.setBorder(BorderFactory.createEmptyBorder(4,0,0,40));
       haut.setBackground( getBackground());
       haut.add(haut1,BorderLayout.CENTER);
-      haut.add(logo,BorderLayout.EAST);
+      // Top-right: sky capture button (HiPS image only) next to the logo, outside the sky view.
+      JPanel hautDroite = new JPanel(new BorderLayout(4,0));
+      hautDroite.setBackground( getBackground());
+      hautDroite.add(new SkyCapture.Button(this),BorderLayout.WEST);
+      hautDroite.add(logo,BorderLayout.CENTER);
+      haut.add(hautDroite,BorderLayout.EAST);
 
       // le panel du status
       JPanel searchPanel = new JPanel(new BorderLayout(0,0));
@@ -3298,6 +3304,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
             return true;
          }
       }
+      if( isMenu(s,SAVESKY) ) { SkyCapture.run(this); return true; }
       if( isMenu(s,EXPORTEPS) ) save.saveFile(1,Save.getCodedFormat(Util.indexInArrayOf("EPS", fmt)),-1);
       else if( isMenu(s,BACKUP) ) save.saveFile(0);
       else if( isMenu(s,EXPORT) ) save.exportPlans();
@@ -3666,8 +3673,8 @@ DropTargetListener, DragSourceListener, DragGestureListener
       } else if( isMenu(s,HPXGENMAP)){ buildHiPS();
       } else if( isMenu(s,HPXGENRGB)){ buildHiPSRGB();
       } else if( isMenu(s,FOVEDITOR))  { buildFoV();
-      } else if( isMenu(s,"HiPS Downloader...")) { new HiPSDownloaderDialog(javax.swing.SwingUtilities.getWindowAncestor(this)).setVisible(true);
-      } else if( isMenu(s,"VizieR / Simbad Downloader...")) { new CatalogDownloaderDialog(javax.swing.SwingUtilities.getWindowAncestor(this)).setVisible(true);
+      } else if( isMenu(s,"HiPS Downloader...")) { new HiPSDownloaderDialog(javax.swing.SwingUtilities.getWindowAncestor(this), this).setVisible(true);
+      } else if( isMenu(s,"VizieR / Simbad Downloader...")) { new CatalogDownloaderDialog(javax.swing.SwingUtilities.getWindowAncestor(this), this).setVisible(true);
       } else if( isMenu(s,TOPBOTTOM) )  { flip(0);
       } else if( isMenu(s,RIGHTLEFT) )  { flip(1);
       } else if( isMenu(s,REGISTER) ) { getMessagingMgr().register(false, true);

@@ -1,6 +1,8 @@
 @file:Suppress("EmptyCatchBlock", "TooGenericExceptionThrown", "VariableNaming", "ImplicitDefaultLocale", "WildcardImport", "MagicNumber", "MaxLineLength", "ComplexCondition", "CyclomaticComplexMethod", "LongMethod", "ReturnCount", "LongParameterList", "SwallowedException", "TooGenericExceptionCaught", "NestedBlockDepth", "FunctionNaming", "LoopWithTooManyJumpStatements", "TooManyFunctions")
 package com.kroryan.astrovia.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -104,6 +106,11 @@ fun SkyScreen(vm: SkyViewModel) {
     var searchOpen by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
+    // Folder for sky captures: chosen with the system folder picker, kept across restarts.
+    val dirPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) vm.setCaptureDir(uri)
+    }
+    val captureLabel = remember(state.settings.captureDirUri) { vm.captureLocationLabel() }
     val searchFocus = remember { FocusRequester() }
 
     // Edge-to-edge: offsets follow the real system-bar insets (they differ per
@@ -366,6 +373,8 @@ fun SkyScreen(vm: SkyViewModel) {
             hasCatalog = state.catalogRows.isNotEmpty(),
             hasMarkers = state.markers.isNotEmpty() || state.measurements.isNotEmpty(),
             gridOn = state.settings.showGrid,
+            locationLabel = captureLabel,
+            onChooseFolder = { dirPicker.launch(null) },
             onDismiss = { showCaptureDialog = false },
         )
     }
@@ -448,6 +457,9 @@ fun SkyScreen(vm: SkyViewModel) {
                 settings = state.settings,
                 onSave = { vm.setSettings(it) },
                 onClearCache = { vm.clearCache() },
+                captureLocation = captureLabel,
+                onChooseCaptureDir = { dirPicker.launch(null) },
+                onResetCaptureDir = { vm.setCaptureDir(null) },
             )
         }
     }
@@ -465,7 +477,8 @@ fun SkyScreen(vm: SkyViewModel) {
                 cameraCenter = state.camera.center,
                 cameraFovDeg = state.camera.fovDeg,
                 onDismiss = { showDownloadSheet = false },
-                onAddCustomDir = { vm.addCustomHiPSDir(it) }
+                onAddCustomDir = { vm.addCustomHiPSDir(it) },
+                onShowCatalogFile = { vm.showCatalogFile(it) },
             )
         }
     }
@@ -482,6 +495,9 @@ private fun SettingsSheet(
     settings: AppSettings,
     onSave: (AppSettings) -> Unit,
     onClearCache: () -> Unit,
+    captureLocation: String,
+    onChooseCaptureDir: () -> Unit,
+    onResetCaptureDir: () -> Unit,
 ) {
     var draft by remember(settings) { mutableStateOf(settings) }
     val dirty = draft != settings
@@ -509,6 +525,22 @@ private fun SettingsSheet(
         }
         Text(
             "Lower quality = fewer tiles = faster loading (at the cost of sharpness).",
+            color = TextSecondary,
+            style = MaterialTheme.typography.labelSmall,
+        )
+        Spacer(Modifier.height(12.dp))
+
+        // --- Where sky captures are saved ---
+        Text("Capture folder", color = TextSecondary)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(captureLocation, color = TextPrimary, modifier = Modifier.weight(1f))
+            androidx.compose.material3.TextButton(onClick = onChooseCaptureDir) { Text("Choose") }
+            if (settings.captureDirUri != null) {
+                androidx.compose.material3.TextButton(onClick = onResetCaptureDir) { Text("Default") }
+            }
+        }
+        Text(
+            "Where \"Capture the sky\" saves its pictures. Default: Pictures/Astrovia.",
             color = TextSecondary,
             style = MaterialTheme.typography.labelSmall,
         )

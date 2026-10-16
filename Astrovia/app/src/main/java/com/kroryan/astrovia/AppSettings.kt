@@ -38,6 +38,8 @@ data class AppSettings(
     val brightness: Float = 0f,   // -0.5 .. 0.5
     val contrast: Float = 1f,     // 0.5 .. 2.0
     val customHiPSDirs: Set<String> = emptySet(),
+    /** Folder (a Storage Access Framework tree URI) chosen for sky captures; null = Pictures/Astrovia. */
+    val captureDirUri: String? = null,
 ) {
     companion object {
         private const val PREFS = "astrovia_settings"
@@ -61,7 +63,8 @@ data class AppSettings(
                 invert = p.getBoolean(K_INV, false),
                 brightness = p.getFloat(K_BRIGHT, 0f).coerceIn(-0.5f, 0.5f),
                 contrast = p.getFloat(K_CONT, 1f).coerceIn(0.5f, 2f),
-                customHiPSDirs = p.getStringSet("custom_dirs", emptySet()) ?: emptySet()
+                customHiPSDirs = p.getStringSet("custom_dirs", emptySet()) ?: emptySet(),
+                captureDirUri = p.getString("capture_dir", null)?.takeIf { it.isNotBlank() },
             )
         }
 
@@ -76,6 +79,7 @@ data class AppSettings(
                 .putFloat(K_BRIGHT, s.brightness)
                 .putFloat(K_CONT, s.contrast)
                 .putStringSet("custom_dirs", s.customHiPSDirs)
+                .putString("capture_dir", s.captureDirUri)
                 .apply()
         }
     }

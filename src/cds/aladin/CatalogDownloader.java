@@ -35,10 +35,28 @@ public class CatalogDownloader {
         return null;
     }
 
+    private static final Pattern OVERFLOW = Pattern.compile("name=\"QUERY_STATUS\"\\s+value=\"OVERFLOW\"");
+
+    /** SIMBAD/VizieR report a row-limit cut at the END of the table: the head-only check never saw it. */
+    static String detectOverflow(File file) {
+        try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(file, "r")) {
+            int n = (int)Math.min(raf.length(), 16L * 1024);
+            raf.seek(raf.length() - n);
+            byte[] b = new byte[n];
+            raf.readFully(b);
+            if (OVERFLOW.matcher(new String(b, StandardCharsets.UTF_8)).find()) {
+                return "The server stopped at its row limit: this table is INCOMPLETE. Use a smaller radius.";
+            }
+        } catch (IOException e) { /* nothing to report */ }
+        return null;
+    }
+
     public interface DownloaderListener {
         void onProgress(long totalBytesDownloaded);
         void onComplete();
         void onError(String message);
+        /** The download worked but the server cut the table short (row limit). */
+        default void onWarning(String message) { }
     }
     
     public static void download(String source, String catalog, double ra, double dec, double radius, File targetFile, DownloaderListener listener) {
@@ -46,7 +64,7 @@ public class CatalogDownloader {
             try {
                 String queryUrl = "";
                 if ("Simbad".equalsIgnoreCase(source)) {
-                    String tapUrl = "https://simbad.u-strasbg.fr/simbad/sim-tap/sync";
+                    String tapUrl = "https://simbad.cds.unistra.fr/simbad/sim-tap/sync";
                     String query;
                     if (radius > 0) {
                         String rStr = String.format(java.util.Locale.US, "%.6f", ra);
@@ -59,10 +77,10 @@ public class CatalogDownloader {
                     queryUrl = tapUrl + "?REQUEST=doQuery&LANG=ADQL&FORMAT=votable/td&QUERY=" + URLEncoder.encode(query, "UTF-8");
                 } else {
                     if (radius > 0) {
-                        queryUrl = "http://vizier.u-strasbg.fr/viz-bin/votable?-source=" + URLEncoder.encode(catalog, "UTF-8") 
+                        queryUrl = "https://vizier.cds.unistra.fr/viz-bin/votable?-source=" + URLEncoder.encode(catalog, "UTF-8") 
                                  + "&-c=" + ra + "%20" + dec + "&-c.r=" + radius + "&-out.max=unlimited";
                     } else {
-                        queryUrl = "http://vizier.u-strasbg.fr/viz-bin/votable?-source=" + URLEncoder.encode(catalog, "UTF-8") + "&-out.max=unlimited";
+                        queryUrl = "https://vizier.cds.unistra.fr/viz-bin/votable?-source=" + URLEncoder.encode(catalog, "UTF-8") + "&-out.max=unlimited";
                     }
                 }
                 
@@ -70,28 +88,50 @@ public class CatalogDownloader {
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 conn.setConnectTimeout(15000);
-                conn.setReadTimeout(0); // No read timeout for large downloads
+                conn.setReadTimeout(60000); // a stalled connection must not block the thread forever
                 
                 if (conn.getResponseCode() == 200) {
-                    targetFile.getParentFile().mkdirs();
-                    try (InputStream is = conn.getInputStream();
-                         FileOutputStream fos = new FileOutputStream(targetFile)) {
-                        byte[] buffer = new byte[8192];
-                        int n;
-                        long downloaded = 0;
-                        while ((n = is.read(buffer)) != -1) {
-                            fos.write(buffer, 0, n);
-                            downloaded += n;
-                            long finalDownloaded = downloaded;
-                            javax.swing.SwingUtilities.invokeLater(() -> listener.onProgress(finalDownloaded));
+                    targetFile.getAbsoluteFile().getParentFile().mkdirs();
+                    // Write to ".part" and rename at the end: a dropped connection used to leave a truncated
+                    // catalogue under the final name.
+                    File part = new File(targetFile.getPath() + ".part");
+                    try {
+                        try (InputStream is = conn.getInputStream();
+                             FileOutputStream fos = new FileOutputStream(part)) {
+                            byte[] buffer = new byte[65536];
+                            int n;
+                            long downloaded = 0;
+                            long lastPublish = 0;
+                            while ((n = is.read(buffer)) != -1) {
+                                fos.write(buffer, 0, n);
+                                downloaded += n;
+                                long now = System.currentTimeMillis();
+                                if (now - lastPublish > 250) { // one event per 250 ms, not per chunk
+                                    lastPublish = now;
+                                    final long finalDownloaded = downloaded;
+                                    javax.swing.SwingUtilities.invokeLater(() -> listener.onProgress(finalDownloaded));
+                                }
+                                if (downloaded % (8L << 20) < buffer.length && targetFile.getAbsoluteFile().getParentFile().getUsableSpace() < (50L << 20)) {
+                                    throw new IOException("Not enough free disk space to continue");
+                                }
+                            }
                         }
-                    }
-                    String votableError = detectVotableError(targetFile);
-                    if (votableError != null) {
-                        targetFile.delete();
-                        javax.swing.SwingUtilities.invokeLater(() -> listener.onError(votableError));
-                    } else {
-                        javax.swing.SwingUtilities.invokeLater(() -> listener.onComplete());
+                        String votableError = detectVotableError(part);
+                        if (votableError != null) {
+                            part.delete();
+                            javax.swing.SwingUtilities.invokeLater(() -> listener.onError(votableError));
+                        } else {
+                            if (targetFile.exists()) targetFile.delete();
+                            if (!part.renameTo(targetFile)) throw new IOException("Could not save " + targetFile);
+                            final String overflow = detectOverflow(targetFile);
+                            javax.swing.SwingUtilities.invokeLater(() -> {
+                                if (overflow != null) listener.onWarning(overflow);
+                                listener.onComplete();
+                            });
+                        }
+                    } catch (IOException ioe) {
+                        part.delete();
+                        throw ioe;
                     }
                 } else {
                     String error = "HTTP " + conn.getResponseCode() + " " + conn.getResponseMessage();

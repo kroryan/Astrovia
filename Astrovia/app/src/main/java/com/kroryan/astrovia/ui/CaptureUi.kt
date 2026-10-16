@@ -56,6 +56,8 @@ fun CaptureOptionsDialog(
     hasCatalog: Boolean,
     hasMarkers: Boolean,
     gridOn: Boolean,
+    locationLabel: String,
+    onChooseFolder: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val scales = remember { vm.captureScales() }
@@ -97,6 +99,12 @@ fun CaptureOptionsDialog(
                         RadioButton(selected = format == f, onClick = { format = f })
                         Text(f.label, color = TextPrimary)
                     }
+                }
+                Spacer(Modifier.height(4.dp))
+                Text("Save to", style = MaterialTheme.typography.labelLarge, color = TextPrimary)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(locationLabel, color = TextSecondary, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    TextButton(onClick = onChooseFolder) { Text("Change") }
                 }
                 Spacer(Modifier.height(4.dp))
                 Text("Also include", style = MaterialTheme.typography.labelLarge, color = TextPrimary)
@@ -177,7 +185,7 @@ fun CaptureStatusDialogs(vm: SkyViewModel, state: CaptureState) {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("${state.width} x ${state.height} px, ${humanSize(state.bytes)}", color = TextPrimary)
-                    Text("Saved in Pictures/Astrovia", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                    Text("Saved in ${state.location}", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                     if (state.missingTiles > 0) {
                         Text(
                             "${state.missingTiles} tile(s) were not available at full resolution and were filled with a coarser one.",

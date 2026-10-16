@@ -1836,6 +1836,23 @@ public class Save extends JFrame implements ActionListener {
    private void info(String s) { info.setText(s+" "); }
 
 
+   /** Writes a picture that was already rendered (see SkyCapture): PNG carrying the view's WCS
+    * header, or JPEG. The picture must come from the view {@code v}, which describes it. */
+   protected void writeRendered(Image img,ViewSimple v,File f,boolean png,float qual) throws Exception {
+      OutputStream o = new BufferedOutputStream(new FileOutputStream(f));
+      try {
+         String hdr = null;
+         try { hdr = generateFitsHeaderString(v); } catch( Exception e ) { }
+         if( png ) {
+            if( hdr!=null ) ImageWriter(img,"png",-1,true,new PNGOutputFilter(o,hdr));
+            else ImageWriter(img,"png",-1,true,o);
+         } else {
+            if( hdr!=null ) ImageWriter(img,"jpg",qual,true,new JpegOutputFilter(o,hdr));
+            else ImageWriter(img,"jpg",qual,true,o);
+         }
+      } finally { o.close(); }
+   }
+
    protected boolean saveOneView(String filename,int w, int h,int format,float qual,ViewSimple v) {
       boolean rep=false;
       try { rep=saveOneView1(filename,w,h,format,qual,v); }

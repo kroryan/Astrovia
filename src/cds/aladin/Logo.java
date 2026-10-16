@@ -53,7 +53,7 @@ import cds.tools.Util;
  */
 public final class Logo extends JComponent implements MouseListener {
 
-   static final int W=120;                // Taille du logo
+   static final int W=150;                // Taille du logo
    static final int H=40;                // Hauteur du logo
    static final Dimension DIM = new Dimension(W,H);
    static final int DF=20;               // Taille de la font si le logo n'est pas accessible
@@ -106,7 +106,7 @@ public final class Logo extends JComponent implements MouseListener {
    * Aladin.java.home
    */
    public void mousePressed(MouseEvent e) {
-      aladin.glu.showDocument("Aladin.java.home","");
+      aladin.glu.showDocument("Http", cds.astrovia.AstroviaTheme.SOURCE_URL, true);
    }
 
   /** Changement du niveau de trace */
@@ -133,7 +133,7 @@ public final class Logo extends JComponent implements MouseListener {
          g.setColor(getBackground());
          g.fillRect(0,0,W,H);
       }
-      if( img!=null ) g.drawImage(img,W-90,0,this);
+      if( img!=null ) g.drawImage(img,Math.max(0,W-img.getWidth(this)),0,this);
       else {
          g.setFont(Aladin.LLITALIC);
          g.setColor( Color.darkGray );

@@ -335,6 +335,7 @@ fun SkyCanvas(
         if (state.catalogVisible) {
             for (row in state.catalogRows) {
                 val p = proj.forward(row.raDeg, row.decDeg) ?: continue
+                if (p[0] < -20f || p[0] > size.width + 20f || p[1] < -20f || p[1] > size.height + 20f) continue
                 val r = row.mag?.let { (8f - it.toFloat().coerceIn(0f, 20f) * 0.3f).coerceIn(1.5f, 5f) } ?: 2.5f
                 drawCircle(color = MarkerGreen.copy(alpha = 0.85f), radius = r, center = Offset(p[0], p[1]))
             }

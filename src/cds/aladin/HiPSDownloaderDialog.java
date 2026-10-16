@@ -19,8 +19,15 @@ public class HiPSDownloaderDialog extends JDialog implements HiPSDownloader.HiPS
     private HiPSDownloader downloader;
     private long startTime;
 
-    public HiPSDownloaderDialog(Window owner) {
+    private final Aladin aladin;
+    private JCheckBox areaCb;
+    private JLabel estimateLabel;
+
+    public HiPSDownloaderDialog(Window owner) { this(owner, null); }
+
+    public HiPSDownloaderDialog(Window owner, Aladin aladin) {
         super(owner, "HiPS Dataset Downloader", Dialog.ModalityType.MODELESS);
+        this.aladin = aladin;
         setLayout(new BorderLayout(10, 10));
         
         JPanel inputPanel = new JPanel(new GridBagLayout());
@@ -34,8 +41,8 @@ public class HiPSDownloaderDialog extends JDialog implements HiPSDownloader.HiPS
         inputPanel.add(new JLabel("HiPS URL:"), gbc);
         gbc.gridx = 1; gbc.gridwidth = 2;
         urlCombo = new JComboBox<>(new String[] {
-            "http://alasky.cds.unistra.fr/DSS/DSSColor/",
-            "http://alasky.cds.unistra.fr/2MASS/Color/"
+            "https://alasky.cds.unistra.fr/DSS/DSSColor/",
+            "https://alasky.cds.unistra.fr/2MASS/Color/"
         });
         urlCombo.setEditable(true);
         inputPanel.add(urlCombo, gbc);
@@ -44,7 +51,7 @@ public class HiPSDownloaderDialog extends JDialog implements HiPSDownloader.HiPS
         gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 1;
         inputPanel.add(new JLabel("Max Order:"), gbc);
         gbc.gridx = 1;
-        orderSpinner = new JSpinner(new SpinnerNumberModel(3, 0, 20, 1));
+        orderSpinner = new JSpinner(new SpinnerNumberModel(6, 0, 14, 1));
         inputPanel.add(orderSpinner, gbc);
         
         // Target Dir
@@ -78,6 +85,22 @@ public class HiPSDownloaderDialog extends JDialog implements HiPSDownloader.HiPS
         gbc.gridx = 1;
         threadSpinner = new JSpinner(new SpinnerNumberModel(8, 1, 32, 1));
         inputPanel.add(threadSpinner, gbc);
+
+        // Only the area in view: the whole sky to a useful order is hundreds of GB.
+        gbc.gridx = 0; gbc.gridy = 5; gbc.gridwidth = 1;
+        inputPanel.add(new JLabel("Area:"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 2;
+        areaCb = new JCheckBox("Only the area in view", aladin != null);
+        areaCb.setEnabled(aladin != null);
+        inputPanel.add(areaCb, gbc);
+        gbc.gridx = 1; gbc.gridy = 6; gbc.gridwidth = 2;
+        estimateLabel = new JLabel(" ");
+        inputPanel.add(estimateLabel, gbc);
+        javax.swing.event.ChangeListener est = e -> updateEstimate();
+        orderSpinner.addChangeListener(est);
+        areaCb.addChangeListener(est);
+        dirField.addActionListener(e -> updateEstimate());
+        updateEstimate();
         
         add(inputPanel, BorderLayout.CENTER);
         
@@ -113,6 +136,31 @@ public class HiPSDownloaderDialog extends JDialog implements HiPSDownloader.HiPS
         setLocationRelativeTo(owner);
     }
     
+    /** The part of the sky on screen (centre + radius), or null when there is no usable view. */
+    private HiPSDownloader.Region currentRegion() {
+        if (aladin == null || !areaCb.isSelected()) return null;
+        try {
+            ViewSimple v = aladin.view.getCurrentView();
+            if (v == null || v.isFree()) return null;
+            Coord c = v.getCooCentre();
+            double radius = Math.max(v.getTailleRA(), v.getTailleDE()) / 2.0 * 1.25;
+            if (c == null || Double.isNaN(c.al) || Double.isNaN(radius)) return null;
+            return new HiPSDownloader.Region(c.al, c.del, Math.max(0.01, Math.min(90.0, radius)));
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    private void updateEstimate() {
+        int order = (Integer)orderSpinner.getValue();
+        long[] est = HiPSDownloader.estimate(order, currentRegion(), "jpg");
+        long free = HiPSDownloader.freeBytes(new File(dirField.getText()));
+        boolean tooBig = est[1] > free * 0.9 || est[0] > HiPSDownloader.MAX_TILES;
+        estimateLabel.setText("About " + est[0] + " tiles, " + HiPSDownloader.human(est[1]) + " (" + HiPSDownloader.human(free) + " free)");
+        estimateLabel.setForeground(tooBig ? new Color(0xEF, 0x44, 0x44) : UIManager.getColor("Label.foreground"));
+        if (startBtn != null) startBtn.setEnabled(!tooBig && (cancelBtn == null || !cancelBtn.isEnabled()));
+    }
+
     private void startDownload() {
         String url = (String) urlCombo.getSelectedItem();
         File dir = new File(dirField.getText());
@@ -131,7 +179,7 @@ public class HiPSDownloaderDialog extends JDialog implements HiPSDownloader.HiPS
         int threads = (Integer) threadSpinner.getValue();
         
         startTime = System.currentTimeMillis();
-        downloader = new HiPSDownloader(url.trim(), dir, maxOrder, fastCheck, threads, this);
+        downloader = new HiPSDownloader(url.trim(), dir, maxOrder, fastCheck, threads, currentRegion(), this);
         downloader.start();
     }
     
@@ -158,13 +206,24 @@ public class HiPSDownloaderDialog extends JDialog implements HiPSDownloader.HiPS
                 tilesDownloaded, sizeStr, speedStr, activeTasks));
     }
 
+    private String summary = null;
+    private boolean incomplete = false;
+
+    @Override
+    public void onSummary(String summary, boolean incomplete) {
+        this.summary = summary;
+        this.incomplete = incomplete;
+    }
+
     @Override
     public void onComplete() {
         startBtn.setEnabled(true);
         cancelBtn.setEnabled(false);
-        progressLabel.setText(progressLabel.getText() + " - Completed!");
+        progressLabel.setText(summary != null ? summary : progressLabel.getText() + " - Completed!");
         LocalHiPSManager.addLocalHiPS((String) urlCombo.getSelectedItem(), dirField.getText());
-        JOptionPane.showMessageDialog(this, "Download completed!", "Success", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, summary != null ? summary : "Download completed!",
+                incomplete ? "Finished with errors" : "Success",
+                incomplete ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
     }
 
     @Override

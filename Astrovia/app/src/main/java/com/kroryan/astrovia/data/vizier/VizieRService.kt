@@ -47,25 +47,30 @@ class VizieRService {
                 "&-out.meta=DhuL" +
                 "&-oc.form=dm"
         android.util.Log.d("VizieR", "Fetching: $url")
+        // Errors now propagate (java.io.IOException) so the UI can say "no connection" instead of
+        // the misleading "No objects found".
         val text = fetchText(url)
-        if (text == null) {
-            android.util.Log.e("VizieR", "Fetch failed (null text)")
-            return@withContext emptyList()
-        }
-        val rows = VotableParser.parse(text).mapNotNull { row -> row.toCatalogRow() }
-        android.util.Log.d("VizieR", "Parsed ${rows.size} rows")
-        rows
+        rowsFromVotable(text)
     }
 
-    private val raKeys = listOf("_RAJ", "RAJ2000", "RA_ICRS", "RA(ICRS)", "RA", "RAJ2000")
-    private val decKeys = listOf("_DEJ", "DEJ2000", "DE_ICRS", "DE(ICRS)", "DE", "DEJ2000")
+    /**
+     * Rows of a VOTable from VizieR or SIMBAD (also used for catalogues downloaded earlier).
+     * Column names are matched case-insensitively; SIMBAD's `ra`/`dec`/`main_id` are accepted too.
+     */
+    fun rowsFromVotable(text: String): List<CatalogRow> =
+        VotableParser.parse(text).mapNotNull { row -> row.toCatalogRow() }
+
+    private val raKeys = listOf("_raj2000", "_raj", "raj2000", "ra_icrs", "ra(icrs)", "ra_d", "ra")
+    private val decKeys = listOf("_dej2000", "_dej", "dej2000", "de_icrs", "de(icrs)", "dec_d", "dec", "de")
 
     private fun Map<String, String>.toCatalogRow(): CatalogRow? {
-        val ra = firstValue(raKeys)?.toDoubleOrNull() ?: return null
-        val dec = firstValue(decKeys)?.toDoubleOrNull() ?: return null
-        val mag = firstValue(listOf("Gmag", "Kmag", "Jmag", "Hmag", "VTmag", "BTmag", "rmag", "g", "Vmag"))
+        val m = entries.associate { it.key.lowercase() to it.value }
+        fun first(keys: List<String>): String? = keys.firstNotNullOfOrNull { k -> m[k]?.trim()?.takeIf { it.isNotEmpty() } }
+        val ra = first(raKeys)?.toDoubleOrNull() ?: return null
+        val dec = first(decKeys)?.toDoubleOrNull() ?: return null
+        val mag = first(listOf("gmag", "kmag", "jmag", "hmag", "vtmag", "btmag", "rmag", "g", "vmag", "flux_v"))
             ?.toDoubleOrNull()
-        val id = firstValue(listOf("Source", "2MASS", "TYC", "objID", "Source_id")) ?: "${ra}_${dec}"
+        val id = first(listOf("source", "2mass", "tyc", "objid", "source_id", "main_id")) ?: "${ra}_${dec}"
         return CatalogRow(
             id = id,
             position = SkyPosition(ra, dec),
@@ -76,12 +81,9 @@ class VizieRService {
         )
     }
 
-    private fun Map<String, String>.firstValue(keys: List<String>): String? =
-        keys.firstOrNull { containsKey(it) }?.let { get(it) }
-
-    private fun fetchText(url: String): String? = try {
+    private fun fetchText(url: String): String =
         client.newCall(okhttp3.Request.Builder().url(url).build()).execute().use { r ->
-            if (r.isSuccessful) r.body?.string() else null
+            if (!r.isSuccessful) throw java.io.IOException("VizieR answered HTTP ${r.code}")
+            r.body?.string() ?: throw java.io.IOException("VizieR sent an empty answer")
         }
-    } catch (e: Exception) { null }
 }

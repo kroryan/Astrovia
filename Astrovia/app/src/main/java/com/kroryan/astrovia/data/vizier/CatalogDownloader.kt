@@ -21,6 +21,8 @@ data class CatalogDownloadState(
     val errorMessage: String? = null,
     /** Set when the download succeeded but the server cut the table short (row limit). */
     val warning: String? = null,
+    /** Absolute path of the last catalogue saved (so it can be shown on the sky). */
+    val savedPath: String? = null,
 )
 
 class CatalogDownloader(private val context: Context) {
@@ -64,7 +66,7 @@ class CatalogDownloader(private val context: Context) {
 
                 downloadFile(url, outputFile)
                 val warning = detectOverflow(outputFile)
-                _state.update { it.copy(isRunning = false, isSuccess = true, warning = warning) }
+                _state.update { it.copy(isRunning = false, isSuccess = true, warning = warning, savedPath = outputFile.absolutePath) }
             } catch (e: CancellationException) {
                 outputFile.delete()
                 throw e
@@ -85,7 +87,7 @@ class CatalogDownloader(private val context: Context) {
         downloadJob = scope.launch {
             _state.value = CatalogDownloadState(isRunning = true, catalogName = "Simbad")
             try {
-                val tapUrl = "https://simbad.u-strasbg.fr/simbad/sim-tap/sync"
+                val tapUrl = "https://simbad.cds.unistra.fr/simbad/sim-tap/sync"
                 val radiusDegrees = radiusArcmin / 60.0
                 val adql = if (radiusArcmin >= 999999.0) {
                     "SELECT * FROM basic"
@@ -99,7 +101,7 @@ class CatalogDownloader(private val context: Context) {
 
                 downloadFile(url, outputFile)
                 val warning = detectOverflow(outputFile)
-                _state.update { it.copy(isRunning = false, isSuccess = true, warning = warning) }
+                _state.update { it.copy(isRunning = false, isSuccess = true, warning = warning, savedPath = outputFile.absolutePath) }
             } catch (e: CancellationException) {
                 outputFile.delete()
                 throw e
