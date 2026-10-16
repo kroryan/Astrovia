@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds every Astrovia desktop deliverable into release/desktop/:
 #   Astrovia.jar                         universal executable jar (java -jar Astrovia.jar)
-#   astrovia_<ver>_all.deb               Debian/Ubuntu package (+ apt repository in apt-repo/)
+#   astrovia_<ver>_all.deb               Debian/Ubuntu package (+ apt repository in apt-repo/ and astrovia-apt-repo.zip)
 #   astrovia-<ver>-linux.tar.gz          portable folder with astrovia.sh + astrovia.desktop
 #   Astrovia-<ver>-windows-x64.zip       portable Windows bundle (Astrovia.exe + bundled Java runtime)
 #   Astrovia-<ver>-windows-setup.exe     Windows installer (NSIS)
@@ -98,6 +98,8 @@ if [ -n "${GPG_KEY:-}" ]; then
 else
   echo "   (GPG_KEY not set: repository is unsigned, use [trusted=yes] or sign with GPG_KEY=<id>)"
 fi
+
+( cd $A && rm -f ../astrovia-apt-repo.zip && zip -qr ../astrovia-apt-repo.zip . )   # upload this in WordPress: Astrovia Page > Linux repository
 
 echo "== windows"
 if [ ! -x "$CACHE/launch4j/launch4j" ]; then

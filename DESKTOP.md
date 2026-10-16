@@ -52,8 +52,8 @@ GPG_KEY=<fingerprint> ./package-desktop.sh
 Users:
 
 ```
-curl -fsSL https://raw.githubusercontent.com/kroryan/Astrovia/gh-pages/astrovia.gpg | sudo tee /etc/apt/keyrings/astrovia.gpg >/dev/null
-echo "deb [signed-by=/etc/apt/keyrings/astrovia.gpg] https://raw.githubusercontent.com/kroryan/Astrovia/gh-pages stable main" | sudo tee /etc/apt/sources.list.d/astrovia.list
+curl -fsSL https://kroryandev.com/wp-content/uploads/astrovia-apt/astrovia.gpg | sudo tee /etc/apt/keyrings/astrovia.gpg >/dev/null
+echo "deb [signed-by=/etc/apt/keyrings/astrovia.gpg] https://kroryandev.com/wp-content/uploads/astrovia-apt stable main" | sudo tee /etc/apt/sources.list.d/astrovia.list
 sudo apt update && sudo apt install astrovia
 ```
 
