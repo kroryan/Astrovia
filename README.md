@@ -45,8 +45,8 @@ Add the Astrovia repository once, then install and update it with `apt`:
 
 ```
 sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL https://kroryan.github.io/Astrovia/astrovia.gpg | sudo tee /etc/apt/keyrings/astrovia.gpg >/dev/null
-echo "deb [signed-by=/etc/apt/keyrings/astrovia.gpg] https://kroryan.github.io/Astrovia stable main" | sudo tee /etc/apt/sources.list.d/astrovia.list
+curl -fsSL https://raw.githubusercontent.com/kroryan/Astrovia/gh-pages/astrovia.gpg | sudo tee /etc/apt/keyrings/astrovia.gpg >/dev/null
+echo "deb [signed-by=/etc/apt/keyrings/astrovia.gpg] https://raw.githubusercontent.com/kroryan/Astrovia/gh-pages stable main" | sudo tee /etc/apt/sources.list.d/astrovia.list
 sudo apt update
 sudo apt install astrovia
 ```
