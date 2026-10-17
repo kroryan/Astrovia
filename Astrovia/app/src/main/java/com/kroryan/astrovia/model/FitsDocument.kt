@@ -35,8 +35,6 @@ class FitsOverlay(
     val alpha: Float = 0.85f,
 )
 
-/** A picture with four known sky corners (top-left, top-right, bottom-right, bottom-left) drawn over the sky. */
-class QuadOverlay(val bitmap: Bitmap, val raCorners: DoubleArray, val decCorners: DoubleArray, val alpha: Float = 0.9f)
 
 /** Processing history of an open picture: every step keeps its result so it can be undone. */
 class ProcSession(

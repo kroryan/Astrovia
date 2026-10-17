@@ -52,21 +52,5 @@ class TileLoader(private val scope: CoroutineScope, private val onChange: () -> 
         fun fetchText(url: String): String? = try {
             HttpClient.client.newCall(Request.Builder().url(url).build()).execute().use { r -> if (!r.isSuccessful) null else r.body?.string() }
         } catch (e: Exception) { null }
-
-        /** One bitmap of the whole picture at a level whose largest side is at most [maxSide] pixels (for placing it on the sky). */
-        suspend fun stitch(p: TilePyramid, maxSide: Int = 1800): Bitmap? = withContext(Dispatchers.IO) {
-            val level = (p.maxLevel downTo 0).firstOrNull { maxOf(p.levelWidth(it), p.levelHeight(it)) <= maxSide } ?: 0
-            val w = p.levelWidth(level); val h = p.levelHeight(level)
-            val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-            val c = Canvas(out)
-            for (row in 0 until p.rows(level)) for (col in 0 until p.cols(level)) {
-                val t = fetch(p.tileUrl(level, col, row)) ?: continue
-                val r = p.tileRect(level, col, row)
-                val lo = (p as? DeepZoomPyramid)?.leftOverlap(col) ?: 0
-                val to = (p as? DeepZoomPyramid)?.topOverlap(row) ?: 0
-                c.drawBitmap(t, android.graphics.Rect(lo, to, lo + (r[2] - r[0]), to + (r[3] - r[1])), android.graphics.Rect(r[0], r[1], r[2], r[3]), null)
-            }
-            out
-        }
     }
 }

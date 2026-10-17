@@ -107,7 +107,6 @@ data class SkyUiState(
     val customTables: List<String>? = null,
     val customTap: String = "",
     val viewerImage: com.kroryan.astrovia.data.gallery.OutreachImage? = null,
-    val quadOverlay: com.kroryan.astrovia.model.QuadOverlay? = null,
     val gallery: List<com.kroryan.astrovia.data.gallery.OutreachImage>? = null,
     val galleryMission: String = "webb",
     val hitFilter: HitFilter? = null,
@@ -772,27 +771,6 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
         _state.update { it.copy(viewerImage = null, closeSheetsTick = it.closeSheetsTick + 1, camera = SkyCamera.looking(SkyPosition(img.raDeg, img.decDeg), fov), cameraPlaced = true) }
     }
 
-    /** Places the picture over the sky between its four corners (a coarse copy of it, up to about 1800 px). */
-    fun showImageOnSky(img: com.kroryan.astrovia.data.gallery.OutreachImage) {
-        if (img.corners.size < 4) { toast("This picture has no sky corners"); return }
-        _state.update { it.copy(fileLoading = true) }
-        viewModelScope.launch {
-            val bmp = withContext(Dispatchers.IO) {
-                runCatching {
-                    val p = com.kroryan.astrovia.data.gallery.TilePyramids.open(img.tilesUrl) { u -> com.kroryan.astrovia.data.gallery.TileLoader.fetchText(u) }
-                    if (p == null) null else com.kroryan.astrovia.data.gallery.TileLoader.stitch(p)
-                }.getOrNull()
-            }
-            if (bmp == null) { _state.update { it.copy(fileLoading = false) }; toast("Could not load the picture"); return@launch }
-            val ra = DoubleArray(4) { img.corners[it].first }; val dec = DoubleArray(4) { img.corners[it].second }
-            val fov = ((img.fovDeg ?: 0.2) * 1.4).coerceIn(0.002, 180.0)
-            stopMotion()
-            _state.update { it.copy(fileLoading = false, viewerImage = null, closeSheetsTick = it.closeSheetsTick + 1, quadOverlay = com.kroryan.astrovia.model.QuadOverlay(bmp, ra, dec), camera = SkyCamera.looking(SkyPosition(img.raDeg, img.decDeg), fov), cameraPlaced = true) }
-            toast("${img.title} placed on the sky")
-        }
-    }
-
-    fun clearQuadOverlay() = _state.update { it.copy(quadOverlay = null) }
 
 
     // --- Image processing (engine shared with the desktop app) ---

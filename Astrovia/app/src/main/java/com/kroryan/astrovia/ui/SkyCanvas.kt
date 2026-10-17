@@ -345,29 +345,6 @@ fun SkyCanvas(
             }
         }
 
-        // Outreach picture placed between its four sky corners
-        state.quadOverlay?.let { q ->
-            val g = 24
-            val verts = FloatArray((g + 1) * (g + 1) * 2)
-            var ok = true
-            val r0 = q.raCorners[0]
-            fun unwrap(r: Double): Double { var d = (r - r0) % 360.0; if (d > 180) d -= 360; if (d < -180) d += 360; return r0 + d }
-            val ra = DoubleArray(4) { unwrap(q.raCorners[it]) }
-            loop@ for (j in 0..g) for (i in 0..g) {
-                val u = i.toDouble() / g; val v = j.toDouble() / g
-                val rr = (1 - v) * ((1 - u) * ra[0] + u * ra[1]) + v * ((1 - u) * ra[3] + u * ra[2])
-                val dd = (1 - v) * ((1 - u) * q.decCorners[0] + u * q.decCorners[1]) + v * ((1 - u) * q.decCorners[3] + u * q.decCorners[2])
-                val p = proj.forward(((rr % 360.0) + 360.0) % 360.0, dd)
-                if (p == null) { ok = false; break@loop }
-                val k = (j * (g + 1) + i) * 2
-                verts[k] = p[0]; verts[k + 1] = p[1]
-            }
-            if (ok) {
-                val paint = android.graphics.Paint().apply { isFilterBitmap = true; alpha = (q.alpha * 255).toInt().coerceIn(0, 255) }
-                drawIntoCanvas { c -> c.nativeCanvas.drawBitmapMesh(q.bitmap, g, g, verts, 0, null, 0, paint) }
-            }
-        }
-
         // Catalog overlays
         if (state.catalogVisible) {
             for (row in state.catalogRows) {

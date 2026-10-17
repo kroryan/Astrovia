@@ -135,9 +135,12 @@ fun FitsViewer(vm: SkyViewModel, doc: FitsDocument, busy: String?, stack: Pair<S
                     Text(doc.note ?: "No image in this HDU", color = TextSecondary, modifier = Modifier.align(Alignment.Center).padding(24.dp))
                 }
 
+                // Everything that is not the picture lives in a box that respects the status and navigation bars
+                // (a Dialog does not pass those insets to navigationBarsPadding, which hid the dock behind the system buttons).
+                Box(Modifier.fillMaxSize().safeDrawingPadding()) {
                 // ---- top bar: small, translucent
                 Row(
-                    Modifier.align(Alignment.TopCenter).fillMaxWidth().background2().statusBarsPadding().padding(horizontal = 4.dp),
+                    Modifier.align(Alignment.TopCenter).fillMaxWidth().background2().padding(horizontal = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f).padding(start = 12.dp)) {
@@ -156,7 +159,7 @@ fun FitsViewer(vm: SkyViewModel, doc: FitsDocument, busy: String?, stack: Pair<S
                     IconButton(onClick = { vm.closeFits() }) { Icon(Icons.Filled.Close, contentDescription = "Close", tint = Color.White) }
                 }
                 if (busy != null || stack != null) {
-                    Column(Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 56.dp).fillMaxWidth().padding(horizontal = 24.dp)) {
+                    Column(Modifier.align(Alignment.TopCenter).padding(top = 56.dp).fillMaxWidth().padding(horizontal = 24.dp)) {
                         Surface(color = SkyPanel, shape = RoundedCornerShape(16.dp)) {
                             Column(Modifier.padding(12.dp)) {
                                 Text(stack?.first ?: "$busy…", color = TextPrimary, style = MaterialTheme.typography.bodyMedium)
@@ -168,7 +171,7 @@ fun FitsViewer(vm: SkyViewModel, doc: FitsDocument, busy: String?, stack: Pair<S
                 }
 
                 // ---- bottom: reading, folding panel, dock
-                Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding()) {
+                Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
                     readout?.let { r ->
                         Surface(color = Color(0xCC000000), shape = RoundedCornerShape(10.dp), modifier = Modifier.padding(start = 10.dp, bottom = 6.dp).clickable { readout = null }) {
                             Text(r, color = TextPrimary, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
@@ -176,7 +179,7 @@ fun FitsViewer(vm: SkyViewModel, doc: FitsDocument, busy: String?, stack: Pair<S
                     }
                     AnimatedVisibility(visible = panel != null, enter = expandVertically(), exit = shrinkVertically()) {
                         Surface(color = SkyPanel, shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp), tonalElevation = 3.dp) {
-                            Column(Modifier.fillMaxWidth().heightIn(max = (box.height * 0.46f).dp.coerceAtLeast(180.dp).coerceAtMost(420.dp)).verticalScroll(rememberScrollState())) {
+                            Column(Modifier.fillMaxWidth().heightIn(max = with(androidx.compose.ui.platform.LocalDensity.current) { (box.height * 0.46f).toDp() }.coerceAtLeast(180.dp).coerceAtMost(420.dp)).verticalScroll(rememberScrollState())) {
                                 when (panel) {
                                     Panel.DISPLAY -> DisplayPanel(vm, doc)
                                     Panel.PROCESS -> ProcessPanel(vm, doc, busy, visible)
@@ -202,6 +205,7 @@ fun FitsViewer(vm: SkyViewModel, doc: FitsDocument, busy: String?, stack: Pair<S
                             }
                         }
                     }
+                }
                 }
             }
         }

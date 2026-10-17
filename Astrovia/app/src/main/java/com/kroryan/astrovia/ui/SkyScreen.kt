@@ -304,7 +304,7 @@ fun SkyScreen(vm: SkyViewModel) {
                     onClearMarkers = if (state.markers.isNotEmpty()) ({ vm.clearMarkers() }) else null,
                     onClearMeasurements = if (state.measurements.isNotEmpty()) ({ vm.clearMeasurements() }) else null,
                     onOpenFile = { openFileLauncher.launch(arrayOf("*/*")) },
-                    onClearImage = if (state.fitsOverlay != null || state.quadOverlay != null) ({ vm.clearFitsOverlay(); vm.clearQuadOverlay() }) else null,
+                    onClearImage = if (state.fitsOverlay != null) ({ vm.clearFitsOverlay() }) else null,
                 ),
                 modifier = Modifier
                     .align(Alignment.BottomEnd)

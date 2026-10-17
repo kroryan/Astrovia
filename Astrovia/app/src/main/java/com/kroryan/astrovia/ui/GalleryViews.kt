@@ -103,7 +103,6 @@ fun ImageExplorer(vm: SkyViewModel, img: OutreachImage) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f).padding(start = 12.dp)) { Text(img.title, color = TextPrimary, maxLines = 1); Text(img.mission + " · " + img.id, color = TextSecondary, style = MaterialTheme.typography.bodySmall, maxLines = 1) }
                     IconButton(onClick = { info = true }) { Icon(Icons.Filled.Info, contentDescription = "Information", tint = Color.White) }
-                    IconButton(onClick = { vm.showImageOnSky(img) }, enabled = img.corners.size >= 4) { Icon(Icons.Filled.Public, contentDescription = "Show on the sky", tint = if (img.corners.size >= 4) Color.White else Color.Gray) }
                     IconButton(onClick = { vm.goToImage(img) }) { Icon(Icons.Filled.MyLocation, contentDescription = "Go to its position", tint = Color.White) }
                     img.webPage?.let { w -> IconButton(onClick = { runCatching { ctx.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(w)).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) } }) { Icon(Icons.Filled.OpenInBrowser, contentDescription = "Web page", tint = Color.White) } }
                     IconButton(onClick = { vm.closeImage() }) { Icon(Icons.Filled.Close, contentDescription = "Close", tint = Color.White) }
