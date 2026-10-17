@@ -1135,7 +1135,8 @@ implements Runnable, ActionListener, ItemListener, ChangeListener  {
       // Choix selon configuration utilisateur
       if( Aladin.PLANET==-1 ) {
          String s = get(PLANET);
-         return s!=null && s.startsWith(ACTIVATED);
+         // Astrovia: planetary data (Solar system branch) are available unless the user turns them off
+         return s==null || s.startsWith(ACTIVATED);
       }
       
       // Choix forcé par paramètre sur la ligne de commande (ou BETA)
