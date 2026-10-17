@@ -40,7 +40,10 @@ public final class WelcomeDialog {
       { "Free and open source",
         "Free, no ads and no tracking. Licensed under the GNU General Public License v3 (GPL-3.0). The source code is publicly available." },
       { "Data and privacy",
-        "Astrovia connects to public astronomical services (HiPS servers, Simbad and VizieR at CDS); coordinates and names queried are sent to those servers." },
+        "Astrovia has no accounts and collects no personal data. To show images and catalogs it connects to public astronomical services (HiPS servers, Simbad and VizieR at CDS); the coordinates and names you search are sent to those servers. "
+      + "This research has made use of the SIMBAD database and the VizieR catalogue access tool, operated at CDS, Strasbourg, France. "
+      + "The Archives search also queries the ESA archives (ESA Sky TAP, Gaia, HST), MAST, IRSA, HEASARC, the ESO archive, the NASA Exoplanet Archive and IMCCE SkyBoT, and the gallery shows ESA/Webb, ESA/Hubble and Euclid pictures with their credits; "
+      + "the coordinates of the field you look at are sent to them. Their data terms and citations apply." },
    };
 
    private static final String CREDITS =

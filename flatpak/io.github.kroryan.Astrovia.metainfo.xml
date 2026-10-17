@@ -69,6 +69,13 @@
     <binary>astrovia</binary>
   </provides>
   <releases>
+    <release version="0.6.4" date="2026-10-17">
+      <description>
+        <ul>
+          <li>Image processing, field overview of the archives, light curves, gallery and many fixes</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.6.3" date="2026-10-17">
       <description>
         <ul>
