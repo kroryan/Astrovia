@@ -21,6 +21,13 @@ import com.kroryan.astrovia.data.archive.ArchiveSource
 import com.kroryan.astrovia.data.archive.Publication
 import com.kroryan.astrovia.data.archive.SolarSystemBody
 import com.kroryan.astrovia.model.Target
+import com.kroryan.astrovia.model.FitsDocument
+import com.kroryan.astrovia.model.FitsOverlay
+import com.kroryan.astrovia.data.fits.ColorMap
+import com.kroryan.astrovia.data.fits.FitsRender
+import com.kroryan.astrovia.data.fits.Stretch
+import com.kroryan.astrovia.data.files.FileOpener
+import com.kroryan.astrovia.data.files.OpenedFile
 import com.kroryan.astrovia.model.Marker
 import com.kroryan.astrovia.model.Measurement
 import com.kroryan.astrovia.capture.CaptureFormat
@@ -78,7 +85,38 @@ data class SkyUiState(
     val publications: List<Publication>? = null,
     val publicationsFor: String? = null,
     val targets: List<Target> = emptyList(),
-)
+    val lists: Map<String, List<Target>> = emptyMap(),
+    val builtInLists: Map<String, List<Target>> = emptyMap(),
+    val currentList: String = "My targets",
+    val objectInfo: com.kroryan.astrovia.data.archive.ObjectInfo? = null,
+    val objectLoading: Boolean = false,
+    // Files opened by the user
+    val fitsDoc: FitsDocument? = null,
+    val fitsOverlay: FitsOverlay? = null,
+    val fileLoading: Boolean = false,
+    val lightCurve: com.kroryan.astrovia.data.fits.LightCurve? = null,
+    val archiveSources: List<ArchiveSource> = emptyList(),
+    val plan: PlanState? = null,
+    val fieldObjects: List<com.kroryan.astrovia.data.archive.FieldObject>? = null,
+    val customTables: List<String>? = null,
+    val customTap: String = "",
+    val viewerImage: com.kroryan.astrovia.data.gallery.OutreachImage? = null,
+    val quadOverlay: com.kroryan.astrovia.model.QuadOverlay? = null,
+    val gallery: List<com.kroryan.astrovia.data.gallery.OutreachImage>? = null,
+    val galleryMission: String = "webb",
+    val hitFilter: HitFilter? = null,
+    val fieldCounts: Map<String, Int> = emptyMap(),
+    val scanProgress: Pair<Int, Int>? = null,
+) {
+    /** Archive results after the chart filter (tap a bar or a year in the charts). */
+    val visibleHits: List<ArchiveHit> get() = hitFilter?.let { f -> archiveHits.filter(f.test) } ?: archiveHits
+}
+
+/** A filter chosen by tapping a chart: [label] is shown to the user, [test] decides which results stay. */
+class HitFilter(val label: String, val test: (ArchiveHit) -> Boolean)
+
+/** An instrument footprint placed on the sky to plan an observation. */
+data class PlanState(val key: String, val raDeg: Double, val decDeg: Double, val paDeg: Double)
 
 class SkyViewModel(app: Application) : AndroidViewModel(app) {
     private val simbad = SimbadService()
@@ -90,6 +128,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
     val tileRepo = TileRepository(app, settings.memCacheMb, settings.concurrency)
     val downloader = com.kroryan.astrovia.data.hips.HiPSDownloader(app)
     val catalogDownloader = com.kroryan.astrovia.data.vizier.CatalogDownloader(app)
+    val archives: ArchiveService = ArchiveService(app)
 
     // Releases the tile bitmaps when the app is hidden or the system is short of memory.
     private val memoryCallbacks = object : android.content.ComponentCallbacks2 {
@@ -112,7 +151,8 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
             _state.update { it.copy(tileVersion = it.tileVersion + 1, downloadingTiles = tileRepo.activeDownloads) }
         }
         app.registerComponentCallbacks(memoryCallbacks)
-        _state.update { it.copy(settings = settings, targets = loadTargets()) }
+        _state.update { it.copy(settings = settings, archiveSources = archives.allSources()) }
+        loadLists()
         loadSurveyProperties(_state.value.survey)
         fetchSurveys()
     }
@@ -677,8 +717,317 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
     fun clearMeasurements() = _state.update { it.copy(measurements = emptyList(), pendingMeasureFrom = null) }
 
 
+
+    /** Opens any HiPS given its root URL (online) with its title read from the `properties` file. */
+    fun openHipsUrl(url: String) {
+        val base = com.kroryan.astrovia.data.hips.HiPSListService.upgradeToHttps(url).trimEnd('/').removeSuffix("/properties")
+        viewModelScope.launch {
+            val props = withContext(Dispatchers.IO) {
+                runCatching {
+                    com.kroryan.astrovia.data.net.HttpClient.client.newCall(okhttp3.Request.Builder().url("$base/properties").build()).execute().use { r ->
+                        if (!r.isSuccessful) null else r.body?.string()
+                    }
+                }.getOrNull()
+            }
+            if (props == null) { toast("No HiPS found at that address (no properties file)"); return@launch }
+            val map = props.lines().mapNotNull { l -> val i = l.indexOf('='); if (i <= 0 || l.trimStart().startsWith("#")) null else l.substring(0, i).trim() to l.substring(i + 1).trim() }.toMap()
+            val title = map["obs_title"] ?: base.substringAfterLast('/')
+            val sv = HiPSSurvey(id = "url:$base", title = title, baseUrl = base, isColor = (map["dataproduct_subtype"] ?: "").contains("color", true),
+                description = map["obs_description"].orEmpty(), frame = map["hips_frame"] ?: "equatorial", formats = map["hips_tile_format"].orEmpty(),
+                category = "Opened by URL", regime = map["obs_regime"].orEmpty())
+            _state.update { it.copy(availableSurveys = listOf(sv) + it.availableSurveys.filter { x -> x.id != sv.id }) }
+            setSurvey(sv)
+        }
+    }
+
+
+
+    // --- Outreach pictures (Webb, Hubble, Euclid) ---
+    fun loadGallery(mission: String) {
+        _state.update { it.copy(galleryMission = mission, gallery = null, archiveLoading = true) }
+        viewModelScope.launch {
+            val g = try { archives.gallery(mission) } catch (e: CancellationException) { throw e } catch (e: Exception) { toast("Gallery: ${e.message ?: "not reachable"}"); null }
+            _state.update { if (it.galleryMission == mission) it.copy(gallery = g, archiveLoading = false) else it }
+        }
+    }
+
+    fun openImage(img: com.kroryan.astrovia.data.gallery.OutreachImage) = _state.update { it.copy(viewerImage = img) }
+
+    fun closeImage() = _state.update { it.copy(viewerImage = null) }
+
+    fun goToImage(img: com.kroryan.astrovia.data.gallery.OutreachImage) {
+        stopMotion()
+        val fov = ((img.fovDeg ?: 0.2) * 1.4).coerceIn(0.002, 180.0)
+        _state.update { it.copy(viewerImage = null, camera = SkyCamera.looking(SkyPosition(img.raDeg, img.decDeg), fov), cameraPlaced = true) }
+    }
+
+    /** Places the picture over the sky between its four corners (a coarse copy of it, up to about 1800 px). */
+    fun showImageOnSky(img: com.kroryan.astrovia.data.gallery.OutreachImage) {
+        if (img.corners.size < 4) { toast("This picture has no sky corners"); return }
+        _state.update { it.copy(fileLoading = true) }
+        viewModelScope.launch {
+            val bmp = withContext(Dispatchers.IO) {
+                runCatching {
+                    val p = com.kroryan.astrovia.data.gallery.TilePyramids.open(img.tilesUrl) { u -> com.kroryan.astrovia.data.gallery.TileLoader.fetchText(u) }
+                    if (p == null) null else com.kroryan.astrovia.data.gallery.TileLoader.stitch(p)
+                }.getOrNull()
+            }
+            if (bmp == null) { _state.update { it.copy(fileLoading = false) }; toast("Could not load the picture"); return@launch }
+            val ra = DoubleArray(4) { img.corners[it].first }; val dec = DoubleArray(4) { img.corners[it].second }
+            val fov = ((img.fovDeg ?: 0.2) * 1.4).coerceIn(0.002, 180.0)
+            stopMotion()
+            _state.update { it.copy(fileLoading = false, viewerImage = null, quadOverlay = com.kroryan.astrovia.model.QuadOverlay(bmp, ra, dec), camera = SkyCamera.looking(SkyPosition(img.raDeg, img.decDeg), fov), cameraPlaced = true) }
+            toast("${img.title} placed on the sky")
+        }
+    }
+
+    fun clearQuadOverlay() = _state.update { it.copy(quadOverlay = null) }
+
+    // --- Light curves (TESS, Kepler, K2 and any FITS table with a time and a flux column) ---
+    fun closeLightCurve() = _state.update { it.copy(lightCurve = null) }
+
+    /** Downloads a light-curve FITS product (e.g. a MAST *_lc.fits) and plots it. */
+    fun plotLightCurve(url: String, title: String) {
+        _state.update { it.copy(fileLoading = true, message = null) }
+        viewModelScope.launch {
+            val res: Result<com.kroryan.astrovia.data.fits.LightCurve> = withContext(Dispatchers.IO) {
+                runCatching {
+                    val dir = java.io.File(app.cacheDir, "lightcurves").apply { mkdirs() }
+                    val f = java.io.File(dir, "lc_" + url.hashCode().toUInt().toString(16) + ".fits")
+                    if (!f.exists() || f.length() == 0L) {
+                        com.kroryan.astrovia.data.net.HttpClient.client.newCall(okhttp3.Request.Builder().url(url.replace("http://", "https://")).build()).execute().use { r ->
+                            if (!r.isSuccessful) throw java.io.IOException("The archive answered HTTP ${r.code}")
+                            r.body!!.byteStream().use { i -> f.outputStream().use { o -> i.copyTo(o) } }
+                        }
+                    }
+                    com.kroryan.astrovia.data.fits.FitsFile.open(f).use { fits ->
+                        val (hdu, cols) = com.kroryan.astrovia.data.fits.LightCurves.find(fits) ?: throw java.io.IOException("This file has no light curve (time + flux columns)")
+                        com.kroryan.astrovia.data.fits.LightCurves.read(fits, hdu, cols, title)
+                    }
+                }
+            }
+            res.onSuccess { lc -> _state.update { it.copy(fileLoading = false, lightCurve = lc) } }
+                .onFailure { e -> _state.update { it.copy(fileLoading = false) }; toast("Light curve: ${e.message ?: "failed"}") }
+        }
+    }
+
+    /** Plots the light curve of an open FITS table (chosen in the FITS viewer). */
+    fun plotFitsLightCurve(tableIndex: Int) {
+        val d = _state.value.fitsDoc ?: return
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                runCatching {
+                    val hdu = d.fits.hdus[tableIndex]
+                    val cols = com.kroryan.astrovia.data.fits.LightCurves.detect(com.kroryan.astrovia.data.fits.LightCurves.columnsOf(d.fits, hdu)) ?: throw java.io.IOException("No time and flux columns in this table")
+                    com.kroryan.astrovia.data.fits.LightCurves.read(d.fits, hdu, cols, d.name)
+                }
+            }
+            r.onSuccess { lc -> _state.update { it.copy(lightCurve = lc) } }.onFailure { toast("Light curve: ${it.message}") }
+        }
+    }
+
+    // --- Open files: FITS images and tables, VOTable, CSV/TSV ---
+    private var openFits: com.kroryan.astrovia.data.fits.FitsFile? = null
+
+    fun openFile(uri: Uri) {
+        _state.update { it.copy(fileLoading = true, message = null) }
+        viewModelScope.launch {
+            val res = withContext(Dispatchers.IO) { FileOpener.open(app, uri) }
+            when (res) {
+                is OpenedFile.Failed -> toast("${res.name}: ${res.reason}")
+                is OpenedFile.Table -> {
+                    if (res.rows.isEmpty()) toast("${res.name}: ${res.totalRows} rows but no RA/Dec columns to place them on the sky")
+                    else {
+                        _state.update { it.copy(catalogRows = res.rows, catalogVisible = true, activeCatalogId = null, camera = it.camera.recenterTo(SkyPosition(res.rows[0].raDeg, res.rows[0].decDeg))) }
+                        toast("${res.name}: ${res.rows.size} sources shown on the sky")
+                    }
+                }
+                is OpenedFile.Fits -> showFits(res.name, res.fits)
+            }
+            _state.update { it.copy(fileLoading = false) }
+        }
+    }
+
+    private fun toast(msg: String) {
+        _state.update { it.copy(message = msg) }
+        clearMessageLater(msg)
+    }
+
+    private suspend fun showFits(name: String, fits: com.kroryan.astrovia.data.fits.FitsFile) {
+        openFits?.close()
+        openFits = fits
+        val hdu = fits.imageHdus.firstOrNull()
+        if (hdu == null) {
+            val lcHdu = com.kroryan.astrovia.data.fits.LightCurves.find(fits)
+            if (lcHdu != null) {
+                val lc = withContext(Dispatchers.IO) { runCatching { com.kroryan.astrovia.data.fits.LightCurves.read(fits, lcHdu.first, lcHdu.second, name) }.getOrNull() }
+                if (lc != null) { _state.update { it.copy(lightCurve = lc) }; return }
+            }
+            val t = fits.tableHdus.firstOrNull()
+            if (t == null) { toast("$name: no image or table in this FITS file"); return }
+            loadFitsTable(name, fits, t.index)
+            return
+        }
+        val doc = withContext(Dispatchers.Default) { buildFitsDoc(name, fits, hdu.index, Stretch.ASINH, ColorMap.GRAY, null, null) }
+        _state.update { it.copy(fitsDoc = doc) }
+    }
+
+    private fun buildFitsDoc(name: String, fits: com.kroryan.astrovia.data.fits.FitsFile, hduIndex: Int, st: Stretch, cm: ColorMap, lo0: Float?, hi0: Float?): FitsDocument {
+        val hdu = fits.hdus[hduIndex]
+        return try {
+            val img = fits.readImage(hdu)
+            val (lo, hi) = if (lo0 != null && hi0 != null) lo0 to hi0 else FitsRender.cuts(img.values)
+            val argb = FitsRender.toArgb(img, lo, hi, st, cm)
+            val bmp = android.graphics.Bitmap.createBitmap(argb, img.width, img.height, android.graphics.Bitmap.Config.ARGB_8888)
+            FitsDocument(name, fits, hdu, img, bmp, st, cm, lo, hi)
+        } catch (e: Exception) {
+            FitsDocument(name, fits, hdu, null, null, note = e.message ?: "Could not read this HDU")
+        }
+    }
+
+    fun setFitsHdu(index: Int) {
+        val d = _state.value.fitsDoc ?: return
+        viewModelScope.launch {
+            val nd = withContext(Dispatchers.Default) { buildFitsDoc(d.name, d.fits, index, d.stretch, d.colorMap, null, null) }
+            _state.update { it.copy(fitsDoc = nd) }
+        }
+    }
+
+    fun setFitsStyle(st: Stretch, cm: ColorMap, lo: Float, hi: Float) {
+        val d = _state.value.fitsDoc ?: return
+        val hdu = d.hdu ?: return
+        viewModelScope.launch {
+            val nd = withContext(Dispatchers.Default) { buildFitsDoc(d.name, d.fits, hdu.index, st, cm, lo, hi) }
+            _state.update { s ->
+                // keep an overlay in sync with the style
+                val ov = s.fitsOverlay
+                s.copy(fitsDoc = nd, fitsOverlay = if (ov != null && nd.bitmap != null && nd.image?.wcs != null) FitsOverlay(nd.bitmap, nd.image.wcs, nd.image.origWidth, nd.image.origHeight, nd.image.step, ov.alpha) else ov)
+            }
+        }
+    }
+
+    /** Puts the FITS image on the sky at its true position (needs a celestial WCS). */
+    fun showFitsOnSky() {
+        val d = _state.value.fitsDoc ?: return
+        val img = d.image
+        val wcs = img?.wcs
+        val bmp = d.bitmap
+        if (img == null || wcs == null || bmp == null) { toast("This image has no usable sky coordinates (WCS)"); return }
+        val c = wcs.pixelToSky(img.origWidth / 2.0 + 0.5, img.origHeight / 2.0 + 0.5)
+        if (c == null) { toast("The image centre cannot be projected"); return }
+        val fov = (maxOf(img.origWidth, img.origHeight) * com.kroryan.astrovia.data.fits.Wcs.scaleDeg(wcs) * 1.3).coerceIn(0.001, 180.0)
+        stopMotion()
+        _state.update { it.copy(fitsOverlay = FitsOverlay(bmp, wcs, img.origWidth, img.origHeight, img.step), fitsDoc = null, camera = SkyCamera.looking(SkyPosition(c[0], c[1]), fov), cameraPlaced = true) }
+        toast("${d.name} placed on the sky")
+    }
+
+    fun setOverlayAlpha(a: Float) = _state.update { s -> s.fitsOverlay?.let { s.copy(fitsOverlay = FitsOverlay(it.bitmap, it.wcs, it.origWidth, it.origHeight, it.step, a)) } ?: s }
+
+    fun clearFitsOverlay() = _state.update { it.copy(fitsOverlay = null) }
+
+    fun closeFits() = _state.update { it.copy(fitsDoc = null) }
+
+    /** Shows a FITS table on the sky as a catalogue (RA/Dec columns are detected by name). */
+    fun loadFitsTable(name: String, fits: com.kroryan.astrovia.data.fits.FitsFile, hduIndex: Int) {
+        viewModelScope.launch {
+            val rows = withContext(Dispatchers.IO) { runCatching { vizier.rowsFromMaps(fits.readTable(fits.hdus[hduIndex]).rows) }.getOrDefault(emptyList()) }
+            if (rows.isEmpty()) { toast("$name: this table has no RA/Dec columns"); return@launch }
+            _state.update { it.copy(catalogRows = rows, catalogVisible = true, activeCatalogId = null, fitsDoc = null, camera = it.camera.recenterTo(SkyPosition(rows[0].raDeg, rows[0].decDeg))) }
+            toast("$name: ${rows.size} sources shown on the sky")
+        }
+    }
+
+    fun fitsTables(): List<Pair<Int, String>> = _state.value.fitsDoc?.fits?.tableHdus?.map { it.index to it.name }.orEmpty()
+
+
+    // --- External data centres: user-added TAP services ---
+    fun loadCustomTables(tapUrl: String) {
+        _state.update { it.copy(archiveLoading = true, customTables = null, customTap = tapUrl) }
+        viewModelScope.launch {
+            val t = try { archives.listTables(tapUrl) } catch (e: CancellationException) { throw e } catch (e: Exception) { toast("TAP service: ${e.message ?: "failed"}"); null }
+            _state.update { it.copy(archiveLoading = false, customTables = t) }
+        }
+    }
+
+    fun addCustomSource(tapUrl: String, table: String, label: String) {
+        _state.update { it.copy(archiveLoading = true) }
+        viewModelScope.launch {
+            try {
+                val src = archives.detectSource(tapUrl, table, label)
+                archives.addCustom(src)
+                _state.update { it.copy(archiveLoading = false, archiveSources = archives.allSources()) }
+                toast("Added: ${src.label}")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(archiveLoading = false) }
+                toast("Could not add the table: ${e.message ?: "failed"}")
+            }
+        }
+    }
+
+    fun removeCustomSource(id: String) {
+        archives.removeCustom(id)
+        _state.update { it.copy(archiveSources = archives.allSources()) }
+    }
+
+    // --- Papers of the objects in the field ---
+    fun loadFieldObjects() {
+        val c = _state.value.camera.center
+        val r = visibleRadiusDeg()
+        _state.update { it.copy(archiveLoading = true, fieldObjects = null) }
+        viewModelScope.launch {
+            val l = try { archives.fieldObjects(c.raDeg, c.decDeg, r) } catch (e: CancellationException) { throw e } catch (e: Exception) { toast("SIMBAD: ${e.message ?: "not reachable"}"); null }
+            _state.update { it.copy(archiveLoading = false, fieldObjects = l) }
+        }
+    }
+
+    // --- Observation planning: instrument footprints on the sky ---
+    fun setPlan(key: String?, paDeg: Double? = null) {
+        val c = _state.value.camera.center
+        _state.update { s ->
+            if (key == null && s.plan == null) s
+            else if (key == null) s.copy(plan = null)
+            else s.copy(plan = PlanState(key, s.plan?.raDeg ?: c.raDeg, s.plan?.decDeg ?: c.decDeg, paDeg ?: s.plan?.paDeg ?: 0.0))
+        }
+    }
+
+    fun placePlanHere() {
+        val c = _state.value.camera.center
+        _state.update { s -> s.plan?.let { s.copy(plan = it.copy(raDeg = c.raDeg, decDeg = c.decDeg)) } ?: s }
+    }
+
+    fun setPlanPa(pa: Double) = _state.update { s -> s.plan?.let { s.copy(plan = it.copy(paDeg = pa)) } ?: s }
+
+
+    // --- Field overview: how much each archive has in the field (counts, tap to open) ---
+    private var scanJob: Job? = null
+
+    fun scanField(all: Boolean = false) {
+        scanJob?.cancel()
+        val c = _state.value.camera.center
+        val r = visibleRadiusDeg()
+        val list = _state.value.archiveSources.filter { it.kind in listOf(com.kroryan.astrovia.data.archive.ArchiveKind.OBSERVATIONS, com.kroryan.astrovia.data.archive.ArchiveKind.SPECTRA, com.kroryan.astrovia.data.archive.ArchiveKind.CATALOGUES, com.kroryan.astrovia.data.archive.ArchiveKind.LIGHT_CURVES, com.kroryan.astrovia.data.archive.ArchiveKind.IMAGES, com.kroryan.astrovia.data.archive.ArchiveKind.ALERTS) }
+            .let { l -> if (all) l else l.filter { it.centre == "ESA" || it.centre == "MAST" } }
+        _state.update { it.copy(fieldCounts = emptyMap(), scanProgress = 0 to list.size) }
+        scanJob = viewModelScope.launch {
+            val gate = kotlinx.coroutines.sync.Semaphore(5)
+            val done = java.util.concurrent.atomic.AtomicInteger(0)
+            val jobs = list.map { src ->
+                launch {
+                    gate.acquire()
+                    try {
+                        val n = try { archives.countInField(src, c.raDeg, c.decDeg, r) } catch (e: CancellationException) { throw e } catch (e: Exception) { -1 }
+                        _state.update { st -> st.copy(fieldCounts = st.fieldCounts + (src.id to n), scanProgress = done.incrementAndGet() to list.size) }
+                    } finally { gate.release() }
+                }
+            }
+            jobs.forEach { it.join() }
+            _state.update { it.copy(scanProgress = null) }
+        }
+    }
+
     // --- Multi-archive search (own implementation over IVOA TAP) ---
-    val archives = ArchiveService(app)
 
     /** Radius (degrees) of the circle that covers the visible field, capped so queries stay fast. */
     private fun visibleRadiusDeg(): Double = (_state.value.camera.fovDeg / 2.0 * 1.25).coerceIn(0.005, 20.0)
@@ -701,12 +1050,14 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: Exception) {
                 msg = "${src.label}: failed (${e.message})"
             }
-            _state.update { it.copy(archiveLoading = false, archiveHits = hits, archiveLabel = src.label, archiveVisible = true, message = msg) }
+            _state.update { it.copy(archiveLoading = false, archiveHits = hits, archiveLabel = src.label, archiveVisible = true, hitFilter = null, message = msg) }
             clearMessageLater(msg)
         }
     }
 
-    fun clearArchive() = _state.update { it.copy(archiveHits = emptyList(), archiveLabel = null, selectedHit = null, solarBodies = emptyList()) }
+    fun clearArchive() = _state.update { it.copy(archiveHits = emptyList(), archiveLabel = null, selectedHit = null, solarBodies = emptyList(), hitFilter = null) }
+
+    fun setHitFilter(f: HitFilter?) = _state.update { s -> s.copy(hitFilter = if (f == null || s.hitFilter?.label == f.label) null else f, selectedHit = null) }
 
     fun toggleArchiveVisibility() = _state.update { it.copy(archiveVisible = !it.archiveVisible) }
 
@@ -720,10 +1071,11 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
     /** Hit under a sky position: inside a footprint, or the closest centre within [radiusDeg]. */
     fun hitAt(pos: SkyPosition, radiusDeg: Double): ArchiveHit? {
         val s = _state.value
-        if (!s.archiveVisible || s.archiveHits.isEmpty()) return null
-        val inside = s.archiveHits.filter { h -> h.footprints.any { it.contains(pos.raDeg, pos.decDeg) } }
+        val vis = s.visibleHits
+        if (!s.archiveVisible || vis.isEmpty()) return null
+        val inside = vis.filter { h -> h.footprints.any { it.contains(pos.raDeg, pos.decDeg) } }
         if (inside.isNotEmpty()) return inside.minByOrNull { SkyPosition.separation(pos, SkyPosition(it.raDeg, it.decDeg)) }
-        val best = s.archiveHits.minByOrNull { SkyPosition.separation(pos, SkyPosition(it.raDeg, it.decDeg)) } ?: return null
+        val best = vis.minByOrNull { SkyPosition.separation(pos, SkyPosition(it.raDeg, it.decDeg)) } ?: return null
         return best.takeIf { SkyPosition.separation(pos, SkyPosition(best.raDeg, best.decDeg)) <= radiusDeg }
     }
 
@@ -767,22 +1119,55 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    // --- Target list (multi-object lists, kept on the device) ---
-    private val targetPrefs get() = app.getSharedPreferences("astrovia_targets", android.content.Context.MODE_PRIVATE)
+    // --- Target lists: several named lists, built-in lists (Messier), import / export ---
+    private val listStore by lazy { com.kroryan.astrovia.model.TargetLists(app) }
 
-    private fun loadTargets(): List<Target> = runCatching { Target.listFromJson(targetPrefs.getString("list", "[]").orEmpty()) }.getOrDefault(emptyList())
+    private fun loadLists() {
+        val u = listStore.user()
+        val cur = if ("My targets" in u) "My targets" else u.keys.first()
+        _state.update { it.copy(lists = u, builtInLists = listStore.builtIn(), currentList = cur, targets = u[cur].orEmpty()) }
+    }
 
-    private fun saveTargets(list: List<Target>) { targetPrefs.edit().putString("list", Target.listToJson(list)).apply() }
+    private fun updateLists(lists: Map<String, List<Target>>, current: String = _state.value.currentList) {
+        listStore.save(lists)
+        _state.update { it.copy(lists = lists, currentList = current, targets = lists[current].orEmpty()) }
+    }
 
-    /** Resolves one name per line with SIMBAD and adds the ones found. */
+    fun selectList(name: String) = _state.update { it.copy(currentList = name, targets = it.lists[name] ?: it.builtInLists[name].orEmpty()) }
+
+    fun createList(name: String) {
+        val n = name.trim()
+        if (n.isEmpty() || n in _state.value.lists) return
+        updateLists(_state.value.lists + (n to emptyList()), n)
+    }
+
+    fun deleteList(name: String) {
+        val l = _state.value.lists - name
+        if (l.isEmpty()) updateLists(mapOf("My targets" to emptyList()), "My targets") else updateLists(l, l.keys.first())
+    }
+
+    /** Copies a built-in list (Messier...) into the user's lists so it can be edited. */
+    fun copyBuiltIn(name: String) {
+        val src = _state.value.builtInLists[name] ?: return
+        updateLists(_state.value.lists + (name to src), name)
+    }
+
+    fun addToCurrentList(t: Target) {
+        val cur = _state.value.currentList
+        if (cur !in _state.value.lists) return
+        updateLists(_state.value.lists + (cur to ((_state.value.lists[cur].orEmpty() + t).distinctBy { it.name })))
+        toast("Added to $cur")
+    }
+
+    /** Resolves one name per line with SIMBAD and adds the ones found to the current list. */
     fun addTargets(namesText: String) {
-        val names = namesText.lines().map { it.trim() }.filter { it.isNotEmpty() }.distinct().take(200)
-        if (names.isEmpty()) return
+        val (known, names) = com.kroryan.astrovia.model.TargetLists.parse(namesText)
+        val list0 = names.map { it.trim() }.filter { it.isNotEmpty() }.distinct().take(300)
         _state.update { it.copy(archiveLoading = true, message = null) }
         viewModelScope.launch {
-            val found = ArrayList<Target>()
+            val found = ArrayList<Target>(known)
             var failed = 0
-            for (n in names) {
+            for (n in list0) {
                 try {
                     val o = simbad.search(n).firstOrNull()
                     if (o != null) found.add(Target(o.mainId, o.position.raDeg, o.position.decDeg)) else failed++
@@ -792,23 +1177,41 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
                     failed++
                 }
             }
-            val all = (_state.value.targets + found).distinctBy { it.name }
-            saveTargets(all)
+            val cur = _state.value.currentList
+            val l = _state.value.lists
+            if (cur in l) updateLists(l + (cur to (l[cur].orEmpty() + found).distinctBy { it.name }))
             val msg = "Targets: ${found.size} added" + if (failed > 0) ", $failed not found" else ""
-            _state.update { it.copy(archiveLoading = false, targets = all, message = msg) }
+            _state.update { it.copy(archiveLoading = false, message = msg) }
             clearMessageLater(msg)
         }
     }
 
+    /** Puts every picture of the gallery of a mission in a new list. */
+    fun listFromGallery(label: String, images: List<com.kroryan.astrovia.data.gallery.OutreachImage>) {
+        val n = "$label pictures"
+        updateLists(_state.value.lists + (n to images.map { Target(it.title, it.raDeg, it.decDeg) }.distinctBy { it.name }), n)
+    }
+
+    fun exportCurrentList(csv: Boolean): String = com.kroryan.astrovia.model.TargetLists.let { if (csv) it.toCsv(_state.value.targets) else Target.listToJson(_state.value.targets) }
+
     fun removeTarget(t: Target) {
-        val all = _state.value.targets - t
-        saveTargets(all)
-        _state.update { it.copy(targets = all) }
+        val cur = _state.value.currentList
+        val l = _state.value.lists
+        if (cur in l) updateLists(l + (cur to (l[cur].orEmpty() - t)))
     }
 
     fun goToTarget(t: Target) {
         stopMotion()
         _state.update { it.copy(camera = it.camera.recenterTo(SkyPosition(t.raDeg, t.decDeg))) }
+    }
+
+    // --- Object explorer ---
+    fun loadObjectInfo(name: String) {
+        _state.update { it.copy(objectLoading = true, objectInfo = null) }
+        viewModelScope.launch {
+            val info = try { archives.objectDetails(name) } catch (e: CancellationException) { throw e } catch (e: Exception) { null }
+            _state.update { it.copy(objectLoading = false, objectInfo = info) }
+        }
     }
 
     // --- Sessions and view links ---
@@ -854,7 +1257,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
         val targets = runCatching { Target.listFromJson(o.optJSONArray("targets")?.toString() ?: "[]") }.getOrDefault(emptyList())
         o.optString("survey").takeIf { it.isNotEmpty() }?.let { id -> _state.value.availableSurveys.firstOrNull { it.id == id }?.let { setSurvey(it) } }
         stopMotion()
-        saveTargets(targets)
+        updateLists(_state.value.lists + (_state.value.currentList to targets))
         _state.update {
             it.copy(
                 camera = SkyCamera.looking(SkyPosition(o.getDouble("ra"), o.getDouble("dec")), o.getDouble("fov").coerceIn(0.0005, 180.0)),

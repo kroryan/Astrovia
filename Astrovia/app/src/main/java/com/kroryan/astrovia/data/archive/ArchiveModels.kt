@@ -10,7 +10,8 @@ enum class ArchiveKind(val label: String, val code: String) {
     OBSERVATIONS("Observations", "obs"),
     SPECTRA("Spectra", "spec"),
     CATALOGUES("Catalogues", "cat"),
-    ALERTS("Alerts", "alert"),
+    LIGHT_CURVES("Light curves", "lc"),
+    ALERTS("Multi-messenger events", "alert"),
     SOLAR_SYSTEM("Solar system", "sso"),
     IMAGES("Outreach images", "img"),
     EXOPLANETS("Exoplanets", "exo");
@@ -35,7 +36,17 @@ data class ArchiveSource(
     val regionCol: String?,
     val linkCol: String?,
     val tapUrl: String,
+    /** Extra ADQL condition (e.g. a collection filter) and the answer format ("csv" or "votable"). */
+    val where: String? = null,
+    val format: String = "csv",
+    /** Data centre that serves it (ESA, MAST, ESO, IRSA, HEASARC...). */
+    val centre: String = "",
 ) {
+    fun toJson(): JSONObject = JSONObject().put("id", id).put("label", label).put("mission", mission).put("band", band).put("kind", kind.code)
+        .put("table", table).put("ra", raCol).put("dec", decCol).put("idCol", idCol ?: JSONObject.NULL).put("nameCol", nameCol ?: JSONObject.NULL)
+        .put("regionCol", regionCol ?: JSONObject.NULL).put("linkCol", linkCol ?: JSONObject.NULL).put("tap", tapUrl).put("where", where ?: JSONObject.NULL)
+        .put("fmt", format).put("centre", centre)
+
     companion object {
         fun fromJson(o: JSONObject, defaultTap: String): ArchiveSource {
             fun s(k: String) = if (o.isNull(k)) null else o.optString(k).takeIf { it.isNotBlank() }
@@ -45,6 +56,7 @@ data class ArchiveSource(
                 table = o.getString("table"), raCol = o.getString("ra"), decCol = o.getString("dec"),
                 idCol = s("idCol"), nameCol = s("nameCol"), regionCol = s("regionCol"), linkCol = s("linkCol"),
                 tapUrl = s("tap") ?: defaultTap,
+                where = s("where"), format = s("fmt") ?: "csv", centre = s("centre") ?: "ESA",
             )
         }
     }

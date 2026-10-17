@@ -80,6 +80,14 @@ Section "Install"
   WriteRegStr HKLM "${UNINST}" "DisplayIcon" "$INSTDIR\astrovia.ico"
   WriteRegStr HKLM "${UNINST}" "UninstallString" "$INSTDIR\Uninstall.exe"
   WriteRegDWORD HKLM "${UNINST}" "NoModify" 1
+  ; open FITS and VOTable files with Astrovia (Open with / double click)
+  WriteRegStr HKLM "Software\Classes\Astrovia.File" "" "Astronomy data file (FITS, VOTable)"
+  WriteRegStr HKLM "Software\Classes\Astrovia.File\DefaultIcon" "" "$INSTDIR\astrovia.ico"
+  WriteRegStr HKLM "Software\Classes\Astrovia.File\shell\open\command" "" '"$INSTDIR\Astrovia.exe" "%1"'
+  WriteRegStr HKLM "Software\Classes\.fits\OpenWithProgids" "Astrovia.File" ""
+  WriteRegStr HKLM "Software\Classes\.fit\OpenWithProgids" "Astrovia.File" ""
+  WriteRegStr HKLM "Software\Classes\.fts\OpenWithProgids" "Astrovia.File" ""
+  WriteRegStr HKLM "Software\Classes\.vot\OpenWithProgids" "Astrovia.File" ""
 SectionEnd
 
 Section "Uninstall"
@@ -89,4 +97,9 @@ Section "Uninstall"
   Delete "$DESKTOP\${APP}.lnk"
   DeleteRegKey HKLM "${UNINST}"
   DeleteRegKey HKLM "Software\${APP}"
+  DeleteRegKey HKLM "Software\Classes\Astrovia.File"
+  DeleteRegValue HKLM "Software\Classes\.fits\OpenWithProgids" "Astrovia.File"
+  DeleteRegValue HKLM "Software\Classes\.fit\OpenWithProgids" "Astrovia.File"
+  DeleteRegValue HKLM "Software\Classes\.fts\OpenWithProgids" "Astrovia.File"
+  DeleteRegValue HKLM "Software\Classes\.vot\OpenWithProgids" "Astrovia.File"
 SectionEnd

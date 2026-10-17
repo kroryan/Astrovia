@@ -12,7 +12,7 @@ import java.nio.charset.CodingErrorAction
 object HiPSListService {
     // Only the fields the app needs: ~0.9 MB instead of the ~4.9 MB of the full records.
     private const val LIST_URL = "https://alasky.cds.unistra.fr/MocServer/query?dataproduct_type=image&get=record&fmt=json" +
-        "&fields=ID,obs_title,obs_description,hips_service_url,hips_tile_format,hips_frame"
+        "&fields=ID,obs_title,obs_description,hips_service_url,hips_tile_format,hips_frame,client_category,obs_regime,em_min,em_max"
 
     /**
      * @param cacheFile where the last good list is kept so the catalogue is available offline and
@@ -53,7 +53,11 @@ object HiPSListService {
                                 description = obj.optString("obs_description", ""),
                                 frame = obj.optString("hips_frame", "equatorial").ifBlank { "equatorial" },
                                 formats = obj.optString("hips_tile_format", ""),
-                            ),
+                                category = firstString(obj, "client_category"),
+                                regime = firstString(obj, "obs_regime"),
+                                emMin = firstString(obj, "em_min").toDoubleOrNull(),
+                                emMax = firstString(obj, "em_max").toDoubleOrNull(),
+                            ).let { sv -> if (sv.category.isBlank()) sv.copy(category = "Image/" + sv.band) else sv },
                         )
                     }
                     if (cacheFile != null && json.length > 1000) {
@@ -69,6 +73,11 @@ object HiPSListService {
             val rest = list.drop(head.size).sortedBy { it.title.lowercase() }
             head + rest
         }
+
+    private fun firstString(o: org.json.JSONObject, key: String): String {
+        val v = o.opt(key) ?: return ""
+        return if (v is JSONArray) (if (v.length() > 0) v.optString(0) else "") else v.toString()
+    }
 
     const val OFFLINE_SUFFIX = " (offline)"
     const val OFFLINE_DESC = "Offline: downloaded on this device"
@@ -101,6 +110,7 @@ object HiPSListService {
                         description = OFFLINE_DESC,
                         frame = p["hips_frame"]?.takeIf { it.isNotBlank() } ?: "equatorial",
                         formats = p["hips_tile_format"] ?: "",
+                        category = "Offline (downloaded)",
                     ),
                 )
             }

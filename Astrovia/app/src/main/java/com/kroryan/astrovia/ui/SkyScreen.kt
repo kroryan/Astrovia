@@ -31,6 +31,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.Dialog
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Clear
@@ -98,6 +106,7 @@ fun SkyScreen(vm: SkyViewModel) {
     var showSettingsSheet by remember { mutableStateOf(false) }
     var showDownloadSheet by remember { mutableStateOf(false) }
     var showArchives by remember { mutableStateOf(false) }
+    val openFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) vm.openFile(uri) }
     var archivesTab by remember { mutableStateOf(0) }
     var archivesSection by remember { mutableStateOf(0) }
 
@@ -136,40 +145,23 @@ fun SkyScreen(vm: SkyViewModel) {
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(16.dp),
                 )
-                OutlinedTextField(
-                    value = surveySearch,
-                    onValueChange = { surveySearch = it },
-                    label = { Text("Search, e.g. PanSTARRS or offline") },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                    singleLine = true
+                HipsBrowser(
+                    surveys = state.availableSurveys, archives = state.archiveSources, selectedId = state.survey.id, loading = state.surveysLoading,
+                    onSelect = { survey ->
+                        vm.setSurvey(survey)
+                        scope.launch { drawerState.close() }
+                    },
+                    onArchive = { src ->
+                        vm.searchArchive(src)
+                        archivesTab = 1; archivesSection = 0; showArchives = true
+                        scope.launch { drawerState.close() }
+                    },
+                    onOpenUrl = { u ->
+                        vm.openHipsUrl(u)
+                        scope.launch { drawerState.close() }
+                    },
+                    modifier = Modifier.weight(1f, fill = false),
                 )
-                if (state.surveysLoading) {
-                    androidx.compose.material3.LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
-                }
-                HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
-                
-                val filteredSurveys = remember(surveySearch, state.availableSurveys) {
-                    if (surveySearch.isBlank()) state.availableSurveys
-                    else state.availableSurveys.filter {
-                        it.title.contains(surveySearch, ignoreCase = true) ||
-                        it.id.contains(surveySearch, ignoreCase = true) ||
-                        it.description.contains(surveySearch, ignoreCase = true)
-                    }
-                }
-                
-                LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
-                    items(filteredSurveys, key = { it.id }) { survey ->
-                        NavigationDrawerItem(
-                            label = { Text(survey.title) },
-                            selected = survey.id == state.survey.id,
-                            onClick = {
-                                vm.setSurvey(survey)
-                                scope.launch { drawerState.close() }
-                            },
-                            modifier = Modifier.padding(horizontal = 12.dp),
-                        )
-                    }
-                }
                 HorizontalDivider()
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.about_menu_item)) },
@@ -311,6 +303,8 @@ fun SkyScreen(vm: SkyViewModel) {
                     onReloadCatalog = if (activeCatId != null) ({ vm.loadCatalog(activeCatId, maxRowsInput.toIntOrNull() ?: 500) }) else null,
                     onClearMarkers = if (state.markers.isNotEmpty()) ({ vm.clearMarkers() }) else null,
                     onClearMeasurements = if (state.measurements.isNotEmpty()) ({ vm.clearMeasurements() }) else null,
+                    onOpenFile = { openFileLauncher.launch(arrayOf("*/*")) },
+                    onClearImage = if (state.fitsOverlay != null || state.quadOverlay != null) ({ vm.clearFitsOverlay(); vm.clearQuadOverlay() }) else null,
                 ),
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
@@ -379,10 +373,16 @@ fun SkyScreen(vm: SkyViewModel) {
     }
 
     if (showAbout) AboutDialog(onDismiss = { showAbout = false })
+    state.fitsDoc?.let { FitsViewer(vm, it) }
+    state.viewerImage?.let { ImageExplorer(vm, it) }
+    state.lightCurve?.let { LightCurveView(it, onClose = { vm.closeLightCurve() }) }
+    if (state.fileLoading) Dialog(onDismissRequest = {}) { androidx.compose.material3.CircularProgressIndicator() }
     if (showArchives) ArchivesSheet(vm, state, archivesTab, archivesSection, onDismiss = { showArchives = false })
     state.selectedHit?.let { hit ->
         HitSheet(
             hit = hit,
+            onImage = if (hit.source.kind == com.kroryan.astrovia.data.archive.ArchiveKind.IMAGES) com.kroryan.astrovia.data.gallery.OutreachImage.fromHit(hit)?.let { im -> { vm.openImage(im); vm.selectHit(null) } } else null,
+            onPlot = hit.link?.takeIf { hit.source.kind == com.kroryan.astrovia.data.archive.ArchiveKind.LIGHT_CURVES || it.endsWith("_lc.fits") }?.let { u -> { vm.plotLightCurve(u, hit.title); vm.selectHit(null) } },
             onCenter = { vm.recenter(com.kroryan.astrovia.model.SkyPosition(hit.raDeg, hit.decDeg)) },
             onPublications = { vm.loadPublications(hit.title); vm.selectHit(null); archivesTab = 2; archivesSection = 2; showArchives = true },
             onDismiss = { vm.selectHit(null) },
@@ -410,11 +410,13 @@ fun SkyScreen(vm: SkyViewModel) {
             sheetState = sheetState,
         ) {
             ObjectSheetContent(
-                obj = selected,
+                obj = selected, vm = vm, info = state.objectInfo, loading = state.objectLoading,
                 onCenter = {
                     vm.recenter(selected.position)
                     vm.clearSelected()
                 },
+                onPapers = { vm.loadPublications(selected.mainId); vm.clearSelected(); archivesTab = 5; archivesSection = 3; showArchives = true },
+                onObservations = { vm.recenter(selected.position); vm.clearSelected(); vm.scanField(false); archivesTab = 3; showArchives = true },
             )
         }
     }
@@ -730,18 +732,41 @@ private fun StatusItem(label: String, value: String) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ObjectSheetContent(obj: com.kroryan.astrovia.data.simbad.SimbadObject, onCenter: () -> Unit) {
-    Column(Modifier.padding(16.dp).fillMaxWidth()) {
+private fun ObjectSheetContent(
+    obj: com.kroryan.astrovia.data.simbad.SimbadObject, vm: SkyViewModel, info: com.kroryan.astrovia.data.archive.ObjectInfo?, loading: Boolean,
+    onCenter: () -> Unit, onPapers: () -> Unit, onObservations: () -> Unit,
+) {
+    val ctx = LocalContext.current
+    LaunchedEffect(obj.mainId) { vm.loadObjectInfo(obj.mainId) }
+    val open: (String) -> Unit = { u -> runCatching { ctx.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(u)).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) } }
+    Column(Modifier.padding(16.dp).fillMaxWidth().verticalScroll(rememberScrollState())) {
         Text(obj.mainId, style = MaterialTheme.typography.titleLarge, color = TextPrimary)
-        Text("Type: ${obj.otype}", color = TextSecondary)
-        Text("RA: ${obj.position.formatRa()}", color = TextSecondary)
-        Text("Dec: ${obj.position.formatDec()}", color = TextSecondary)
+        Text(info?.type?.takeIf { it.isNotBlank() } ?: "Type: ${obj.otype}", color = TextSecondary)
+        Text("RA: ${obj.position.formatRa()}   Dec: ${obj.position.formatDec()}", color = TextSecondary)
         obj.magV?.let { Text("Mag V: $it", color = TextSecondary) }
         if (obj.spectralType.isNotBlank()) Text("Spectral type: ${obj.spectralType}", color = TextSecondary)
-        Spacer(Modifier.height(12.dp))
-        FloatingActionButton(onClick = onCenter, containerColor = MaterialTheme.colorScheme.primary) {
-            Icon(Icons.Filled.Search, contentDescription = "Center")
+        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().padding(vertical = 6.dp))
+        info?.let { i ->
+            i.distanceLy?.let { Text("Distance: ${"%,.0f".format(it)} light-years (parallax ${"%.2f".format(i.parallaxMas)} mas)", color = TextSecondary) }
+            i.redshift?.let { Text("Redshift: ${"%.5f".format(it)}", color = TextSecondary) }
+            i.sizeArcmin?.let { Text("Size: ${"%.1f".format(it)} arcmin", color = TextSecondary) }
+            if (i.magnitudes.isNotEmpty()) Text("Magnitudes: " + i.magnitudes.entries.joinToString("  ") { "${it.key} ${"%.2f".format(it.value)}" }, color = TextSecondary)
+            Text("${i.papers} papers", color = TextSecondary)
+            if (i.aliases.isNotEmpty()) Text("Also known as: " + i.aliases.take(10).joinToString(", "), color = TextSecondary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+        }
+        if (info == null && !loading) Text("More details are not available right now (SIMBAD did not answer).", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 12.dp)) {
+            Button(onClick = onCenter) { Text("Center") }
+            OutlinedButton(onClick = onObservations) { Text("Observations here") }
+            OutlinedButton(onClick = onPapers) { Text("Papers") }
+            OutlinedButton(onClick = { vm.addToCurrentList(com.kroryan.astrovia.model.Target(obj.mainId, obj.position.raDeg, obj.position.decDeg)) }) { Text("Add to list") }
+        }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = { open("https://simbad.cds.unistra.fr/simbad/sim-id?Ident=" + java.net.URLEncoder.encode(obj.mainId, "UTF-8")) }) { Text("SIMBAD") }
+            TextButton(onClick = { open("https://ned.ipac.caltech.edu/byname?objname=" + java.net.URLEncoder.encode(obj.mainId, "UTF-8")) }) { Text("NED") }
+            TextButton(onClick = { open("https://en.wikipedia.org/w/index.php?search=" + java.net.URLEncoder.encode(obj.mainId, "UTF-8")) }) { Text("Wikipedia") }
         }
     }
 }

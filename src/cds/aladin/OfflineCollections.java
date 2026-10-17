@@ -47,6 +47,9 @@ final class OfflineCollections {
    /** Plain folder of an offline HiPS (opened with the engine's native local loader, see TreeObjDir.loadHips). */
    static final String KEY_PATH = "astrovia_offline_path";
 
+   /** How the Available data tree is organised: see Organizer (0 default, 1 by wavelength, 2 by mission). */
+   private static int organization = 0;
+
    /** Which collections the tree shows: everything, online only, or offline only. */
    static final int ALL = 0, ONLINE = 1, OFFLINE = 2;
 
@@ -97,6 +100,7 @@ final class OfflineCollections {
       try (FileInputStream in = new FileInputStream(prefsFile())) { pr.load(in); } catch (IOException e) { /* defaults */ }
       preferOffline = "true".equals(pr.getProperty("prefer"));
       try { sourceMode = Math.max(0, Math.min(2, Integer.parseInt(pr.getProperty("source", "0")))); } catch (Exception e) { sourceMode = ALL; }
+      try { organization = Math.max(0, Math.min(2, Integer.parseInt(pr.getProperty("organization", "0")))); } catch (Exception e) { organization = 0; }
    }
 
    private static synchronized void save() {
@@ -108,6 +112,7 @@ final class OfflineCollections {
          Properties pr = new Properties();
          pr.setProperty("prefer", String.valueOf(preferOffline));
          pr.setProperty("source", String.valueOf(sourceMode));
+         pr.setProperty("organization", String.valueOf(organization));
          try (FileOutputStream out = new FileOutputStream(prefsFile())) { pr.store(out, "Astrovia offline collections"); }
       } catch (IOException e) { /* preferences are optional */ }
    }
@@ -121,6 +126,8 @@ final class OfflineCollections {
 
    static synchronized int getSourceMode() { return sourceMode; }
    static synchronized void setSourceMode(int m) { sourceMode = m; save(); }
+   static synchronized int getOrganization() { return organization; }
+   static synchronized void setOrganization(int m) { organization = m; save(); }
    static synchronized boolean isPreferOffline() { return preferOffline; }
    static synchronized void setPreferOffline(boolean b) { preferOffline = b; save(); }
 

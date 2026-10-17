@@ -530,11 +530,17 @@ public class TreeObjDir extends TreeObj implements Propable {
    }
 
    // Positionnement de la clé de tri
+   private static boolean isOfflineBranch(String s) { return s.startsWith(OfflineCollections.HIPS_BRANCH) || s.startsWith(OfflineCollections.CAT_BRANCH); }
+
    protected void setPath() {
       String s=prop.getProperty("internal_category");
       if( !aladin.directory.isGlobalSorted() ) {
          if( s==null ) s=prop.getProperty(Constante.KEY_CLIENT_CATEGORY);
          if( s==null ) s="Others";
+      }
+      int org = OfflineCollections.getOrganization();
+      if( org!=Organizer.DEFAULT && s!=null && !isOfflineBranch(s) ) {
+         s = Organizer.folders(org, s, prop.getFirst("obs_regime"), prop.getFirst("em_min"), prop.getFirst("em_max"), internalId);
       }
       if( s==null ) path = label.replace("/","\\/");
       else path = s+"/"+label.replace("/","\\/");

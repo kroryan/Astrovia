@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.PhotoCamera
@@ -121,8 +122,12 @@ fun skyDialActions(
     onReloadCatalog: (() -> Unit)?,
     onClearMarkers: (() -> Unit)?,
     onClearMeasurements: (() -> Unit)?,
+    onOpenFile: (() -> Unit)? = null,
+    onClearImage: (() -> Unit)? = null,
 ): List<DialAction> = buildList {
     add(DialAction(Icons.Filled.PhotoCamera, "Capture the sky", onClick = onCapture))
+    onOpenFile?.let { add(DialAction(Icons.Filled.FolderOpen, "Open file (FITS, VOTable, CSV)", onClick = it)) }
+    onClearImage?.let { add(DialAction(Icons.Filled.Clear, "Remove FITS image", onClick = it)) }
     add(DialAction(Icons.Filled.Straighten, "Measure", highlighted = measureMode, onClick = onMeasure))
     add(DialAction(Icons.Filled.Add, "Marker", onClick = onMarker))
     add(

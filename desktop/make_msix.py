@@ -76,6 +76,19 @@ manifest = f'''<?xml version="1.0" encoding="utf-8"?>
         <uap:DefaultTile Wide310x150Logo="Assets\\Wide310x150Logo.png" Square71x71Logo="Assets\\Square71x71Logo.png"
             Square310x310Logo="Assets\\Square310x310Logo.png"/>
       </uap:VisualElements>
+      <Extensions>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="astroviadata">
+            <uap:DisplayName>Astronomy data file</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.fits</uap:FileType>
+              <uap:FileType>.fit</uap:FileType>
+              <uap:FileType>.fts</uap:FileType>
+              <uap:FileType>.vot</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
     </Application>
   </Applications>
   <Capabilities>

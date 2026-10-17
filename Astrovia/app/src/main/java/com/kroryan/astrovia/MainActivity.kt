@@ -20,14 +20,26 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
-        intent.data?.let { vmForLinks.openViewLink(it) }
+        handleIntent(vmForLinks, intent)
+    }
+
+    /** astrovia:// links, "Open with" and "Share" of FITS / VOTable / CSV files. */
+    private fun handleIntent(vm: SkyViewModel, intent: android.content.Intent?) {
+        intent ?: return
+        val data = intent.data
+        if (data != null) {
+            if (data.scheme == "astrovia") vm.openViewLink(data) else vm.openFile(data)
+        } else if (intent.action == android.content.Intent.ACTION_SEND) {
+            @Suppress("DEPRECATION")
+            (intent.getParcelableExtra<android.net.Uri>(android.content.Intent.EXTRA_STREAM))?.let { vm.openFile(it) }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         val vm: SkyViewModel by viewModels()
-        intent?.data?.let { vm.openViewLink(it) }
+        handleIntent(vm, intent)
         setContent {
             AstroviaTheme {
                 var accepted by remember { mutableStateOf(OnboardingPrefs.isAccepted(this)) }

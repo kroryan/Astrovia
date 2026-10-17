@@ -10,4 +10,4 @@ Terminal=false
 Categories=Science;Astronomy;
 Keywords=astronomy;sky;atlas;hips;fits;simbad;vizier;
 StartupWMClass=cds-astrovia-Astrovia
-MimeType=application/fits;application/x-votable+xml;
+MimeType=application/fits;image/fits;application/x-fits;application/x-votable+xml;

@@ -44,7 +44,8 @@ The "Archives" window (desktop) and sheet (Android) are an original implementati
 public IVOA standards (TAP/ADQL, VOTable). They query these services; their terms of use and citation requests apply:
 
 - ESA archives (XMM-Newton, Herschel, HST, JWST, Gaia, Euclid...) through the ESA Sky archive TAP service (sky.esa.int/esasky-tap), the Gaia archive and the HST archive.
-- NASA Exoplanet Archive (exoplanetarchive.ipac.caltech.edu).
+- NASA Exoplanet Archive (exoplanetarchive.ipac.caltech.edu), MAST at STScI (TESS, Kepler, K2 and other missions), IRSA at Caltech/IPAC, HEASARC at NASA/GSFC and the ESO archive.
+- Outreach pictures: ESA/Webb, NASA, ESA and CSA; ESA/Hubble and NASA; the Euclid Consortium and ESA. Each picture shows its credit in the viewer. Their reuse terms apply.
 - IMCCE SkyBoT (solar-system objects) and SIMBAD (CDS) for names and publications; ADS links for papers.
 
 "ESA" and the names of the missions belong to their owners and are used only to describe the data. Astrovia is not

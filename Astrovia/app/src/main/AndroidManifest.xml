@@ -36,6 +36,40 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="astrovia" android:host="view" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/fits" />
+                <data android:mimeType="image/fits" />
+                <data android:mimeType="application/x-fits" />
+                <data android:mimeType="application/x-votable+xml" />
+                <data android:mimeType="text/csv" />
+                <data android:mimeType="text/tab-separated-values" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.fits" />
+                <data android:pathPattern=".*\\.fit" />
+                <data android:pathPattern=".*\\.fts" />
+                <data android:pathPattern=".*\\.vot" />
+                <data android:pathPattern=".*\\.votable" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/fits" />
+                <data android:mimeType="image/fits" />
+                <data android:mimeType="application/x-votable+xml" />
+                <data android:mimeType="text/csv" />
+            </intent-filter>
         </activity>
 
         <service

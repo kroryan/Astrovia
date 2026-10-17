@@ -67,12 +67,32 @@ final class OfflineBar extends JPanel {
       row1.add(label, BorderLayout.WEST);
       row1.add(box, BorderLayout.CENTER);
 
+      // ---- Organisation: default folders / by wavelength / by mission
+      JLabel orgLabel = new JLabel("Organize");
+      orgLabel.setFont(orgLabel.getFont().deriveFont(java.awt.Font.BOLD));
+      orgLabel.setForeground(Aladin.COLOR_LABEL);
+      final JComboBox<String> orgBox = new JComboBox<String>(Organizer.NAMES);
+      orgBox.setSelectedIndex(OfflineCollections.getOrganization());
+      Util.toolTip(orgBox, "How the collections are grouped: the default folders, by wavelength (gamma, X-ray, UV, optical, infrared, radio...) or by mission", true);
+      orgBox.addActionListener(e -> {
+         final int m = orgBox.getSelectedIndex();
+         SwingUtilities.invokeLater(new Runnable() { public void run() { aladin.directory.applyOrganization(m); } });
+      });
+      JPanel row2 = new JPanel(new BorderLayout(6, 0));
+      row2.setBackground(bg);
+      row2.add(orgLabel, BorderLayout.WEST);
+      row2.add(orgBox, BorderLayout.CENTER);
+      JPanel north = new JPanel(new GridLayout(2, 1, 0, 3));
+      north.setBackground(bg);
+      north.add(row1);
+      north.add(row2);
+
       // ---- Offline collections menu
       final JButton plus = new JButton(aladin.chaine.getString("OFFPLUS") );
       Util.toolTip(plus, aladin.chaine.getString("OFFPLUSTIP"), true);
       plus.addActionListener(e -> menu().show(plus, 0, plus.getHeight()));
 
-      add(row1, BorderLayout.NORTH);
+      add(north, BorderLayout.NORTH);
       add(plus, BorderLayout.CENTER);
    }
 

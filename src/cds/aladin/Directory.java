@@ -2946,6 +2946,18 @@ public class Directory extends JPanel implements Iterable<MocItem>, GrabItFrame 
       }
    }
 
+   /** The organisation selector (default / by wavelength / by mission) changed: rebuild the tree with the new paths. */
+   protected void applyOrganization(int mode) {
+      OfflineCollections.setOrganization(mode);
+      try {
+         ArrayList<TreeObjDir> tmp = populateMultiProp();
+         rebuildTree(tmp, false, true, true);
+         dirList = tmp;
+      } catch( Exception e ) {
+         if( aladin.levelTrace >= 3 ) e.printStackTrace();
+      }
+   }
+
    /** The source selector (All / Online / Offline) changed: rebuild the tree with the matching collections. */
    protected void applySourceMode(int mode) {
       OfflineCollections.setSourceMode(mode);

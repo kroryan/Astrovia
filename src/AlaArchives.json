@@ -13,7 +13,8 @@
    "idCol": null,
    "nameCol": "title",
    "regionCol": "stc_s",
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_v_gravitational_waves_fdw",
@@ -27,7 +28,8 @@
    "idCol": null,
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "t_tmass_original_valid_fdw",
@@ -41,7 +43,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "t_v_akari_asteroids_flux_cat_fdw",
@@ -55,7 +58,8 @@
    "idCol": null,
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "t_akari_point_source_catalogue_fdw",
@@ -69,7 +73,8 @@
    "idCol": null,
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_t_chandra_csc2_fdw",
@@ -83,7 +88,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_chandra_csc211_fdw",
@@ -97,7 +103,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_fermi_3fhl_fdw",
@@ -111,7 +118,8 @@
    "idCol": "recno",
    "nameCol": null,
    "regionCol": "stc_s",
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_fermi_4fgl_dr2_fdw",
@@ -125,7 +133,8 @@
    "idCol": null,
    "nameCol": null,
    "regionCol": "stc_s",
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_fermi_4lac_fdw",
@@ -139,7 +148,8 @@
    "idCol": "recno",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "t_gaia_source_dr3_fdw",
@@ -153,7 +163,8 @@
    "idCol": "source_id",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_hcv_catalogue",
@@ -167,7 +178,8 @@
    "idCol": null,
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_t_hubble_scv3_fdw",
@@ -181,7 +193,8 @@
    "idCol": "target_name",
    "nameCol": "target_name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_v_hsa_cat_hppsc_100_fdw",
@@ -195,7 +208,8 @@
    "idCol": "obsid",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_v_hsa_cat_hppsc_160_fdw",
@@ -209,7 +223,8 @@
    "idCol": "obsid",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_v_hsa_cat_hppsc_070_fdw",
@@ -223,7 +238,8 @@
    "idCol": "obsid",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_v_hsa_cat_spsc_250_fdw",
@@ -237,7 +253,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_v_hsa_cat_spsc_350_fdw",
@@ -251,7 +268,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_v_hsa_cat_spsc_500_fdw",
@@ -265,7 +283,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_hipparcos_fdw",
@@ -279,7 +298,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_tycho2_fdw",
@@ -293,7 +313,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "integral_ibis",
@@ -307,7 +328,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_v_icecubepsc_fdw",
@@ -321,7 +343,8 @@
    "idCol": null,
    "nameCol": null,
    "regionCol": "stc_s",
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_pcss_catalog_hfi_fdw",
@@ -335,7 +358,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_pcss_catalog_lfi_fdw",
@@ -349,7 +373,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_pcss_catalog_excluded_fdw",
@@ -363,7 +388,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_v_sz_catalog_fdw",
@@ -377,7 +403,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_v_gcc_catalog_fdw",
@@ -391,7 +418,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_cat2rxs_fdw",
@@ -405,7 +433,8 @@
    "idCol": "obsid",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_cat2whsp_fdw",
@@ -419,7 +448,8 @@
    "idCol": "recno",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_ou4blazars_fdw",
@@ -433,7 +463,8 @@
    "idCol": "id",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_glade_plus_fdw",
@@ -447,7 +478,8 @@
    "idCol": null,
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "t_allwise_original_valid_fdw",
@@ -461,7 +493,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_xsa_epic_source_cat_fdw",
@@ -475,7 +508,8 @@
    "idCol": "observation_id",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_xsa_epic_source_cat_dr11_fdw",
@@ -489,7 +523,8 @@
    "idCol": "observation_id",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_xsa_epic_source_cat_dr12_fdw",
@@ -503,7 +538,8 @@
    "idCol": "observation_id",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_xsa_epic_stack_cat_fdw",
@@ -517,7 +553,8 @@
    "idCol": "obs_id",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_xsa_epic_stack_cat_dr11_fdw",
@@ -531,7 +568,8 @@
    "idCol": "obs_id",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_xsa_epic_stack_cat_dr12_fdw",
@@ -545,7 +583,8 @@
    "idCol": "obs_id",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_xsa_om_source_cat_fdw",
@@ -559,7 +598,8 @@
    "idCol": "obsid",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_xsa_om_source_cat_5_fdw",
@@ -573,7 +613,8 @@
    "idCol": "observation_id",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_xsa_om_source_cat_6_fdw",
@@ -587,7 +628,8 @@
    "idCol": "obsid",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_v_xsa_slew_source_cat_fdw",
@@ -601,7 +643,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": "postcard_url"
+   "linkCol": "postcard_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_xsa_slew_source_cat_fdw",
@@ -615,7 +658,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": "postcard_url"
+   "linkCol": "postcard_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_efeds_c001_hard_fdw",
@@ -629,7 +673,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_efeds_c001_main_fdw",
@@ -643,7 +688,8 @@
    "idCol": "name",
    "nameCol": "name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_erass1_hard_fdw",
@@ -657,7 +703,8 @@
    "idCol": null,
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_erass1_main_fdw",
@@ -671,7 +718,8 @@
    "idCol": null,
    "nameCol": null,
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_euclid_outreach_fdw",
@@ -685,7 +733,8 @@
    "idCol": "id",
    "nameCol": "title",
    "regionCol": "stc_s",
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_hst_outreach_fdw",
@@ -699,7 +748,8 @@
    "idCol": "id",
    "nameCol": "title",
    "regionCol": "stc_s",
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_webb_outreach_ext_fdw",
@@ -713,7 +763,8 @@
    "idCol": "id",
    "nameCol": "title",
    "regionCol": "stc_s",
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_webb_outreach_fdw",
@@ -727,7 +778,8 @@
    "idCol": "id",
    "nameCol": "title",
    "regionCol": "stc_s",
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_akari_irc_fdw",
@@ -741,7 +793,8 @@
    "idCol": "obs_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_alma_obs_fdw",
@@ -755,7 +808,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "access_url"
+   "linkCol": "access_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_cheops_obs_fdw",
@@ -769,7 +823,8 @@
    "idCol": "obs_id",
    "nameCol": "targname",
    "regionCol": "stc_s",
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_chandra_obs_photo_fdw",
@@ -783,7 +838,8 @@
    "idCol": "obs_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "access_url"
+   "linkCol": "access_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_corot_astero_fdw",
@@ -797,7 +853,8 @@
    "idCol": "recno",
    "nameCol": null,
    "regionCol": "s_region",
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_v_corot_exo_fdw",
@@ -811,7 +868,8 @@
    "idCol": "recno",
    "nameCol": null,
    "regionCol": "s_region",
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_euclid_mosaic_product_nisp",
@@ -825,7 +883,8 @@
    "idCol": null,
    "nameCol": null,
    "regionCol": "stc_s",
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_euclid_mosaic_product_vis",
@@ -839,7 +898,8 @@
    "idCol": null,
    "nameCol": null,
    "regionCol": "stc_s",
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_hst_mmi_observation_infrared_fdw_fdw",
@@ -853,7 +913,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_hst_mmi_observation_uv_fdw_fdw",
@@ -867,7 +928,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_hst_mmi_observation_fdw_fdw",
@@ -881,7 +943,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_hst_mmi_observation_optical_fdw_fdw",
@@ -895,7 +958,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_hsa_esasky_photo_fdw_fdw",
@@ -909,7 +973,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_jwst_obs_fdw",
@@ -923,7 +988,8 @@
    "idCol": "obs_id",
    "nameCol": "target_name",
    "regionCol": "s_region",
-   "linkCol": "access_url"
+   "linkCol": "access_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_esasky_jwst_images_miri_fdw_fdw",
@@ -937,7 +1003,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_esasky_jwst_images_fdw_fdw",
@@ -951,7 +1018,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_spitzer_irac_fdw",
@@ -965,7 +1033,8 @@
    "idCol": "obs_id",
    "nameCol": null,
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_suzaku_data_fdw",
@@ -979,7 +1048,8 @@
    "idCol": "observation_id",
    "nameCol": null,
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_obscore_isla_fdw_fdw",
@@ -993,7 +1063,8 @@
    "idCol": "obs_id",
    "nameCol": "target_name",
    "regionCol": null,
-   "linkCol": "access_url"
+   "linkCol": "access_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_ida_data_fdw",
@@ -1007,7 +1078,8 @@
    "idCol": "observation_id",
    "nameCol": null,
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_nida_images_fdw",
@@ -1021,7 +1093,8 @@
    "idCol": null,
    "nameCol": null,
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_xsa_esasky_photo_fdw_fdw",
@@ -1035,7 +1108,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_esasky_xmm_om_uv_fdw",
@@ -1049,7 +1123,8 @@
    "idCol": "observation_id",
    "nameCol": null,
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "v_mv_v_esasky_xmm_om_fdw",
@@ -1063,7 +1138,8 @@
    "idCol": "observation_id",
    "nameCol": null,
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_esasky_xmm_om_optical_fdw",
@@ -1077,7 +1153,8 @@
    "idCol": "observation_id",
    "nameCol": null,
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_chandra_obs_spectra_fdw",
@@ -1091,7 +1168,8 @@
    "idCol": "obs_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "access_url"
+   "linkCol": "access_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_hst_mmi_spectra_infrared_fdw_fdw",
@@ -1105,7 +1183,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_hst_mmi_spectra_uv_fdw_fdw",
@@ -1119,7 +1198,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_hst_mmi_spectra_optical_fdw_fdw",
@@ -1133,7 +1213,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_hsa_esasky_spectra_fdw_fdw",
@@ -1147,7 +1228,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_iso_spectra_fdw",
@@ -1161,7 +1243,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_iue_spectra_fdw",
@@ -1175,7 +1258,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_esasky_jwst_spectra_miri_fdw_fdw",
@@ -1189,7 +1273,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_esasky_jwst_spectra_fdw_fdw",
@@ -1203,7 +1288,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_lamost_dr8_lrs_fdw",
@@ -1217,7 +1303,8 @@
    "idCol": "obsid",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_lamost_dr8_mrs_fdw",
@@ -1231,7 +1318,8 @@
    "idCol": "obsid",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_lamost_dr9_lrs_fdw",
@@ -1245,7 +1333,8 @@
    "idCol": "obsid",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_lamost_dr9_mrs_fdw",
@@ -1259,7 +1348,8 @@
    "idCol": "obsid",
    "nameCol": null,
    "regionCol": null,
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_nida_spectra_fdw",
@@ -1273,7 +1363,8 @@
    "idCol": null,
    "nameCol": null,
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "mv_v_v_xsa_spectra_rgs_fdw_fdw",
@@ -1287,7 +1378,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": "stc_s",
-   "linkCol": "product_url"
+   "linkCol": "product_url",
+   "centre": "ESA"
   },
   {
    "id": "xmatch_hst",
@@ -1301,7 +1393,8 @@
    "idCol": "observation_id",
    "nameCol": "sso_name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "xmatch_herschel",
@@ -1315,7 +1408,8 @@
    "idCol": "observation_id",
    "nameCol": "sso_name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "xmatch_xmm_om",
@@ -1329,7 +1423,8 @@
    "idCol": "observation_id",
    "nameCol": "target_name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "xmatch_xmm",
@@ -1343,7 +1438,8 @@
    "idCol": "observation_id",
    "nameCol": "sso_name",
    "regionCol": null,
-   "linkCol": null
+   "linkCol": null,
+   "centre": "ESA"
   },
   {
    "id": "pscomppars",
@@ -1358,7 +1454,8 @@
    "nameCol": "hostname",
    "regionCol": null,
    "linkCol": null,
-   "tap": "https://exoplanetarchive.ipac.caltech.edu/TAP"
+   "tap": "https://exoplanetarchive.ipac.caltech.edu/TAP",
+   "centre": "NASA"
   },
   {
    "id": "gaia_gea",
@@ -1373,7 +1470,8 @@
    "nameCol": null,
    "regionCol": null,
    "linkCol": null,
-   "tap": "https://gea.esac.esa.int/tap-server/tap"
+   "tap": "https://gea.esac.esa.int/tap-server/tap",
+   "centre": "ESA"
   },
   {
    "id": "hst_obscore",
@@ -1388,7 +1486,125 @@
    "nameCol": "target_name",
    "regionCol": "s_region",
    "linkCol": "access_url",
-   "tap": "https://hst.esac.esa.int/tap-server/tap"
+   "tap": "https://hst.esac.esa.int/tap-server/tap",
+   "centre": "ESA"
+  },
+  {
+   "regionCol": "s_region",
+   "linkCol": "access_url",
+   "nameCol": "target_name",
+   "idCol": "obs_id",
+   "fmt": "csv",
+   "tap": "https://archive.eso.org/tap_obs",
+   "id": "eso_obscore",
+   "label": "ESO archive (all instruments)",
+   "mission": "ESO",
+   "band": "Optical/IR",
+   "kind": "obs",
+   "table": "ivoa.ObsCore",
+   "ra": "s_ra",
+   "dec": "s_dec",
+   "centre": "ESO"
+  },
+  {
+   "regionCol": "s_region",
+   "linkCol": "access_url",
+   "nameCol": "target_name",
+   "idCol": "obs_id",
+   "fmt": "votable",
+   "tap": "https://mast.stsci.edu/vo-tap/api/v0.1/caom",
+   "id": "mast_obscore",
+   "label": "MAST (all missions)",
+   "mission": "MAST",
+   "band": "UV/Opt/IR",
+   "kind": "obs",
+   "table": "ivoa.obscore",
+   "ra": "s_ra",
+   "dec": "s_dec",
+   "centre": "MAST"
+  },
+  {
+   "linkCol": "access_url",
+   "nameCol": "target_name",
+   "idCol": "obs_id",
+   "where": "obs_collection='TESS' AND dataproduct_type='timeseries'",
+   "fmt": "votable",
+   "tap": "https://mast.stsci.edu/vo-tap/api/v0.1/caom",
+   "id": "mast_tess_lc",
+   "label": "TESS light curves (MAST)",
+   "mission": "TESS",
+   "band": "Optical/IR",
+   "kind": "lc",
+   "table": "ivoa.obscore",
+   "ra": "s_ra",
+   "dec": "s_dec",
+   "centre": "MAST"
+  },
+  {
+   "linkCol": "access_url",
+   "nameCol": "target_name",
+   "idCol": "obs_id",
+   "where": "obs_collection='Kepler' AND dataproduct_type='timeseries'",
+   "fmt": "votable",
+   "tap": "https://mast.stsci.edu/vo-tap/api/v0.1/caom",
+   "id": "mast_kepler_lc",
+   "label": "Kepler light curves (MAST)",
+   "mission": "Kepler",
+   "band": "Optical",
+   "kind": "lc",
+   "table": "ivoa.obscore",
+   "ra": "s_ra",
+   "dec": "s_dec",
+   "centre": "MAST"
+  },
+  {
+   "linkCol": "access_url",
+   "nameCol": "target_name",
+   "idCol": "obs_id",
+   "where": "obs_collection='K2' AND dataproduct_type='timeseries'",
+   "fmt": "votable",
+   "tap": "https://mast.stsci.edu/vo-tap/api/v0.1/caom",
+   "id": "mast_k2_lc",
+   "label": "K2 light curves (MAST)",
+   "mission": "K2",
+   "band": "Optical",
+   "kind": "lc",
+   "table": "ivoa.obscore",
+   "ra": "s_ra",
+   "dec": "s_dec",
+   "centre": "MAST"
+  },
+  {
+   "regionCol": "s_region",
+   "linkCol": "access_url",
+   "nameCol": "target_name",
+   "idCol": "obs_id",
+   "fmt": "csv",
+   "tap": "https://irsa.ipac.caltech.edu/TAP",
+   "id": "irsa_obscore",
+   "label": "IRSA (all missions)",
+   "mission": "IRSA",
+   "band": "IR",
+   "kind": "obs",
+   "table": "ivoa.obscore",
+   "ra": "s_ra",
+   "dec": "s_dec",
+   "centre": "IRSA"
+  },
+  {
+   "nameCol": "name",
+   "idCol": "name",
+   "fmt": "votable",
+   "tap": "https://heasarc.gsfc.nasa.gov/xamin/vo/tap",
+   "id": "fermi_gbm",
+   "label": "Fermi GBM gamma-ray bursts (HEASARC)",
+   "mission": "Fermi",
+   "band": "Gamma",
+   "kind": "alert",
+   "table": "fermigbrst",
+   "ra": "ra",
+   "dec": "dec",
+   "centre": "HEASARC"
   }
  ]
 }

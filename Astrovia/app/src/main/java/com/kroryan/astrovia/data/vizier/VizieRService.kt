@@ -57,8 +57,10 @@ class VizieRService {
      * Rows of a VOTable from VizieR or SIMBAD (also used for catalogues downloaded earlier).
      * Column names are matched case-insensitively; SIMBAD's `ra`/`dec`/`main_id` are accepted too.
      */
-    fun rowsFromVotable(text: String): List<CatalogRow> =
-        VotableParser.parse(text).mapNotNull { row -> row.toCatalogRow() }
+    fun rowsFromVotable(text: String): List<CatalogRow> = rowsFromMaps(VotableParser.parse(text))
+
+    /** Rows from any tabular source (VOTable, CSV, FITS table): needs a recognisable RA/Dec pair of columns. */
+    fun rowsFromMaps(rows: List<Map<String, String>>): List<CatalogRow> = rows.mapNotNull { row -> row.toCatalogRow() }
 
     private val raKeys = listOf("_raj2000", "_raj", "raj2000", "ra_icrs", "ra(icrs)", "ra_d", "ra")
     private val decKeys = listOf("_dej2000", "_dej", "dej2000", "de_icrs", "de(icrs)", "dec_d", "dec", "de")

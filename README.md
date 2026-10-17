@@ -32,12 +32,17 @@ FITS images and MOC coverage, in a modern dark interface. Free, no ads, no track
 
 ## Highlights (0.6.3)
 
-- **Archives: multi-mission search (new, Android and desktop).** One window/sheet to search around the view you are looking at, over about 100 archives and catalogues:
-  - *Observations and spectra:* JWST, HST, XMM-Newton, Chandra, Herschel, ALMA, Spitzer, AKARI, ISO, IUE, Suzaku, CHEOPS, CoRoT, Euclid mosaics, LAMOST and more.
-  - *Catalogues:* Gaia DR3, Hipparcos, Tycho-2, 2MASS, AllWISE, eROSITA, ROSAT, Fermi, Planck, Chandra, XMM, Herschel, INTEGRAL, Hubble Source Catalog...
-  - *Alerts* (gravitational waves, IceCube), *outreach images* (Webb, Hubble, Euclid), *exoplanets* (NASA Exoplanet Archive) and *solar-system objects* in the field right now (IMCCE SkyBoT).
-  - Android draws the observation footprints on the sky; tap one to see its details and open or download the data.
-- **Science tools:** visibility windows for JWST / Euclid (Sun-angle limits), target lists resolved with SIMBAD, publications of an object (SIMBAD to ADS), and shareable view links / sessions (`astrovia://view?ra=..&dec=..&fov=..`).
+- **One "Available data" for everything (Android and desktop).** Sky surveys (HiPS) and archives live in the same panel, which you can organise as you like: *default folders*, *by wavelength* (gamma-ray, hard X-ray, soft X-ray, UV, optical, near / mid / far infrared, sub-mm, radio), *by mission* or *by data centre*, with a search box and band filters. Every HiPS of every wavelength (radio, gamma, X-ray...) is there, and you can open any HiPS by URL.
+- **Archives: multi-mission search.** Around the view you are looking at, over about 100 sources:
+  - *Observations, spectra, light curves, catalogues* of JWST, HST, XMM-Newton, Chandra, Herschel, ALMA, Spitzer, Euclid, Gaia, eROSITA, Fermi, Planck, TESS, Kepler, K2...
+  - *External data centres*: ESA, MAST, ESO, IRSA, HEASARC, NASA Exoplanet Archive, and **any TAP service you add yourself**.
+  - *Multi-messenger events* (gravitational waves, IceCube, Fermi GBM bursts), *outreach images* and *solar-system objects* in the field right now.
+  - A **field overview** with how many results each archive has (tap one to see them), and **interactive charts** of the results (tap a bar, an instrument or a year to filter; footprints follow on the sky).
+- **Gallery of high-resolution pictures** from James Webb, Euclid and Hubble: explore them at full resolution (only the tiles you look at are downloaded) and place them on the sky.
+- **Light curves**: TESS, Kepler and K2 from MAST, or any FITS table with time and flux, with zoom and pan.
+- **Plan future observations**: project the field of view of JWST, HST, Euclid, XMM, Chandra or Rubin on the sky with an orientation, and see when the target is observable.
+- **Investigate an object**: type, coordinates, distance, redshift, magnitudes, names, papers, links; **lists** of objects (several named lists, Messier built in, picture lists, CSV / JSON import and export).
+- **Open your own files** (Android and desktop): FITS images (any bit depth, with WCS: shown over the sky at their true position, with stretch, colour maps and cut levels), FITS tables, VOTable and CSV/TSV catalogues. Android also opens them from "Open with" and "Share".
 - All the offline download features of 0.6.2 are unchanged.
 
 The Archives feature is an original implementation on top of public IVOA protocols (TAP/ADQL, VOTable) and the services above; see [NOTICE.md](NOTICE.md) for the data acknowledgements.

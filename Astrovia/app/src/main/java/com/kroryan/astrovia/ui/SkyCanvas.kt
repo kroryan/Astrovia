@@ -322,6 +322,52 @@ fun SkyCanvas(
             drawCoordGrid(proj, camera.fovDeg)
         }
 
+        // FITS image placed on the sky at its true position (a warped mesh of the picture)
+        state.fitsOverlay?.let { ov ->
+            val gx = 28; val gy = 28
+            val verts = FloatArray((gx + 1) * (gy + 1) * 2)
+            var ok = true
+            loop@ for (j in 0..gy) {
+                for (i in 0..gx) {
+                    val u = i.toDouble() / gx; val v = j.toDouble() / gy
+                    val fx = 0.5 + u * ov.origWidth
+                    val fy = ov.origHeight + 0.5 - v * ov.origHeight
+                    val sky = ov.wcs.pixelToSky(fx, fy)
+                    val q = if (sky != null) proj.forward(sky[0], sky[1]) else null
+                    if (q == null) { ok = false; break@loop }
+                    val k = (j * (gx + 1) + i) * 2
+                    verts[k] = q[0]; verts[k + 1] = q[1]
+                }
+            }
+            if (ok) {
+                val paint = android.graphics.Paint().apply { isFilterBitmap = true; alpha = (ov.alpha * 255).toInt().coerceIn(0, 255) }
+                drawIntoCanvas { c -> c.nativeCanvas.drawBitmapMesh(ov.bitmap, gx, gy, verts, 0, null, 0, paint) }
+            }
+        }
+
+        // Outreach picture placed between its four sky corners
+        state.quadOverlay?.let { q ->
+            val g = 24
+            val verts = FloatArray((g + 1) * (g + 1) * 2)
+            var ok = true
+            val r0 = q.raCorners[0]
+            fun unwrap(r: Double): Double { var d = (r - r0) % 360.0; if (d > 180) d -= 360; if (d < -180) d += 360; return r0 + d }
+            val ra = DoubleArray(4) { unwrap(q.raCorners[it]) }
+            loop@ for (j in 0..g) for (i in 0..g) {
+                val u = i.toDouble() / g; val v = j.toDouble() / g
+                val rr = (1 - v) * ((1 - u) * ra[0] + u * ra[1]) + v * ((1 - u) * ra[3] + u * ra[2])
+                val dd = (1 - v) * ((1 - u) * q.decCorners[0] + u * q.decCorners[1]) + v * ((1 - u) * q.decCorners[3] + u * q.decCorners[2])
+                val p = proj.forward(((rr % 360.0) + 360.0) % 360.0, dd)
+                if (p == null) { ok = false; break@loop }
+                val k = (j * (g + 1) + i) * 2
+                verts[k] = p[0]; verts[k + 1] = p[1]
+            }
+            if (ok) {
+                val paint = android.graphics.Paint().apply { isFilterBitmap = true; alpha = (q.alpha * 255).toInt().coerceIn(0, 255) }
+                drawIntoCanvas { c -> c.nativeCanvas.drawBitmapMesh(q.bitmap, g, g, verts, 0, null, 0, paint) }
+            }
+        }
+
         // Catalog overlays
         if (state.catalogVisible) {
             for (row in state.catalogRows) {
@@ -332,10 +378,31 @@ fun SkyCanvas(
             }
         }
 
+        // Observation plan: instrument footprint at the planned pointing
+        state.plan?.let { pl ->
+            val inst = com.kroryan.astrovia.sky.Planner.byKey(pl.key)
+            if (inst != null) {
+                for ((ras, decs) in com.kroryan.astrovia.sky.Planner.outline(inst, pl.raDeg, pl.decDeg, pl.paDeg)) {
+                    val path = androidx.compose.ui.graphics.Path()
+                    var ok = true
+                    for (i in ras.indices) {
+                        val q = proj.forward(ras[i], decs[i])
+                        if (q == null) { ok = false; break }
+                        if (i == 0) path.moveTo(q[0], q[1]) else path.lineTo(q[0], q[1])
+                    }
+                    if (!ok) continue
+                    path.close()
+                    drawPath(path, androidx.compose.ui.graphics.Color(0x2230D5C8))
+                    drawPath(path, androidx.compose.ui.graphics.Color(0xFF30D5C8), style = Stroke(width = 3f))
+                }
+                proj.forward(pl.raDeg, pl.decDeg)?.let { q -> drawCircle(androidx.compose.ui.graphics.Color(0xFF30D5C8), 4f, Offset(q[0], q[1])) }
+            }
+        }
+
         // Archive results: footprints (polygons) or small diamonds for point-like results
         if (state.archiveVisible) {
             val sel = state.selectedHit
-            for (hit in state.archiveHits) {
+            for (hit in state.visibleHits) {
                 val color = archiveColor(hit.source.kind)
                 val isSel = hit === sel
                 val a = if (isSel) 1f else 0.75f
@@ -402,6 +469,7 @@ private fun archiveColor(kind: com.kroryan.astrovia.data.archive.ArchiveKind): a
     com.kroryan.astrovia.data.archive.ArchiveKind.OBSERVATIONS -> androidx.compose.ui.graphics.Color(0xFF38BDF8)
     com.kroryan.astrovia.data.archive.ArchiveKind.SPECTRA -> androidx.compose.ui.graphics.Color(0xFFA78BFA)
     com.kroryan.astrovia.data.archive.ArchiveKind.CATALOGUES -> androidx.compose.ui.graphics.Color(0xFFFACC15)
+    com.kroryan.astrovia.data.archive.ArchiveKind.LIGHT_CURVES -> androidx.compose.ui.graphics.Color(0xFF22D3EE)
     com.kroryan.astrovia.data.archive.ArchiveKind.ALERTS -> androidx.compose.ui.graphics.Color(0xFFF87171)
     com.kroryan.astrovia.data.archive.ArchiveKind.SOLAR_SYSTEM -> androidx.compose.ui.graphics.Color(0xFFFB923C)
     com.kroryan.astrovia.data.archive.ArchiveKind.IMAGES -> androidx.compose.ui.graphics.Color(0xFFF472B6)
