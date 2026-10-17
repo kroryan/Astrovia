@@ -213,7 +213,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
 
    /** Numero de version */
    static public final    String VERSION = "v12.060";   // Aladin engine version this build is based on
-   static public final    String ASTROVIA_VERSION = "0.6.4";
+   static public final    String ASTROVIA_VERSION = "0.6.5";
    static protected final String AUTHORS = "P.Fernique, T.Boch, A.Oberto, F.Bonnarel, Chaitra & al";
 //   static protected final String OUTREACH_VERSION = "    *** UNDERGRADUATE MODE (based on "+VERSION+") ***";
    static protected final String BETA_VERSION     = "  (engine "+VERSION+")";

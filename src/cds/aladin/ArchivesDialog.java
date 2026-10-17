@@ -129,7 +129,7 @@ public class ArchivesDialog extends JDialog {
    private String[] folders(Source s, int org) {
       String kind = KIND_LABELS[Math.max(0, indexOf(KINDS, s.kind))];
       switch (org) {
-         case Organizer.WAVELENGTH: return new String[] { Organizer.bandOfArchive(s.band), kind };
+         case Organizer.WAVELENGTH: return new String[] { cds.astrovia.sky.Bands.ofArchive(s.band), kind };
          case Organizer.MISSION: return new String[] { s.mission == null || s.mission.isEmpty() ? "Various" : s.mission, kind };
          case Organizer.CENTRE: return new String[] { s.centre == null || s.centre.isEmpty() ? "ESA" : s.centre, kind };
          default: return new String[] { "Archives and catalogues", kind };
@@ -146,8 +146,8 @@ public class ArchivesDialog extends JDialog {
       Map<String, DefaultMutableTreeNode> folder = new LinkedHashMap<String, DefaultMutableTreeNode>();
       List<Source> ordered = new ArrayList<Source>(sources);
       if (org == Organizer.WAVELENGTH) {
-         final List<String> order = Arrays.asList("Gamma-ray", "Hard X-ray", "Soft X-ray", "UV", "Optical", "Near-IR", "Mid-IR", "Far-IR", "Infrared", "Sub-mm / mm", "Radio", "Other wavelengths");
-         Collections.sort(ordered, new Comparator<Source>() { public int compare(Source a, Source b) { int x = order.indexOf(Organizer.bandOfArchive(a.band)) - order.indexOf(Organizer.bandOfArchive(b.band)); return x != 0 ? x : a.label.compareToIgnoreCase(b.label); } });
+         final List<String> order = cds.astrovia.sky.Bands.ALL;
+         Collections.sort(ordered, new Comparator<Source>() { public int compare(Source a, Source b) { int x = order.indexOf(cds.astrovia.sky.Bands.ofArchive(a.band)) - order.indexOf(cds.astrovia.sky.Bands.ofArchive(b.band)); return x != 0 ? x : a.label.compareToIgnoreCase(b.label); } });
       }
       for (Source s : ordered) {
          if (!"all".equals(k) && !k.equals(s.kind)) continue;
@@ -181,9 +181,7 @@ public class ArchivesDialog extends JDialog {
    }
 
    private String adql(Source s, double ra, double dec, double rad, int max) {
-      return String.format(Locale.US, "SELECT TOP %d * FROM %s WHERE 1=CONTAINS(POINT('ICRS',%s,%s),CIRCLE('ICRS',%.6f,%.6f,%.6f))%s",
-            max, s.table, s.ra, s.dec, ra, dec, rad, s.where == null || s.where.isEmpty() ? "" : " AND (" + s.where + ")")
-            + (s.orderCol == null ? "" : " ORDER BY " + s.orderCol + " ASC");   // brightest first, so a row limit keeps the useful sources
+      return cds.astrovia.sky.Adql.cone(s.table, s.ra, s.dec, ra, dec, rad, max, s.where, s.orderCol);   // same query as the Android app
    }
 
    private void doSearch() {
@@ -253,35 +251,11 @@ public class ArchivesDialog extends JDialog {
 
    static List<Map<String, String>> tap(String base, String adql, int readMs) throws IOException {
       String t = new String(fetch(base + "/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=csv&QUERY=" + enc(adql), readMs), "UTF-8");
-      if (t.trim().startsWith("<")) return SimpleVotable.parse(t);
+      if (t.trim().startsWith("<")) return cds.astrovia.sky.VotableReader.parse(t);
       return csv(t);
    }
 
-   /** RFC 4180 CSV into rows keyed by the header. */
-   static List<Map<String, String>> csv(String text) {
-      List<List<String>> recs = new ArrayList<List<String>>();
-      List<String> row = new ArrayList<String>();
-      StringBuilder sb = new StringBuilder();
-      boolean q = false;
-      for (int i = 0; i < text.length(); i++) {
-         char c = text.charAt(i);
-         if (q) { if (c == '"') { if (i + 1 < text.length() && text.charAt(i + 1) == '"') { sb.append('"'); i++; } else q = false; } else sb.append(c); }
-         else if (c == '"') q = true;
-         else if (c == ',') { row.add(sb.toString()); sb.setLength(0); }
-         else if (c == '\n') { row.add(sb.toString()); sb.setLength(0); recs.add(row); row = new ArrayList<String>(); }
-         else if (c != '\r') sb.append(c);
-      }
-      if (sb.length() > 0 || !row.isEmpty()) { row.add(sb.toString()); recs.add(row); }
-      List<Map<String, String>> out = new ArrayList<Map<String, String>>();
-      if (recs.size() < 2) return out;
-      List<String> head = recs.get(0);
-      for (int r = 1; r < recs.size(); r++) {
-         Map<String, String> m = new LinkedHashMap<String, String>();
-         for (int k = 0; k < head.size(); k++) m.put(head.get(k), k < recs.get(r).size() ? recs.get(r).get(k) : "");
-         out.add(m);
-      }
-      return out;
-   }
+   static List<Map<String, String>> csv(String text) { return cds.astrovia.sky.CsvTable.parse(text); }
 
    // ------------------------------------------------------------------ light curves (TESS, Kepler, K2 via MAST, or any FITS file)
    private JPanel lightCurvePanel() {
@@ -309,7 +283,7 @@ public class ArchivesDialog extends JDialog {
             new Thread(new Runnable() { public void run() {
                try {
                   String q = String.format(Locale.US, "SELECT TOP 200 obs_id,target_name,t_min,t_exptime,access_url FROM ivoa.obscore WHERE 1=CONTAINS(POINT('ICRS',s_ra,s_dec),CIRCLE('ICRS',%.6f,%.6f,%.5f)) AND (obs_collection='%s' AND dataproduct_type='timeseries')", ra, dec, rad, coll);
-                  final List<Map<String, String>> rows = SimpleVotable.parse(new String(fetch("https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=votable&QUERY=" + enc(q)), "UTF-8"));
+                  final List<Map<String, String>> rows = cds.astrovia.sky.VotableReader.parse(new String(fetch("https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=votable&QUERY=" + enc(q)), "UTF-8"));
                   SwingUtilities.invokeLater(new Runnable() { public void run() {
                      for (Map<String, String> r : rows) { products.add(new String[] { r.get("access_url"), r.get("target_name") }); lm.addElement(r.get("obs_id") + "   target " + r.get("target_name") + "   exp " + r.get("t_exptime") + " s"); }
                      status.setText(rows.size() + " light curves");
@@ -369,39 +343,12 @@ public class ArchivesDialog extends JDialog {
    }
 
    // ------------------------------------------------------------------ observation planning (instrument footprints)
-   /** Nominal field sizes in arcsec: {label, mission, shape...}; a shape is "R cx cy w h" or "C r". */
-   static final String[][] INSTR = {
-      { "JWST NIRCam (2 modules)", "JWST", "R -86.5 0 129 129", "R 86.5 0 129 129" },
-      { "JWST NIRSpec MSA", "JWST", "R -52 51 100 96", "R 52 51 100 96", "R -52 -51 100 96", "R 52 -51 100 96" },
-      { "JWST NIRISS", "JWST", "R 0 0 132 132" },
-      { "JWST MIRI imager", "JWST", "R 0 0 74 113" },
-      { "HST WFC3/UVIS", "HST", "R 0 0 162 162" },
-      { "HST WFC3/IR", "HST", "R 0 0 136 123" },
-      { "HST ACS/WFC", "HST", "R 0 51 202 100", "R 0 -51 202 100" },
-      { "Euclid VIS", "Euclid", "R 0 0 2833 2552" },
-      { "Euclid NISP", "Euclid", "R 0 0 2747 2599" },
-      { "XMM-Newton EPIC (30')", "XMM-Newton", "C 900" },
-      { "Chandra ACIS-I", "Chandra", "R 0 0 1014 1014" },
-      { "Rubin LSST camera", "Rubin", "C 6300" },
-      { "Custom 1 x 1 deg", "Custom", "R 0 0 3600 3600" },
-   };
-
-   /** Gnomonic de-projection of an offset (arcsec east/north in the instrument frame rotated by PA) around a pointing. */
-   static double[] toSky(double ra, double dec, double paDeg, double x, double y) {
-      double pa = Math.toRadians(paDeg);
-      double e = x * Math.cos(pa) + y * Math.sin(pa), n = -x * Math.sin(pa) + y * Math.cos(pa);
-      double xi = Math.toRadians(e / 3600.0), eta = Math.toRadians(n / 3600.0);
-      double d0 = Math.toRadians(dec), den = Math.cos(d0) - eta * Math.sin(d0);
-      double r = Math.toRadians(ra) + Math.atan2(xi, den);
-      double d = Math.atan2(Math.sin(d0) + eta * Math.cos(d0), Math.sqrt(xi * xi + den * den));
-      return new double[] { (Math.toDegrees(r) % 360 + 360) % 360, Math.toDegrees(d) };
-   }
-
    private JPanel planPanel() {
       JPanel p = new JPanel(new BorderLayout(6, 6));
       p.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-      String[] names = new String[INSTR.length];
-      for (int i = 0; i < INSTR.length; i++) names[i] = INSTR[i][0];
+      final List<cds.astrovia.sky.Planner.Instrument> instruments = cds.astrovia.sky.Planner.all();   // sizes and projection shared with the Android app
+      String[] names = new String[instruments.size()];
+      for (int i = 0; i < names.length; i++) names[i] = instruments.get(i).label;
       final JComboBox<String> box = new JComboBox<String>(names);
       final JSlider pa = new JSlider(0, 359, 0);
       final JLabel paL = new JLabel("PA 0 deg");
@@ -418,30 +365,20 @@ public class ArchivesDialog extends JDialog {
       draw.addActionListener(e -> {
          try {
             double ra = Double.parseDouble(raF.getText().trim()), dec = Double.parseDouble(decF.getText().trim());
-            String[] inst = INSTR[box.getSelectedIndex()];
-            aladin.execAsyncCommand("draw newtool(Plan " + inst[0].replace(",", " ").replace("(", "").replace(")", "") + ")");
-            for (int k = 2; k < inst.length; k++) {
-               String[] t = inst[k].split(" ");
+            cds.astrovia.sky.Planner.Instrument inst = instruments.get(box.getSelectedIndex());
+            aladin.execAsyncCommand("draw newtool(Plan " + inst.label.replace(",", " ").replace("(", "").replace(")", "") + ")");
+            for (double[][] poly : cds.astrovia.sky.Planner.outline(inst, ra, dec, pa.getValue())) {
                StringBuilder sb = new StringBuilder("draw cyan polygon(");
-               if (t[0].equals("R")) {
-                  double cx = Double.parseDouble(t[1]), cy = Double.parseDouble(t[2]), w = Double.parseDouble(t[3]) / 2, h = Double.parseDouble(t[4]) / 2;
-                  double[][] c = { { cx - w, cy - h }, { cx + w, cy - h }, { cx + w, cy + h }, { cx - w, cy + h } };
-                  for (int i = 0; i < 4; i++) { double[] s = toSky(ra, dec, pa.getValue(), c[i][0], c[i][1]); sb.append(i > 0 ? "," : "").append(String.format(Locale.US, "%.6f,%.6f", s[0], s[1])); }
-               } else {
-                  double r = Double.parseDouble(t[1]);
-                  for (int i = 0; i < 48; i++) { double[] s = toSky(ra, dec, 0, r * Math.cos(2 * Math.PI * i / 48), r * Math.sin(2 * Math.PI * i / 48)); sb.append(i > 0 ? "," : "").append(String.format(Locale.US, "%.6f,%.6f", s[0], s[1])); }
-               }
+               for (int i = 0; i < poly[0].length; i++) sb.append(i > 0 ? "," : "").append(String.format(Locale.US, "%.6f,%.6f", poly[0][i], poly[1][i]));
                aladin.execAsyncCommand(sb.append(")").toString());
             }
-            status.setText("Footprint of " + inst[0] + " drawn");
+            status.setText("Footprint of " + inst.label + " drawn");
          } catch (Exception ex) { status.setText("Check RA and Dec in the Search tab."); }
       });
       return p;
    }
 
    // ------------------------------------------------------------------ visibility
-   static final String[] CONSTRAINT_NAMES = { "JWST (Sun 85\u00b0-135\u00b0)", "Euclid (Sun ~87\u00b0-121\u00b0)", "Generic (Sun > 45\u00b0)" };
-   static final double[][] CONSTRAINTS = { { 85, 135 }, { 87, 121 }, { 45, 180 } };
    private final JTextArea visOut = new JTextArea();
    private final JPanel strip = new JPanel() {
       protected void paintComponent(Graphics g0) {
@@ -463,7 +400,7 @@ public class ArchivesDialog extends JDialog {
    private JPanel visibilityPanel() {
       JPanel p = new JPanel(new BorderLayout(6, 6));
       p.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-      final JComboBox<String> box = new JComboBox<String>(CONSTRAINT_NAMES);
+      final JComboBox<String> box = new JComboBox<String>(cds.astrovia.sky.Visibility.PRESET_NAMES);
       JButton go = new JButton("Compute for RA/Dec of the Search tab");
       JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
       top.add(new JLabel("Observatory:")); top.add(box); top.add(go);
@@ -477,20 +414,14 @@ public class ArchivesDialog extends JDialog {
       go.addActionListener(e -> {
          try {
             double ra = Double.parseDouble(raF.getText().trim()), dec = Double.parseDouble(decF.getText().trim());
-            double[] c = CONSTRAINTS[box.getSelectedIndex()];
+            double[] c = cds.astrovia.sky.Visibility.PRESET_LIMITS[box.getSelectedIndex()];
             double start = Instant.now().toEpochMilli() / 86400000.0 + 2440587.5;
             StringBuilder sb = new StringBuilder();
-            sb.append(String.format(Locale.US, "Target RA %.4f Dec %+.4f%nSun angle now: %.1f deg%n%n", ra, dec, elongation(ra, dec, start)));
-            double open = -1, jd = start, end = start + 365;
-            int n = 0;
+            sb.append(String.format(Locale.US, "Target RA %.4f Dec %+.4f%nSun angle now: %.1f deg%n%n", ra, dec, cds.astrovia.sky.Visibility.elongation(ra, dec, start)));
             stripWindows = new ArrayList<double[]>();
-            for (; jd <= end; jd += 0.25) {
-               double el = elongation(ra, dec, jd);
-               boolean ok = el >= c[0] && el <= c[1];
-               if (ok && open < 0) open = jd;
-               if (!ok && open >= 0) { sb.append(window(open, jd)); stripWindows.add(new double[] { (open - start) / 365.0, (jd - start) / 365.0 }); open = -1; n++; }
-            }
-            if (open >= 0) { sb.append(window(open, end)); stripWindows.add(new double[] { (open - start) / 365.0, 1.0 }); n++; }
+            List<double[]> wins = cds.astrovia.sky.Visibility.windows(ra, dec, c[0], c[1], start, 365, 0.25);   // same maths as the Android app
+            for (double[] w : wins) { sb.append(window(w[0], w[1])); stripWindows.add(new double[] { (w[0] - start) / 365.0, (w[1] - start) / 365.0 }); }
+            int n = wins.size();
             if (n == 0) sb.append("Not observable in the next 365 days with these limits.\n");
             sb.append("\nApproximate: only the Sun-angle limit is applied; real schedules also depend on roll angle, Moon and other constraints.");
             visOut.setText(sb.toString());
@@ -508,20 +439,6 @@ public class ArchivesDialog extends JDialog {
    private static String jd2s(double jd) { return DAY.format(Instant.ofEpochMilli((long) ((jd - 2440587.5) * 86400000.0))); }
 
    private static String window(double a, double b) { return String.format(Locale.US, "%s -> %s  (%d days)%n", jd2s(a), jd2s(b), (int) (b - a)); }
-
-   /** Sun position (low precision, ~0.01 deg) and Sun-target angle in degrees. */
-   static double elongation(double raDeg, double decDeg, double jd) {
-      double n = jd - 2451545.0;
-      double l = Math.toRadians((280.460 + 0.9856474 * n) % 360.0);
-      double g = Math.toRadians((357.528 + 0.9856003 * n) % 360.0);
-      double lam = l + Math.toRadians(1.915) * Math.sin(g) + Math.toRadians(0.020) * Math.sin(2 * g);
-      double eps = Math.toRadians(23.439 - 0.0000004 * n);
-      double sra = Math.atan2(Math.cos(eps) * Math.sin(lam), Math.cos(lam));
-      double sdec = Math.asin(Math.sin(eps) * Math.sin(lam));
-      double a = Math.toRadians(raDeg), d = Math.toRadians(decDeg);
-      double c = Math.sin(d) * Math.sin(sdec) + Math.cos(d) * Math.cos(sdec) * Math.cos(a - sra);
-      return Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, c))));
-   }
 
    // ------------------------------------------------------------------ publications (object and field)
    private JPanel publicationsPanel() {
@@ -743,9 +660,8 @@ public class ArchivesDialog extends JDialog {
    private List<Source> lastScan = new ArrayList<Source>();
 
    private int count(Source s, double ra, double dec, double rad) throws IOException {
-      String q = String.format(Locale.US, "SELECT COUNT(*) AS n FROM %s WHERE 1=CONTAINS(POINT('ICRS',%s,%s),CIRCLE('ICRS',%.6f,%.6f,%.6f))%s", s.table, s.ra, s.dec, ra, dec, rad,
-            s.where == null || s.where.isEmpty() ? "" : " AND (" + s.where + ")");
-      List<Map<String, String>> r = tap(s.tap, q, 20000);   // a slow archive is skipped, it must not block the scan
+      String q = cds.astrovia.sky.Adql.count(s.table, s.ra, s.dec, ra, dec, rad, s.where);
+      List<Map<String, String>> r = tap(s.tap, q, 45000);   // a slow archive is skipped, it must not block the scan
       if (r.isEmpty() || r.get(0).isEmpty()) return 0;
       try { return (int) Double.parseDouble(r.get(0).values().iterator().next().trim()); } catch (NumberFormatException e) { return 0; }
    }
@@ -888,12 +804,8 @@ public class ArchivesDialog extends JDialog {
                   try { pic.ra = Double.parseDouble(r.get("ra_deg")); pic.dec = Double.parseDouble(r.get("dec_deg")); } catch (Exception e) { continue; }
                   try { pic.fov = Double.parseDouble(r.get("fov_size")); } catch (Exception e) { pic.fov = 0.2; }
                   if (pic.tilesUrl == null || pic.tilesUrl.isEmpty()) continue;
-                  java.util.regex.Matcher nm = java.util.regex.Pattern.compile("[-+]?\\d+\\.?\\d*(?:[eE][-+]?\\d+)?").matcher(r.get("stc_s") == null ? "" : r.get("stc_s").replaceAll("(?i)polygon|icrs|j2000", " "));
-                  List<Double> v = new ArrayList<Double>();
-                  while (nm.find()) v.add(Double.parseDouble(nm.group()));
-                  int n = v.size() / 2;
-                  pic.cornersRa = new double[n]; pic.cornersDec = new double[n];
-                  for (int i = 0; i < n; i++) { pic.cornersRa[i] = v.get(2 * i); pic.cornersDec[i] = v.get(2 * i + 1); }
+                  java.util.List<double[][]> shapes = cds.astrovia.sky.Stcs.parse(r.get("stc_s"));   // same parser as the Android app
+                  if (!shapes.isEmpty()) { pic.cornersRa = shapes.get(0)[0]; pic.cornersDec = shapes.get(0)[1]; }
                   pics.add(pic);
                }
                SwingUtilities.invokeLater(new Runnable() { public void run() { allPics.clear(); allPics.addAll(pics); filterNow.run(); } });

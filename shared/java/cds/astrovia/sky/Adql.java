@@ -1,0 +1,26 @@
+// Astrovia shared code: the ADQL cone queries sent to the archives. GNU GPL v3.
+package cds.astrovia.sky;
+
+import java.util.Locale;
+
+public final class Adql {
+   private Adql() { }
+
+   private static String tail(String where, String orderCol) {
+      return (where == null || where.isEmpty() ? "" : " AND (" + where + ")") + (orderCol == null || orderCol.isEmpty() ? "" : " ORDER BY " + orderCol + " ASC");
+   }
+
+   private static String circle(String raCol, String decCol, double ra, double dec, double rad) {
+      return String.format(Locale.US, "1=CONTAINS(POINT('ICRS',%s,%s),CIRCLE('ICRS',%.6f,%.6f,%.6f))", raCol, decCol, ra, dec, Math.max(0.0005, Math.min(90.0, rad)));
+   }
+
+   /** Rows of a table inside a cone; with an order column the brightest (smallest) come first so a row limit keeps the useful ones. */
+   public static String cone(String table, String raCol, String decCol, double ra, double dec, double radiusDeg, int top, String where, String orderCol) {
+      return String.format(Locale.US, "SELECT TOP %d * FROM %s WHERE ", top, table) + circle(raCol, decCol, ra, dec, radiusDeg) + tail(where, orderCol);
+   }
+
+   /** Number of rows of a table inside a cone. */
+   public static String count(String table, String raCol, String decCol, double ra, double dec, double radiusDeg, String where) {
+      return "SELECT COUNT(*) AS n FROM " + table + " WHERE " + circle(raCol, decCol, ra, dec, radiusDeg) + tail(where, null);
+   }
+}

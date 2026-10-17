@@ -1,5 +1,7 @@
 package com.kroryan.astrovia.data.hips
 
+import cds.astrovia.sky.Bands as SharedBands
+
 /**
  * Un survey HiPS seleccionable. `baseUrl` apunta a la raíz del árbol de tiles.
  * Los tiles se sirven en: {baseUrl}/Norder{order}/Dir{dir}/Npix{npix}.{ext}
@@ -77,32 +79,12 @@ object SurveyRegistry {
  * "By wavelength" organisation and the band filter of the Available data menu.
  */
 object HiPSBands {
-    val all = listOf("Gamma-ray", "Hard X-ray", "Soft X-ray", "UV", "Optical", "Near-IR", "Mid-IR", "Far-IR", "Infrared", "Sub-mm / mm", "Radio", "Gas lines", "Solar system", "Other")
-    private val upper = listOf("Gamma-ray" to 1e-11, "Hard X-ray" to 1.2e-10, "Soft X-ray" to 1e-8, "UV" to 4e-7, "Optical" to 8e-7, "Near-IR" to 5e-6, "Mid-IR" to 3e-5, "Far-IR" to 1e-3, "Sub-mm / mm" to 1e-2, "Radio" to Double.MAX_VALUE)
+    /** Band names in display order. The logic lives in the shared Java code (cds.astrovia.sky.Bands), also used by the desktop app. */
+    val all: List<String> get() = SharedBands.ALL
 
-    fun ofRange(minM: Double?, maxM: Double?): String? {
-        if (minM == null || maxM == null || minM <= 0 || maxM < minM) return null
-        val c = Math.sqrt(minM * maxM)
-        return upper.first { c < it.second }.first
-    }
+    fun ofRange(minM: Double?, maxM: Double?): String? = SharedBands.ofRange(minM, maxM)
 
-    fun ofText(text: String?): String? {
-        val t = (text ?: "").lowercase()
-        return when {
-            "gamma" in t -> "Gamma-ray"
-            "x-ray" in t || "xray" in t || t.trim() == "x" || "/x/" in t || t.startsWith("x/") -> if ("hard" in t) "Hard X-ray" else "Soft X-ray"
-            "uv" in t || "ultra" in t -> "UV"
-            "optic" in t || "visible" in t -> "Optical"
-            "near-ir" in t || "nir" in t -> "Near-IR"
-            "mid-ir" in t -> "Mid-IR"
-            "far-ir" in t || "fir" == t.trim() -> "Far-IR"
-            "infra" in t || t.trim() == "ir" -> "Infrared"
-            "millim" in t || "sub-mm" in t || "submm" in t -> "Sub-mm / mm"
-            "radio" in t || "microwave" in t -> "Radio"
-            "gas" in t || t.startsWith("hi ") || t.trim() == "hi" -> "Gas lines"
-            else -> null
-        }
-    }
+    fun ofText(text: String?): String? = SharedBands.ofText(text)
 
     fun of(s: HiPSSurvey): String {
         val parts = s.category.split('/').map { it.trim() }
@@ -111,20 +93,7 @@ object HiPSBands {
     }
 
     /** Band of an archive source from its descriptive band ("IR", "UV/Opt/IR", "X-ray"...). */
-    fun ofArchive(band: String): String {
-        val b = band.lowercase()
-        return when {
-            "gamma" in b -> "Gamma-ray"
-            "x-ray" in b -> "Soft X-ray"
-            "uv" in b -> "UV"
-            "opt" in b -> "Optical"
-            "fir" in b -> "Far-IR"
-            "ir" in b -> "Infrared"
-            "mm" in b -> "Sub-mm / mm"
-            "radio" in b -> "Radio"
-            else -> "Other"
-        }
-    }
+    fun ofArchive(band: String): String = SharedBands.ofArchive(band)
 }
 
 /** How the Available data tree is organised. */

@@ -59,8 +59,13 @@ object FileOpener {
                     val all = VotableParser.parse(f.readText())
                     OpenedFile.Table(name, vizier.rowsFromMaps(all), all.size)
                 }
-                head.length > 1 && head[0] == '\u001f' && head[1] == '\u008b' ->
-                    OpenedFile.Failed(name, "Compressed files (.gz, .fz) are not supported yet: unpack them first")
+                head.length > 1 && head[0] == '\u001f' && head[1] == '\u008b' -> {
+                    // .fits.gz: decompress next to it and open the plain file (tile-compressed .fz is a different thing)
+                    val plain = File(f.parentFile, f.name.removeSuffix(".gz").removeSuffix(".GZ").ifEmpty { "file" } + ".unzipped")
+                    java.util.zip.GZIPInputStream(f.inputStream().buffered()).use { i -> plain.outputStream().use { o -> i.copyTo(o) } }
+                    f.delete()
+                    openFile(plain, name.removeSuffix(".gz").removeSuffix(".GZ"))
+                }
                 else -> {
                     val text = f.readText()
                     val delim = if (text.lineSequence().firstOrNull().orEmpty().count { it == '\t' } > 0) '\t' else ','

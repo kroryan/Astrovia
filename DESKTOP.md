@@ -58,3 +58,35 @@ sudo apt update && sudo apt install astrovia
 ```
 
 Data lives in `~/.astrovia` (cache, configuration, first-run acceptance in `welcome.accepted`).
+
+## Version
+
+The version is written once, in `VERSION` (and `VERSION_CODE` for Android). Change it everywhere with
+`tools/set-version.sh <version> [android-version-code]`; `build-desktop.sh` stops if the constant in `Aladin.java` disagrees.
+The build also stops on any compile error.
+
+## Code shared with the Android app
+
+`shared/java/` is plain Java 8 used by both apps (image processing in `cds.astrovia.imgproc`; visibility, instrument
+footprints, wavelength bands, STC-S and ADQL helpers, VOTable / CSV readers and tile pyramids in `cds.astrovia.sky`).
+`shared/data/` holds the archive registry (`archives.json`) and the object lists. Edit them there: the desktop build copies
+them into the jar and Gradle packs them as Android assets.
+
+## Archive registry tools
+
+```
+python3 tools/archives/build_registry.py          # regenerate shared/data/archives.json from the ESA Sky TAP schema
+python3 tools/archives/check_registry.py --fast   # ask every source for one row (EMPTY is fine; ERROR / SLOW deserve a look)
+```
+
+`labels.json` says how each table is named and typed; `extras.json` holds the sources written by hand (MAST, ESO, IRSA, ...).
+
+## Files, caches and data
+
+Data lives in `~/.astrovia`. *Clear cache and temporary files...* (the `+` menu of the Available data panel) frees the cache
+and keeps offline collections, lists and settings. Gzip-compressed FITS (`.fits.gz`) opens like any other; tile-compressed
+`.fz` files are not supported yet.
+
+## Not done yet
+
+AppImage and macOS packages, a signed Windows installer and a Flatpak build (only the metadata exists).

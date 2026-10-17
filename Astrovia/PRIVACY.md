@@ -1,6 +1,6 @@
 # Privacy Policy — Astrovia: Sky Atlas
 
-Last updated: October 17, 2026 (version 0.6.4)
+Last updated: October 17, 2026 (version 0.6.5)
 
 Astrovia: Sky Atlas is a free, open-source astronomy application for Android, Windows and Linux, without advertisements, analytics, tracking, or user accounts.
 

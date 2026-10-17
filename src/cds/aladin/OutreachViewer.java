@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import cds.astrovia.sky.TilePyramid;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
@@ -34,69 +35,16 @@ final class OutreachViewer extends JPanel {
       public String toString() { return title; }
    }
 
-   /** Tile pyramid: levels 0 (smallest) ... maxLevel (full size). */
-   abstract static class Pyr {
-      final int w, h, ts;
-      int maxLevel;
-      Pyr(int w, int h, int ts) { this.w = w; this.h = h; this.ts = ts; }
-      int lw(int l) { return (int) Math.max(1, Math.ceil(w / Math.pow(2, maxLevel - l))); }
-      int lh(int l) { return (int) Math.max(1, Math.ceil(h / Math.pow(2, maxLevel - l))); }
-      int cols(int l) { return (int) Math.ceil(lw(l) / (double) ts); }
-      int rows(int l) { return (int) Math.ceil(lh(l) / (double) ts); }
-      abstract String url(int l, int c, int r);
-      int overlapLeft(int c) { return 0; }
-      int overlapTop(int r) { return 0; }
-      int thumbLevel() { for (int l = maxLevel; l >= 0; l--) if (cols(l) == 1 && rows(l) == 1) return l; return 0; }
+   /** Opens the pyramid of a picture (".dzi" Deep Zoom file or a Zoomify folder); the geometry is shared with the Android app. */
+   static TilePyramid open(String tilesUrl) throws java.io.IOException {
+      TilePyramid p;
+      if (tilesUrl.endsWith(".dzi")) p = TilePyramid.deepZoom(tilesUrl, new String(ArchivesDialog.fetch(tilesUrl), "UTF-8"));
+      else p = TilePyramid.zoomify(tilesUrl, new String(ArchivesDialog.fetch(tilesUrl.replaceAll("/+$", "") + "/ImageProperties.xml"), "UTF-8"));
+      if (p == null) throw new java.io.IOException("Unreadable tile description");
+      return p;
    }
 
-   static final class Zoomify extends Pyr {
-      private final String base;
-      Zoomify(String base, int w, int h, int ts) {
-         super(w, h, ts);
-         this.base = base;
-         int ww = w, hh = h, n = 0;
-         while (ww > ts || hh > ts) { ww = (ww + 1) / 2; hh = (hh + 1) / 2; n++; }
-         maxLevel = n;
-      }
-      private int first(int level) { int s = 0; for (int l = 0; l < level; l++) s += cols(l) * rows(l); return s; }
-      String url(int l, int c, int r) { return base + "/TileGroup" + ((first(l) + r * cols(l) + c) / 256) + "/" + l + "-" + c + "-" + r + ".jpg"; }
-   }
-
-   static final class DeepZoom extends Pyr {
-      private final String base, fmt;
-      private final int overlap;
-      DeepZoom(String base, int w, int h, int ts, int overlap, String fmt) {
-         super(w, h, ts);
-         this.base = base; this.overlap = overlap; this.fmt = fmt;
-         maxLevel = (int) Math.ceil(Math.log(Math.max(w, h)) / Math.log(2));
-      }
-      String url(int l, int c, int r) { return base + "_files/" + l + "/" + c + "_" + r + "." + fmt; }
-      int overlapLeft(int c) { return c > 0 ? overlap : 0; }
-      int overlapTop(int r) { return r > 0 ? overlap : 0; }
-   }
-
-   private static int attr(String xml, String name) {
-      java.util.regex.Matcher m = java.util.regex.Pattern.compile(name + "=\"(\\d+)\"").matcher(xml);
-      return m.find() ? Integer.parseInt(m.group(1)) : -1;
-   }
-
-   /** Opens the pyramid of a picture (".dzi" Deep Zoom file or a Zoomify folder). */
-   static Pyr open(String tilesUrl) throws java.io.IOException {
-      if (tilesUrl.endsWith(".dzi")) {
-         String xml = new String(ArchivesDialog.fetch(tilesUrl), "UTF-8");
-         java.util.regex.Matcher f = java.util.regex.Pattern.compile("Format=\"(\\w+)\"").matcher(xml);
-         int w = attr(xml, "Width"), h = attr(xml, "Height");
-         if (w < 0 || h < 0) throw new java.io.IOException("Bad .dzi file");
-         return new DeepZoom(tilesUrl.substring(0, tilesUrl.length() - 4), w, h, attr(xml, "TileSize") > 0 ? attr(xml, "TileSize") : 254, Math.max(0, attr(xml, "Overlap")), f.find() ? f.group(1) : "jpg");
-      }
-      String base = tilesUrl.replaceAll("/+$", "");
-      String xml = new String(ArchivesDialog.fetch(base + "/ImageProperties.xml"), "UTF-8");
-      int w = attr(xml, "WIDTH"), h = attr(xml, "HEIGHT");
-      if (w < 0 || h < 0) throw new java.io.IOException("Bad ImageProperties.xml");
-      return new Zoomify(base, w, h, attr(xml, "TILESIZE") > 0 ? attr(xml, "TILESIZE") : 256);
-   }
-
-   private final Pyr p;
+   private final TilePyramid p;
    private double scale = 1, ox, oy;
    private boolean placed = false;
    private int dragX, dragY;
@@ -106,7 +54,7 @@ final class OutreachViewer extends JPanel {
    private final Set<String> inFlight = ConcurrentHashMap.newKeySet();
    private final ExecutorService pool = Executors.newFixedThreadPool(5);
 
-   OutreachViewer(Pyr p) {
+   OutreachViewer(TilePyramid p) {
       this.p = p;
       setBackground(Color.BLACK);
       setPreferredSize(new Dimension(900, 620));
@@ -120,7 +68,7 @@ final class OutreachViewer extends JPanel {
 
    void dispose() { pool.shutdownNow(); }
 
-   private double fit() { return Math.min(getWidth() / (double) p.w, getHeight() / (double) p.h); }
+   private double fit() { return Math.min(getWidth() / (double) p.width, getHeight() / (double) p.height); }
 
    private BufferedImage tile(final String url) {
       BufferedImage b = cache.get(url);
@@ -138,13 +86,13 @@ final class OutreachViewer extends JPanel {
    }
 
    private void drawLevel(Graphics2D g, int level, double s) {
-      double f = Math.pow(2, p.maxLevel - level);
+      double f = Math.pow(2, p.getMaxLevel() - level);
       int cols = p.cols(level), rows = p.rows(level);
       for (int r = 0; r < rows; r++) for (int c = 0; c < cols; c++) {
-         int l = c * p.ts, t = r * p.ts, rr = Math.min(l + p.ts, p.lw(level)), bb = Math.min(t + p.ts, p.lh(level));
+         int l = c * p.tileSize, t = r * p.tileSize, rr = Math.min(l + p.tileSize, p.levelWidth(level)), bb = Math.min(t + p.tileSize, p.levelHeight(level));
          double sx = ox + l * f * s, sy = oy + t * f * s, dw = (rr - l) * f * s, dh = (bb - t) * f * s;
          if (sx + dw < 0 || sy + dh < 0 || sx > getWidth() || sy > getHeight()) continue;
-         BufferedImage b = tile(p.url(level, c, r));
+         BufferedImage b = tile(p.tileUrl(level, c, r));
          if (b == null) continue;
          int lo = p.overlapLeft(c), to = p.overlapTop(r);
          g.drawImage(b, (int) sx, (int) sy, (int) Math.ceil(sx + dw), (int) Math.ceil(sy + dh), lo, to, Math.min(b.getWidth(), lo + rr - l), Math.min(b.getHeight(), to + bb - t), null);
@@ -155,10 +103,10 @@ final class OutreachViewer extends JPanel {
       super.paintComponent(g0);
       Graphics2D g = (Graphics2D) g0;
       g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-      if (!placed && getWidth() > 0) { double fit = fit(); ox = (getWidth() - p.w * fit) / 2; oy = (getHeight() - p.h * fit) / 2; placed = true; }
+      if (!placed && getWidth() > 0) { double fit = fit(); ox = (getWidth() - p.width * fit) / 2; oy = (getHeight() - p.height * fit) / 2; placed = true; }
       double s = fit() * scale;
-      int want = (int) Math.max(0, Math.min(p.maxLevel, Math.ceil(p.maxLevel + Math.log(s) / Math.log(2))));
-      int th = p.thumbLevel(), back = Math.max(th, Math.min(th + 1, want));
+      int want = (int) Math.max(0, Math.min(p.getMaxLevel(), Math.ceil(p.getMaxLevel() + Math.log(s) / Math.log(2))));
+      int th = p.thumbnailLevel(), back = Math.max(th, Math.min(th + 1, want));
       drawLevel(g, th, s);
       if (back > th) drawLevel(g, back, s);
       if (want > back) { if (want - 2 > back) drawLevel(g, want - 2, s); drawLevel(g, want, s); }
@@ -170,7 +118,7 @@ final class OutreachViewer extends JPanel {
    static void show(final Window owner, final Pic pic, final Aladin aladin) {
       new Thread(new Runnable() { public void run() {
          try {
-            final Pyr pyr = open(pic.tilesUrl);
+            final TilePyramid pyr = open(pic.tilesUrl);
             SwingUtilities.invokeLater(new Runnable() { public void run() {
                final JDialog d = new JDialog(owner, pic.title, Dialog.ModalityType.MODELESS);
                final OutreachViewer v = new OutreachViewer(pyr);

@@ -38,16 +38,25 @@ public final class FitsIO {
    private static double dbl(String s, double d) { try { return s == null ? d : Double.parseDouble(s.replace('D', 'E')); } catch (Exception e) { return d; } }
    private static int num(String s, int d) { try { return s == null ? d : (int) Double.parseDouble(s); } catch (Exception e) { return d; } }
 
-   /** Finds the first image HDU with 2 or more axes. */
-   public static Layout layout(ByteBuffer buf) throws IOException {
+   /** One HDU of a FITS file: its header, where its data starts and how many bytes they take. */
+   public static final class Hdu {
+      public int index;
+      public Map<String, String> header = new LinkedHashMap<String, String>();
+      public long dataStart, dataBytes;
+      public String extension() { return header.get("XTENSION"); }
+   }
+
+   /** Every HDU of the file (the only FITS header parser of the Java code: images and tables use it). */
+   public static List<Hdu> hdus(ByteBuffer buf) throws IOException {
       long len = buf.limit();
-      long pos = 0;
       byte[] sig = new byte[9];
       if (len < BLOCK) throw new IOException("Not a FITS file");
-      ByteBuffer d0 = buf.duplicate(); d0.get(sig);
+      buf.duplicate().get(sig);
       if (!new String(sig, "US-ASCII").equals("SIMPLE  =")) throw new IOException("Not a FITS file");
-      for (int hdu = 0; hdu < 64 && pos + BLOCK <= len; hdu++) {
-         Layout l = new Layout();
+      List<Hdu> out = new ArrayList<Hdu>();
+      long pos = 0;
+      while (pos + BLOCK <= len && out.size() < 200) {
+         Hdu h = new Hdu();
          boolean ended = false; long p = pos;
          while (!ended && p + BLOCK <= len) {
             byte[] block = new byte[BLOCK];
@@ -56,22 +65,37 @@ public final class FitsIO {
                String card = new String(block, i * 80, 80, "US-ASCII");
                String key = card.substring(0, 8).trim();
                if (key.equals("END")) { ended = true; break; }
-               if (card.length() > 10 && card.charAt(8) == '=' && !l.header.containsKey(key)) l.header.put(key, value(card));
+               if (card.length() > 10 && card.charAt(8) == '=' && !h.header.containsKey(key)) h.header.put(key, value(card));
             }
             p += BLOCK;
          }
          if (!ended) break;
-         l.bitpix = num(l.header.get("BITPIX"), 8);
-         int naxis = num(l.header.get("NAXIS"), 0);
-         l.nx = num(l.header.get("NAXIS1"), 0); l.ny = num(l.header.get("NAXIS2"), 0); l.nz = naxis >= 3 ? Math.max(1, num(l.header.get("NAXIS3"), 1)) : 1;
-         l.bscale = dbl(l.header.get("BSCALE"), 1); l.bzero = dbl(l.header.get("BZERO"), 0);
-         l.dataStart = p;
+         int naxis = num(h.header.get("NAXIS"), 0);
          long elems = naxis == 0 ? 0 : 1;
-         for (int a = 1; a <= naxis; a++) elems *= num(l.header.get("NAXIS" + a), 0);
-         long dataBytes = (Math.abs(l.bitpix) / 8) * (long) num(l.header.get("GCOUNT"), 1) * (num(l.header.get("PCOUNT"), 0) + elems);
-         String xt = l.header.get("XTENSION");
-         if (naxis >= 2 && (hdu == 0 || "IMAGE".equals(xt)) && l.nx > 0 && l.ny > 0) return l;
-         pos = p + ((dataBytes + BLOCK - 1) / BLOCK) * BLOCK;
+         for (int a = 1; a <= naxis; a++) elems *= num(h.header.get("NAXIS" + a), 0);
+         h.index = out.size();
+         h.dataStart = p;
+         h.dataBytes = (Math.abs(num(h.header.get("BITPIX"), 8)) / 8) * (long) num(h.header.get("GCOUNT"), 1) * (num(h.header.get("PCOUNT"), 0) + elems);
+         out.add(h);
+         pos = p + ((h.dataBytes + BLOCK - 1) / BLOCK) * BLOCK;
+      }
+      if (out.isEmpty()) throw new IOException("No HDU found");
+      return out;
+   }
+
+   /** Finds the first image HDU with 2 or more axes. */
+   public static Layout layout(ByteBuffer buf) throws IOException {
+      for (Hdu h : hdus(buf)) {
+         int naxis = num(h.header.get("NAXIS"), 0);
+         int nx = num(h.header.get("NAXIS1"), 0), ny = num(h.header.get("NAXIS2"), 0);
+         if (naxis >= 2 && (h.index == 0 || "IMAGE".equals(h.extension())) && nx > 0 && ny > 0) {
+            Layout l = new Layout();
+            l.header = h.header; l.bitpix = num(h.header.get("BITPIX"), 8); l.nx = nx; l.ny = ny;
+            l.nz = naxis >= 3 ? Math.max(1, num(h.header.get("NAXIS3"), 1)) : 1;
+            l.bscale = dbl(h.header.get("BSCALE"), 1); l.bzero = dbl(h.header.get("BZERO"), 0);
+            l.dataStart = h.dataStart;
+            return l;
+         }
       }
       throw new IOException("No image in this FITS file");
    }
@@ -89,6 +113,29 @@ public final class FitsIO {
 
    /** Reads a whole image: mono, or 3 planes as RGB (the first 3 planes of a cube). NaN pixels become the image median. */
    public static Img read(File f) throws IOException {
+      if (!isGzip(f)) return readPlain(f);
+      File plain = gunzip(f);
+      try { return readPlain(plain); } finally { plain.delete(); }
+   }
+
+   /** True for a gzip file (.fits.gz): the first two bytes are 1f 8b. */
+   public static boolean isGzip(File f) throws IOException {
+      InputStream in = new FileInputStream(f);
+      try { return in.read() == 0x1f && in.read() == 0x8b; } finally { in.close(); }
+   }
+
+   /** Decompresses a gzip file to a temporary file (the caller deletes it). */
+   public static File gunzip(File f) throws IOException {
+      File out = File.createTempFile("astrovia_gz_", ".fits");
+      InputStream in = new java.util.zip.GZIPInputStream(new BufferedInputStream(new FileInputStream(f)));
+      try {
+         OutputStream o = new BufferedOutputStream(new FileOutputStream(out));
+         try { byte[] b = new byte[1 << 16]; int n; while ((n = in.read(b)) > 0) o.write(b, 0, n); } finally { o.close(); }
+      } catch (IOException e) { out.delete(); throw e; } finally { in.close(); }
+      return out;
+   }
+
+   private static Img readPlain(File f) throws IOException {
       RandomAccessFile raf = new RandomAccessFile(f, "r");
       try {
          if (raf.length() > Integer.MAX_VALUE) throw new IOException("File larger than 2 GB");

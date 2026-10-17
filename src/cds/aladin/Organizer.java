@@ -11,35 +11,11 @@ final class Organizer {
    static final int DEFAULT = 0, WAVELENGTH = 1, MISSION = 2, CENTRE = 3;
    static final String[] NAMES = { "Default (folders)", "By wavelength", "By mission", "By data centre" };
 
-   /** Bands ordered from the highest to the lowest energy; the numbers are wavelength upper bounds in metres. */
-   private static final String[] BAND = { "Gamma-ray", "Hard X-ray", "Soft X-ray", "UV", "Optical", "Near-IR", "Mid-IR", "Far-IR", "Sub-mm / mm", "Radio" };
-   private static final double[] UPPER = { 1e-11, 1.2e-10, 1e-8, 4e-7, 8e-7, 5e-6, 3e-5, 1e-3, 1e-2, Double.MAX_VALUE };
+   /** Band of a wavelength range in metres, or null. The logic is shared with the Android app (cds.astrovia.sky.Bands). */
+   static String bandOfRange(double minM, double maxM) { return cds.astrovia.sky.Bands.ofRange(minM, maxM); }
 
-   /** Band of a wavelength range in metres (centre on a log scale), or null. */
-   static String bandOfRange(double minM, double maxM) {
-      if (!(minM > 0) || !(maxM >= minM)) return null;
-      double c = Math.sqrt(minM * maxM);
-      for (int i = 0; i < UPPER.length; i++) if (c < UPPER[i]) return BAND[i];
-      return BAND[BAND.length - 1];
-   }
-
-   /** Band from the free-text regime or the folder of the collection (fallback when there is no wavelength range). */
-   static String bandOfText(String text) {
-      if (text == null) return null;
-      String t = text.toLowerCase(Locale.ROOT);
-      if (t.contains("gamma")) return "Gamma-ray";
-      if (t.contains("x-ray") || t.contains("xray") || t.equals("x") || t.contains("/x/") || t.startsWith("x/")) return t.contains("hard") ? "Hard X-ray" : "Soft X-ray";
-      if (t.contains("euv") || t.contains("uv") || t.contains("ultra")) return "UV";
-      if (t.contains("optic") || t.contains("visible")) return "Optical";
-      if (t.contains("near-ir") || t.contains("nir")) return "Near-IR";
-      if (t.contains("mid-ir") || t.contains("mir")) return "Mid-IR";
-      if (t.contains("far-ir") || t.contains("fir")) return "Far-IR";
-      if (t.contains("infra")) return "Infrared";
-      if (t.contains("millim") || t.contains("sub-mm") || t.contains("submm")) return "Sub-mm / mm";
-      if (t.contains("radio") || t.contains("microwave")) return "Radio";
-      if (t.contains("gas")) return "Gas lines";
-      return null;
-   }
+   /** Band from a free-text regime or folder name, or null. */
+   static String bandOfText(String text) { return cds.astrovia.sky.Bands.ofText(text); }
 
    private static double num(String s) {
       try { return s == null ? Double.NaN : Double.parseDouble(s.trim()); } catch (Exception e) { return Double.NaN; }
@@ -58,7 +34,7 @@ final class Organizer {
          String band = bandOfRange(num(emMin), num(emMax));
          if (band == null) band = bandOfText(regime);
          if (band == null) band = bandOfText(cat);
-         if (band == null) band = "Other wavelengths";
+         if (band == null) band = "Other";
          String rest = seg.length > 2 ? "/" + join(seg, 2) : (seg.length > 1 && bandOfText(seg[1]) == null ? "/" + seg[1] : "");
          return "By wavelength/" + band + "/" + kind + rest;
       }
@@ -74,19 +50,8 @@ final class Organizer {
       return cat;
    }
 
-   /** Band of an archive source from its short description ("IR", "UV/Opt/IR", "X-ray", "Gamma"...). */
-   static String bandOfArchive(String band) {
-      String b = band == null ? "" : band.toLowerCase(Locale.ROOT);
-      if (b.contains("gamma")) return "Gamma-ray";
-      if (b.contains("x-ray")) return "Soft X-ray";
-      if (b.contains("uv")) return "UV";
-      if (b.contains("opt")) return "Optical";
-      if (b.contains("fir")) return "Far-IR";
-      if (b.contains("ir")) return "Infrared";
-      if (b.contains("mm")) return "Sub-mm / mm";
-      if (b.contains("radio")) return "Radio";
-      return "Other wavelengths";
-   }
+   /** Band of an archive source from its short description ("IR", "UV/Opt/IR", "X-ray"...). */
+   static String bandOfArchive(String band) { return cds.astrovia.sky.Bands.ofArchive(band); }
 
    private static String join(String[] a, int from) {
       StringBuilder sb = new StringBuilder();

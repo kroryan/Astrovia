@@ -38,7 +38,7 @@ This application makes use of the SIMBAD database and the VizieR catalogue acces
 Strasbourg, France, and of HiPS surveys served by their respective data providers; their terms of use and
 citations apply.
 
-## Archives feature (0.6.4)
+## Archives feature (0.6.5)
 
 The "Archives" window (desktop) and sheet (Android) are an original implementation written for Astrovia on top of
 public IVOA standards (TAP/ADQL, VOTable). They query these services; their terms of use and citation requests apply:
@@ -51,9 +51,9 @@ public IVOA standards (TAP/ADQL, VOTable). They query these services; their term
 "ESA" and the names of the missions belong to their owners and are used only to describe the data. Astrovia is not
 affiliated with or endorsed by ESA, NASA, IMCCE or the CDS.
 
-## Image processing (0.6.4)
+## Image processing (0.6.5)
 
-The image processing tools are an independent implementation (`shared/imgproc`) of standard, well-documented algorithms
+The image processing tools are an independent implementation (`shared/java`) of standard, well-documented algorithms
 (midtones transfer function, polynomial background fitting, median / Gaussian filters, unsharp mask, Richardson-Lucy
 deconvolution, sigma-clipped stacking...). Siril (https://siril.org, GPL v3) was used only as a reference for which low-level
 tools an astronomy image processor offers; no Siril code is included.

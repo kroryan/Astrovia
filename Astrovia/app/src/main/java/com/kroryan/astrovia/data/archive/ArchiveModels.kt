@@ -1,6 +1,8 @@
 @file:Suppress("EmptyCatchBlock", "TooGenericExceptionThrown", "VariableNaming", "ImplicitDefaultLocale", "WildcardImport", "MagicNumber", "MaxLineLength", "ComplexCondition", "CyclomaticComplexMethod", "LongMethod", "ReturnCount", "LongParameterList", "SwallowedException", "TooGenericExceptionCaught", "NestedBlockDepth", "FunctionNaming", "LoopWithTooManyJumpStatements", "TooManyFunctions")
 package com.kroryan.astrovia.data.archive
 
+import cds.astrovia.sky.Stcs
+
 import org.json.JSONObject
 import kotlin.math.cos
 import kotlin.math.sin
@@ -95,45 +97,7 @@ data class ArchiveHit(
     val fields: Map<String, String>,
 )
 
-/** Parser of the footprint notations used by the archives (STC-S "Polygon ICRS ...", "Circle ...", "Union ..."). */
+/** Parser of the footprint notations used by the archives; the parsing lives in the shared Java code (cds.astrovia.sky.Stcs). */
 object Footprints {
-    private val num = Regex("[-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][-+]?\\d+)?")
-
-    fun parse(text: String?): List<SkyPolygon> {
-        if (text.isNullOrBlank()) return emptyList()
-        val out = ArrayList<SkyPolygon>()
-        // Split into shapes at each keyword, so "Union ICRS (Polygon ... Polygon ...)" gives several polygons.
-        val parts = Regex("(?i)(polygon|circle|box)").findAll(text).toList()
-        for ((i, m) in parts.withIndex()) {
-            val end = if (i + 1 < parts.size) parts[i + 1].range.first else text.length
-            val body = text.substring(m.range.last + 1, end)
-            // Drop frame words (ICRS, J2000, GEOCENTER...) which contain digits in "J2000".
-            val cleaned = body.replace(Regex("(?i)\\b(icrs|fk5|j2000|galactic|geocenter|unknownframe|union|intersection|not)\\b"), " ")
-            val v = num.findAll(cleaned).map { it.value.toDouble() }.toList()
-            when (m.value.lowercase()) {
-                "polygon" -> if (v.size >= 6) {
-                    val n = v.size / 2
-                    out.add(SkyPolygon(DoubleArray(n) { v[2 * it] }, DoubleArray(n) { v[2 * it + 1] }))
-                }
-                "circle" -> if (v.size >= 3) out.add(circle(v[0], v[1], v[2]))
-                "box" -> if (v.size >= 4) out.add(box(v[0], v[1], v[2], v[3]))
-            }
-        }
-        return out
-    }
-
-    private fun circle(ra: Double, dec: Double, r: Double, n: Int = 32): SkyPolygon {
-        val cd = cos(Math.toRadians(dec)).coerceAtLeast(0.05)
-        return SkyPolygon(
-            DoubleArray(n) { ra + r * cos(2 * Math.PI * it / n) / cd },
-            DoubleArray(n) { dec + r * sin(2 * Math.PI * it / n) },
-        )
-    }
-
-    private fun box(ra: Double, dec: Double, w: Double, h: Double): SkyPolygon {
-        val cd = cos(Math.toRadians(dec)).coerceAtLeast(0.05)
-        val dx = w / 2 / cd
-        val dy = h / 2
-        return SkyPolygon(doubleArrayOf(ra - dx, ra + dx, ra + dx, ra - dx), doubleArrayOf(dec - dy, dec - dy, dec + dy, dec + dy))
-    }
+    fun parse(text: String?): List<SkyPolygon> = Stcs.parse(text).map { SkyPolygon(it[0], it[1]) }
 }

@@ -9,7 +9,7 @@
 # Needs: JDK 11+, dpkg-deb, apt-ftparchive, zip, ImageMagick (convert), python3, curl, unzip, tar.
 set -euo pipefail
 cd "$(dirname "$0")"
-VER=${ASTROVIA_VERSION:-0.6.4}
+VER=${ASTROVIA_VERSION:-$(tr -d '[:space:]' < VERSION)}
 WINVER="$VER.0"
 export ASTROVIA_VERSION=$VER
 REL=release/desktop

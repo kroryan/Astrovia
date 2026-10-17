@@ -1,6 +1,10 @@
 @file:Suppress("EmptyCatchBlock", "TooGenericExceptionThrown", "VariableNaming", "ImplicitDefaultLocale", "WildcardImport", "MagicNumber", "MaxLineLength", "ComplexCondition", "CyclomaticComplexMethod", "LongMethod", "ReturnCount", "LongParameterList", "SwallowedException", "TooGenericExceptionCaught", "NestedBlockDepth", "FunctionNaming", "LoopWithTooManyJumpStatements", "TooManyFunctions")
 package com.kroryan.astrovia.data.archive
 
+import cds.astrovia.sky.CsvTable
+
+import cds.astrovia.sky.Adql
+
 import android.content.Context
 import com.kroryan.astrovia.data.net.HttpClient
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +49,7 @@ data class SolarSystemBody(
 class ArchiveService(context: Context) {
     private val client = HttpClient.client
     /** Counts of the field overview must answer quickly: a slow archive is skipped instead of blocking the scan. */
-    private val quick = HttpClient.client.newBuilder().callTimeout(20, java.util.concurrent.TimeUnit.SECONDS).readTimeout(20, java.util.concurrent.TimeUnit.SECONDS).build()
+    private val quick = HttpClient.client.newBuilder().callTimeout(45, java.util.concurrent.TimeUnit.SECONDS).readTimeout(45, java.util.concurrent.TimeUnit.SECONDS).build()
 
     val sources: List<ArchiveSource> by lazy {
         val txt = context.assets.open("archives.json").bufferedReader().use { it.readText() }
@@ -93,8 +97,7 @@ class ArchiveService(context: Context) {
 
     /** Number of rows of a source inside a cone: the counts shown in the field overview. */
     suspend fun countInField(src: ArchiveSource, raDeg: Double, decDeg: Double, radiusDeg: Double): Int = withContext(Dispatchers.IO) {
-        val adql = String.format(Locale.US, "SELECT COUNT(*) AS n FROM %s WHERE 1=CONTAINS(POINT('ICRS',%s,%s),CIRCLE('ICRS',%.6f,%.6f,%.6f))", src.table, src.raCol, src.decCol, raDeg, decDeg, radiusDeg.coerceIn(0.0005, 90.0)) +
-            (src.where?.let { " AND ($it)" } ?: "")
+        val adql = Adql.count(src.table, src.raCol, src.decCol, raDeg, decDeg, radiusDeg, src.where)
         tapRows(src.tapUrl, adql, src.format, fast = true).firstOrNull()?.values?.firstOrNull()?.toDoubleOrNull()?.toInt() ?: 0
     }
 
@@ -151,12 +154,7 @@ class ArchiveService(context: Context) {
     suspend fun coneSearch(
         src: ArchiveSource, raDeg: Double, decDeg: Double, radiusDeg: Double, maxRows: Int = 300,
     ): List<ArchiveHit> = withContext(Dispatchers.IO) {
-        val r = radiusDeg.coerceIn(0.0005, 90.0)
-        val adql = String.format(
-            Locale.US,
-            "SELECT TOP %d * FROM %s WHERE 1=CONTAINS(POINT('ICRS',%s,%s),CIRCLE('ICRS',%.6f,%.6f,%.6f))",
-            maxRows, src.table, src.raCol, src.decCol, raDeg, decDeg, r,
-        ) + (src.where?.let { " AND ($it)" } ?: "") + (src.orderCol?.let { " ORDER BY $it ASC" } ?: "")
+        val adql = Adql.cone(src.table, src.raCol, src.decCol, raDeg, decDeg, radiusDeg, maxRows, src.where, src.orderCol)
         val rows = tapRows(src.tapUrl, adql, src.format)
         rows.mapNotNull { row ->
             val m = row.entries.associate { it.key.lowercase() to it.value }
@@ -253,36 +251,7 @@ class ArchiveService(context: Context) {
     }
 }
 
-/** Minimal RFC 4180 CSV reader: quoted fields, doubled quotes and line breaks inside quotes. */
+/** RFC 4180 CSV reader: quotes, doubled quotes and line breaks inside quotes (shared Java code, also used by the desktop app). */
 object Csv {
-    fun parse(text: String): List<Map<String, String>> {
-        val records = ArrayList<List<String>>()
-        var row = ArrayList<String>()
-        val sb = StringBuilder()
-        var q = false
-        var i = 0
-        while (i < text.length) {
-            val c = text[i]
-            if (q) {
-                if (c == '"') {
-                    if (i + 1 < text.length && text[i + 1] == '"') { sb.append('"'); i++ } else q = false
-                } else sb.append(c)
-            } else when (c) {
-                '"' -> q = true
-                ',' -> { row.add(sb.toString()); sb.setLength(0) }
-                '\n' -> { row.add(sb.toString()); sb.setLength(0); records.add(row); row = ArrayList() }
-                '\r' -> {}
-                else -> sb.append(c)
-            }
-            i++
-        }
-        if (sb.isNotEmpty() || row.isNotEmpty()) { row.add(sb.toString()); records.add(row) }
-        if (records.size < 2) return emptyList()
-        val head = records[0]
-        return records.drop(1).filter { it.size > 1 || it.firstOrNull()?.isNotEmpty() == true }.map { r ->
-            val m = LinkedHashMap<String, String>()
-            for (k in head.indices) m[head[k]] = r.getOrElse(k) { "" }
-            m
-        }
-    }
+    fun parse(text: String): List<Map<String, String>> = CsvTable.parse(text)
 }

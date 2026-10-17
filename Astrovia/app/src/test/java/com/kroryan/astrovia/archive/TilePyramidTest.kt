@@ -1,7 +1,6 @@
 package com.kroryan.astrovia.archive
 
-import com.kroryan.astrovia.data.gallery.DeepZoomPyramid
-import com.kroryan.astrovia.data.gallery.ZoomifyPyramid
+import com.kroryan.astrovia.data.gallery.TilePyramid
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -10,7 +9,7 @@ import org.junit.Test
 class TilePyramidTest {
     @Test
     fun zoomifyGeometryAndUrls() {
-        val z = ZoomifyPyramid.parse("https://x/zoomable/img/", "<IMAGE_PROPERTIES WIDTH=\"30866\" HEIGHT=\"38204\" NUMTILES=\"24316\" NUMIMAGES=\"1\" VERSION=\"1.8\" TILESIZE=\"256\" />")!!
+        val z = TilePyramid.zoomify("https://x/zoomable/img/", "<IMAGE_PROPERTIES WIDTH=\"30866\" HEIGHT=\"38204\" NUMTILES=\"24316\" NUMIMAGES=\"1\" VERSION=\"1.8\" TILESIZE=\"256\" />")!!
         assertEquals(38204, z.height); assertEquals(256, z.tileSize)
         // the smallest tier fits in one tile, the largest is the full image
         assertEquals(1, z.cols(0)); assertEquals(1, z.rows(0))
@@ -24,7 +23,7 @@ class TilePyramidTest {
 
     @Test
     fun deepZoom() {
-        val d = DeepZoomPyramid.parse("https://x/dorado_8k.dzi", "<Image Format=\"jpg\" Overlap=\"1\" TileSize=\"254\"><Size Height=\"8200\" Width=\"8200\"/></Image>")!!
+        val d = TilePyramid.deepZoom("https://x/dorado_8k.dzi", "<Image Format=\"jpg\" Overlap=\"1\" TileSize=\"254\"><Size Height=\"8200\" Width=\"8200\"/></Image>")!!
         assertEquals(14, d.maxLevel)                              // 2^14 = 16384 >= 8200
         assertEquals(8200, d.levelWidth(14))
         assertEquals("https://x/dorado_8k_files/3/0_0.jpg", d.tileUrl(3, 0, 0))

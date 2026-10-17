@@ -100,19 +100,15 @@ final class LightCurvePanel extends JPanel {
       }
    }
 
-   private static final String[] TIME = { "TIME", "BTJD", "BJD", "HJD", "MJD", "JD", "TSTART" };
-   private static final String[] FLUX = { "PDCSAP_FLUX", "SAP_FLUX", "FLUX", "KSPSAP_FLUX", "FLUX_CORR", "MAG", "RATE", "COUNTS" };
-
-   private static String find(Map<String, double[]> d, String[] names) {
-      for (String n : names) for (String c : d.keySet()) if (c.equalsIgnoreCase(n)) return c;
-      return null;
-   }
+   /** Name of the column that holds the time and the one that holds the flux, in the same order of preference as the Android app. */
+   private static String[] columns(Map<String, double[]> d) { return cds.astrovia.sky.LightCurveCols.detect(new ArrayList<String>(d.keySet())); }
 
    /** Opens a window with the light curve of a FITS file (first table with time and flux columns). */
    static void show(Window owner, File f, String name) throws java.io.IOException {
-      for (MiniFits.Table tb : MiniFits.read(f, 400000)) {
-         String tc = find(tb.data, TIME), fc = find(tb.data, FLUX);
-         if (tc == null || fc == null || tc.equalsIgnoreCase(fc)) continue;
+      for (cds.astrovia.imgproc.FitsTables.Table tb : cds.astrovia.imgproc.FitsTables.read(f, 400000)) {
+         String[] cols = columns(tb.data);
+         if (cols == null) continue;
+         String tc = cols[0], fc = cols[1];
          String ec = null, qc = null;
          for (String c : tb.data.keySet()) { if (c.equalsIgnoreCase(fc + "_ERR") || c.equalsIgnoreCase("FLUX_ERR")) ec = c; if (c.equalsIgnoreCase("QUALITY")) qc = c; }
          double[] t = tb.data.get(tc), y = tb.data.get(fc), e = ec == null ? null : tb.data.get(ec), q = qc == null ? null : tb.data.get(qc);

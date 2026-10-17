@@ -122,6 +122,11 @@ final class OfflineBar extends JPanel {
       m.addSeparator();
       m.add(manage);
       m.add(prefer);
+      m.addSeparator();
+      JMenuItem clearCache = new JMenuItem("Clear cache and temporary files...");
+      clearCache.setToolTipText("Frees the disk used by the cache; offline collections, lists and settings are kept");
+      clearCache.addActionListener(e -> CacheCleaner.clear(window()));
+      m.add(clearCache);
       return m;
    }
 

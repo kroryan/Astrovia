@@ -30,7 +30,7 @@ FITS images and MOC coverage, in a modern dark interface. Free, no ads, no track
 | **Desktop** (Linux, Windows) | this repository (`src/`) | Java/Swing, based on Aladin Desktop. See [DESKTOP.md](DESKTOP.md) |
 | **Android** | [`Astrovia/`](Astrovia/README.md) | Native Kotlin / Jetpack Compose app |
 
-## Highlights (0.6.4)
+## Highlights (0.6.5)
 
 - **One "Available data" for everything (Android and desktop).** Sky surveys (HiPS) and archives live in the same panel, which you can organise as you like: *default folders*, *by wavelength* (gamma-ray, hard X-ray, soft X-ray, UV, optical, near / mid / far infrared, sub-mm, radio), *by mission* or *by data centre*, with a search box and band filters. Every HiPS of every wavelength (radio, gamma, X-ray...) is there, and you can open any HiPS by URL.
 - **Archives: multi-mission search.** Around the view you are looking at, over about 100 sources:

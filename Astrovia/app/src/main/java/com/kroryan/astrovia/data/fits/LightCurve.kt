@@ -1,6 +1,8 @@
 @file:Suppress("EmptyCatchBlock", "TooGenericExceptionThrown", "VariableNaming", "ImplicitDefaultLocale", "WildcardImport", "MagicNumber", "MaxLineLength", "ComplexCondition", "CyclomaticComplexMethod", "LongMethod", "ReturnCount", "LongParameterList", "SwallowedException", "TooGenericExceptionCaught", "NestedBlockDepth", "FunctionNaming", "LoopWithTooManyJumpStatements", "TooManyFunctions")
 package com.kroryan.astrovia.data.fits
 
+import cds.astrovia.sky.LightCurveCols
+
 /** A time series: TIME and FLUX (and optional errors) with display labels. */
 class LightCurve(
     val title: String, val timeLabel: String, val fluxLabel: String,
@@ -9,15 +11,9 @@ class LightCurve(
 
 /** Finds the time and flux columns of a FITS table (TESS, Kepler, K2, generic) and builds a [LightCurve]. */
 object LightCurves {
-    private val timeNames = listOf("TIME", "BTJD", "BJD", "HJD", "MJD", "JD", "TSTART", "T")
-    private val fluxNames = listOf("PDCSAP_FLUX", "SAP_FLUX", "FLUX", "KSPSAP_FLUX", "FLUX_CORR", "MAG", "RATE", "COUNTS")
-
     /** Column names present in the table that look like a time axis and a flux axis, or null when it is not a light curve. */
-    fun detect(columns: List<String>): Pair<String, String>? {
-        val t = timeNames.firstNotNullOfOrNull { n -> columns.firstOrNull { it.equals(n, true) } } ?: return null
-        val f = fluxNames.firstNotNullOfOrNull { n -> columns.firstOrNull { it.equals(n, true) && !it.equals(t, true) } } ?: return null
-        return t to f
-    }
+    fun detect(columns: List<String>): Pair<String, String>? =
+        LightCurveCols.detect(columns)?.let { it[0] to it[1] }
 
     fun columnsOf(fits: FitsFile, hdu: FitsHdu): List<String> {
         val n = hdu.header.int("TFIELDS") ?: 0

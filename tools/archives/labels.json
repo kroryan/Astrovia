@@ -1,0 +1,581 @@
+{
+ "mv_v_icecube_event_fdw": {
+  "label": "IceCube neutrino alerts",
+  "mission": "IceCube",
+  "band": "Neutrino",
+  "kind": "alert"
+ },
+ "mv_v_gravitational_waves_fdw": {
+  "label": "Gravitational-wave alerts",
+  "mission": "LIGO/Virgo/KAGRA",
+  "band": "GW",
+  "kind": "alert"
+ },
+ "t_tmass_original_valid_fdw": {
+  "label": "2MASS",
+  "mission": "2MASS",
+  "band": "NIR",
+  "kind": "cat",
+  "orderCol": "j_m"
+ },
+ "t_v_akari_asteroids_flux_cat_fdw": {
+  "label": "AKARI asteroid fluxes",
+  "mission": "AKARI",
+  "band": "IR",
+  "kind": "cat"
+ },
+ "t_akari_point_source_catalogue_fdw": {
+  "label": "AKARI point sources",
+  "mission": "AKARI",
+  "band": "IR",
+  "kind": "cat"
+ },
+ "mv_t_chandra_csc2_fdw": {
+  "label": "Chandra Source Catalog 2.0",
+  "mission": "Chandra",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_chandra_csc211_fdw": {
+  "label": "Chandra Source Catalog 2.1",
+  "mission": "Chandra",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_fermi_3fhl_fdw": {
+  "label": "Fermi 3FHL",
+  "mission": "Fermi",
+  "band": "Gamma",
+  "kind": "cat"
+ },
+ "mv_fermi_4fgl_dr2_fdw": {
+  "label": "Fermi 4FGL-DR2",
+  "mission": "Fermi",
+  "band": "Gamma",
+  "kind": "cat"
+ },
+ "mv_fermi_4lac_fdw": {
+  "label": "Fermi 4LAC",
+  "mission": "Fermi",
+  "band": "Gamma",
+  "kind": "cat"
+ },
+ "t_gaia_source_dr3_fdw": {
+  "label": "Gaia DR3 sources",
+  "mission": "Gaia",
+  "band": "Optical",
+  "kind": "cat",
+  "orderCol": "phot_g_mean_mag"
+ },
+ "mv_hcv_catalogue": {
+  "label": "Hubble Catalog of Variables",
+  "mission": "HST",
+  "band": "Optical",
+  "kind": "cat"
+ },
+ "mv_t_hubble_scv3_fdw": {
+  "label": "Hubble Source Catalog",
+  "mission": "HST",
+  "band": "Opt/UV",
+  "kind": "cat"
+ },
+ "mv_v_hsa_cat_hppsc_100_fdw": {
+  "label": "Herschel PACS 100 µm",
+  "mission": "Herschel",
+  "band": "FIR",
+  "kind": "cat"
+ },
+ "mv_v_hsa_cat_hppsc_160_fdw": {
+  "label": "Herschel PACS 160 µm",
+  "mission": "Herschel",
+  "band": "FIR",
+  "kind": "cat"
+ },
+ "mv_v_hsa_cat_hppsc_070_fdw": {
+  "label": "Herschel PACS 70 µm",
+  "mission": "Herschel",
+  "band": "FIR",
+  "kind": "cat"
+ },
+ "mv_v_hsa_cat_spsc_250_fdw": {
+  "label": "Herschel SPIRE 250 µm",
+  "mission": "Herschel",
+  "band": "FIR",
+  "kind": "cat"
+ },
+ "mv_v_hsa_cat_spsc_350_fdw": {
+  "label": "Herschel SPIRE 350 µm",
+  "mission": "Herschel",
+  "band": "FIR",
+  "kind": "cat"
+ },
+ "mv_v_hsa_cat_spsc_500_fdw": {
+  "label": "Herschel SPIRE 500 µm",
+  "mission": "Herschel",
+  "band": "FIR",
+  "kind": "cat"
+ },
+ "mv_hipparcos_fdw": {
+  "label": "Hipparcos",
+  "mission": "Hipparcos",
+  "band": "Optical",
+  "kind": "cat"
+ },
+ "mv_tycho2_fdw": {
+  "label": "Tycho-2",
+  "mission": "Hipparcos",
+  "band": "Optical",
+  "kind": "cat"
+ },
+ "integral_ibis": {
+  "label": "INTEGRAL IBIS",
+  "mission": "INTEGRAL",
+  "band": "Gamma",
+  "kind": "cat"
+ },
+ "mv_v_icecubepsc_fdw": {
+  "label": "IceCube point sources",
+  "mission": "IceCube",
+  "band": "Neutrino",
+  "kind": "cat"
+ },
+ "mv_pcss_catalog_hfi_fdw": {
+  "label": "Planck PCCS2 HFI",
+  "mission": "Planck",
+  "band": "mm",
+  "kind": "cat"
+ },
+ "mv_pcss_catalog_lfi_fdw": {
+  "label": "Planck PCCS2 LFI",
+  "mission": "Planck",
+  "band": "mm",
+  "kind": "cat"
+ },
+ "mv_pcss_catalog_excluded_fdw": {
+  "label": "Planck PCCS2 excluded",
+  "mission": "Planck",
+  "band": "mm",
+  "kind": "cat"
+ },
+ "mv_v_sz_catalog_fdw": {
+  "label": "Planck SZ clusters",
+  "mission": "Planck",
+  "band": "mm",
+  "kind": "cat"
+ },
+ "mv_v_gcc_catalog_fdw": {
+  "label": "Planck galactic cold clumps",
+  "mission": "Planck",
+  "band": "mm",
+  "kind": "cat"
+ },
+ "mv_cat2rxs_fdw": {
+  "label": "ROSAT 2RXS",
+  "mission": "ROSAT",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_cat2whsp_fdw": {
+  "label": "2WHSP HBL sources",
+  "mission": "Various",
+  "band": "Multi",
+  "kind": "cat"
+ },
+ "mv_ou4blazars_fdw": {
+  "label": "Blazars (OU 4)",
+  "mission": "Various",
+  "band": "Multi",
+  "kind": "cat"
+ },
+ "mv_glade_plus_fdw": {
+  "label": "GLADE+ galaxies",
+  "mission": "Various",
+  "band": "Optical",
+  "kind": "cat"
+ },
+ "t_allwise_original_valid_fdw": {
+  "label": "AllWISE",
+  "mission": "WISE",
+  "band": "IR",
+  "kind": "cat",
+  "orderCol": "w1mpro"
+ },
+ "mv_xsa_epic_source_cat_fdw": {
+  "label": "XMM EPIC sources (latest)",
+  "mission": "XMM-Newton",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_xsa_epic_source_cat_dr11_fdw": {
+  "label": "XMM EPIC sources 4XMM-DR11",
+  "mission": "XMM-Newton",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_xsa_epic_source_cat_dr12_fdw": {
+  "label": "XMM EPIC sources 4XMM-DR12",
+  "mission": "XMM-Newton",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_xsa_epic_stack_cat_fdw": {
+  "label": "XMM EPIC stacked",
+  "mission": "XMM-Newton",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_xsa_epic_stack_cat_dr11_fdw": {
+  "label": "XMM EPIC stacked DR11",
+  "mission": "XMM-Newton",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_xsa_epic_stack_cat_dr12_fdw": {
+  "label": "XMM EPIC stacked DR12",
+  "mission": "XMM-Newton",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_xsa_om_source_cat_fdw": {
+  "label": "XMM OM sources",
+  "mission": "XMM-Newton",
+  "band": "UV/Opt",
+  "kind": "cat"
+ },
+ "mv_xsa_om_source_cat_5_fdw": {
+  "label": "XMM OM sources v5",
+  "mission": "XMM-Newton",
+  "band": "UV/Opt",
+  "kind": "cat"
+ },
+ "mv_xsa_om_source_cat_6_fdw": {
+  "label": "XMM OM sources v6",
+  "mission": "XMM-Newton",
+  "band": "UV/Opt",
+  "kind": "cat"
+ },
+ "mv_v_xsa_slew_source_cat_fdw": {
+  "label": "XMM slew survey",
+  "mission": "XMM-Newton",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_xsa_slew_source_cat_fdw": {
+  "label": "XMM slew survey (latest)",
+  "mission": "XMM-Newton",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_efeds_c001_hard_fdw": {
+  "label": "eFEDS hard",
+  "mission": "eROSITA",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_efeds_c001_main_fdw": {
+  "label": "eFEDS main",
+  "mission": "eROSITA",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_erass1_hard_fdw": {
+  "label": "eROSITA eRASS1 hard",
+  "mission": "eROSITA",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_erass1_main_fdw": {
+  "label": "eROSITA eRASS1 main",
+  "mission": "eROSITA",
+  "band": "X-ray",
+  "kind": "cat"
+ },
+ "mv_euclid_outreach_fdw": {
+  "label": "Euclid outreach images",
+  "mission": "Euclid",
+  "band": "Optical",
+  "kind": "img"
+ },
+ "mv_hst_outreach_fdw": {
+  "label": "Hubble outreach images",
+  "mission": "HST",
+  "band": "Optical",
+  "kind": "img"
+ },
+ "mv_webb_outreach_ext_fdw": {
+  "label": "Webb outreach (extended)",
+  "mission": "JWST",
+  "band": "IR",
+  "kind": "img"
+ },
+ "mv_webb_outreach_fdw": {
+  "label": "Webb outreach images",
+  "mission": "JWST",
+  "band": "IR",
+  "kind": "img"
+ },
+ "mv_akari_irc_fdw": {
+  "label": "AKARI IRC",
+  "mission": "AKARI",
+  "band": "IR",
+  "kind": "obs"
+ },
+ "mv_v_v_alma_obs_fdw": {
+  "label": "ALMA",
+  "mission": "ALMA",
+  "band": "mm/radio",
+  "kind": "obs"
+ },
+ "mv_cheops_obs_fdw": {
+  "label": "CHEOPS",
+  "mission": "CHEOPS",
+  "band": "Optical",
+  "kind": "obs"
+ },
+ "mv_chandra_obs_photo_fdw": {
+  "label": "Chandra imaging",
+  "mission": "Chandra",
+  "band": "X-ray",
+  "kind": "obs"
+ },
+ "mv_v_corot_astero_fdw": {
+  "label": "CoRoT asteroseismology",
+  "mission": "CoRoT",
+  "band": "Optical",
+  "kind": "obs"
+ },
+ "mv_v_corot_exo_fdw": {
+  "label": "CoRoT exoplanets",
+  "mission": "CoRoT",
+  "band": "Optical",
+  "kind": "obs"
+ },
+ "mv_euclid_mosaic_product_nisp": {
+  "label": "Euclid NISP mosaics",
+  "mission": "Euclid",
+  "band": "NIR",
+  "kind": "obs"
+ },
+ "mv_euclid_mosaic_product_vis": {
+  "label": "Euclid VIS mosaics",
+  "mission": "Euclid",
+  "band": "Optical",
+  "kind": "obs"
+ },
+ "mv_v_v_hst_mmi_observation_infrared_fdw_fdw": {
+  "label": "HST IR imaging",
+  "mission": "HST",
+  "band": "IR",
+  "kind": "obs"
+ },
+ "mv_v_v_hst_mmi_observation_uv_fdw_fdw": {
+  "label": "HST UV imaging",
+  "mission": "HST",
+  "band": "UV",
+  "kind": "obs"
+ },
+ "mv_v_v_hst_mmi_observation_fdw_fdw": {
+  "label": "HST all observations",
+  "mission": "HST",
+  "band": "UV/Opt/IR",
+  "kind": "obs"
+ },
+ "mv_v_v_hst_mmi_observation_optical_fdw_fdw": {
+  "label": "HST optical imaging",
+  "mission": "HST",
+  "band": "Optical",
+  "kind": "obs"
+ },
+ "mv_v_v_hsa_esasky_photo_fdw_fdw": {
+  "label": "Herschel photometry",
+  "mission": "Herschel",
+  "band": "FIR",
+  "kind": "obs"
+ },
+ "mv_v_jwst_obs_fdw": {
+  "label": "JWST (ObsCore)",
+  "mission": "JWST",
+  "band": "IR",
+  "kind": "obs"
+ },
+ "mv_v_v_esasky_jwst_images_miri_fdw_fdw": {
+  "label": "JWST MIRI imaging",
+  "mission": "JWST",
+  "band": "IR",
+  "kind": "obs"
+ },
+ "mv_v_v_esasky_jwst_images_fdw_fdw": {
+  "label": "JWST NIRCam/NIRISS imaging",
+  "mission": "JWST",
+  "band": "IR",
+  "kind": "obs"
+ },
+ "mv_spitzer_irac_fdw": {
+  "label": "Spitzer IRAC",
+  "mission": "Spitzer",
+  "band": "IR",
+  "kind": "obs"
+ },
+ "mv_suzaku_data_fdw": {
+  "label": "Suzaku",
+  "mission": "Suzaku",
+  "band": "X-ray",
+  "kind": "obs"
+ },
+ "mv_v_obscore_isla_fdw_fdw": {
+  "label": "ISLA (ObsCore)",
+  "mission": "Various",
+  "band": "Various",
+  "kind": "obs"
+ },
+ "mv_ida_data_fdw": {
+  "label": "Integral/IDA",
+  "mission": "Various",
+  "band": "Various",
+  "kind": "obs"
+ },
+ "mv_nida_images_fdw": {
+  "label": "NIDA images",
+  "mission": "Various",
+  "band": "Various",
+  "kind": "obs"
+ },
+ "mv_v_v_xsa_esasky_photo_fdw_fdw": {
+  "label": "XMM-Newton EPIC",
+  "mission": "XMM-Newton",
+  "band": "X-ray",
+  "kind": "obs"
+ },
+ "mv_v_esasky_xmm_om_uv_fdw": {
+  "label": "XMM-Newton OM UV",
+  "mission": "XMM-Newton",
+  "band": "UV",
+  "kind": "obs"
+ },
+ "v_mv_v_esasky_xmm_om_fdw": {
+  "label": "XMM-Newton OM all",
+  "mission": "XMM-Newton",
+  "band": "UV/Opt",
+  "kind": "obs"
+ },
+ "mv_v_esasky_xmm_om_optical_fdw": {
+  "label": "XMM-Newton OM optical",
+  "mission": "XMM-Newton",
+  "band": "Optical",
+  "kind": "obs"
+ },
+ "mv_chandra_obs_spectra_fdw": {
+  "label": "Chandra spectra",
+  "mission": "Chandra",
+  "band": "X-ray",
+  "kind": "spec"
+ },
+ "mv_v_v_hst_mmi_spectra_infrared_fdw_fdw": {
+  "label": "HST IR spectra",
+  "mission": "HST",
+  "band": "IR",
+  "kind": "spec"
+ },
+ "mv_v_v_hst_mmi_spectra_uv_fdw_fdw": {
+  "label": "HST UV spectra",
+  "mission": "HST",
+  "band": "UV",
+  "kind": "spec"
+ },
+ "mv_v_v_hst_mmi_spectra_optical_fdw_fdw": {
+  "label": "HST optical spectra",
+  "mission": "HST",
+  "band": "Optical",
+  "kind": "spec"
+ },
+ "mv_v_v_hsa_esasky_spectra_fdw_fdw": {
+  "label": "Herschel spectra",
+  "mission": "Herschel",
+  "band": "FIR",
+  "kind": "spec"
+ },
+ "mv_iso_spectra_fdw": {
+  "label": "ISO spectra",
+  "mission": "ISO",
+  "band": "IR",
+  "kind": "spec"
+ },
+ "mv_iue_spectra_fdw": {
+  "label": "IUE spectra",
+  "mission": "IUE",
+  "band": "UV",
+  "kind": "spec"
+ },
+ "mv_v_v_esasky_jwst_spectra_miri_fdw_fdw": {
+  "label": "JWST MIRI spectra",
+  "mission": "JWST",
+  "band": "IR",
+  "kind": "spec"
+ },
+ "mv_v_v_esasky_jwst_spectra_fdw_fdw": {
+  "label": "JWST spectra",
+  "mission": "JWST",
+  "band": "IR",
+  "kind": "spec"
+ },
+ "mv_lamost_dr8_lrs_fdw": {
+  "label": "LAMOST DR8 low-res spectra",
+  "mission": "LAMOST",
+  "band": "Optical",
+  "kind": "spec"
+ },
+ "mv_lamost_dr8_mrs_fdw": {
+  "label": "LAMOST DR8 med-res spectra",
+  "mission": "LAMOST",
+  "band": "Optical",
+  "kind": "spec"
+ },
+ "mv_lamost_dr9_lrs_fdw": {
+  "label": "LAMOST DR9 low-res spectra",
+  "mission": "LAMOST",
+  "band": "Optical",
+  "kind": "spec"
+ },
+ "mv_lamost_dr9_mrs_fdw": {
+  "label": "LAMOST DR9 med-res spectra",
+  "mission": "LAMOST",
+  "band": "Optical",
+  "kind": "spec"
+ },
+ "mv_v_nida_spectra_fdw": {
+  "label": "NIDA spectra",
+  "mission": "Various",
+  "band": "Various",
+  "kind": "spec"
+ },
+ "mv_v_v_xsa_spectra_rgs_fdw_fdw": {
+  "label": "XMM-Newton RGS spectra",
+  "mission": "XMM-Newton",
+  "band": "X-ray",
+  "kind": "spec"
+ },
+ "xmatch_hst": {
+  "label": "Solar-system matches: HST",
+  "mission": "HST",
+  "band": "UV/Opt/IR",
+  "kind": "sso"
+ },
+ "xmatch_herschel": {
+  "label": "Solar-system matches: Herschel",
+  "mission": "Herschel",
+  "band": "FIR",
+  "kind": "sso"
+ },
+ "xmatch_xmm_om": {
+  "label": "Solar-system matches: XMM OM",
+  "mission": "XMM-Newton",
+  "band": "UV/Opt",
+  "kind": "sso"
+ },
+ "xmatch_xmm": {
+  "label": "Solar-system matches: XMM-Newton",
+  "mission": "XMM-Newton",
+  "band": "X-ray",
+  "kind": "sso"
+ }
+}

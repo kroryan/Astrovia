@@ -18,7 +18,11 @@ val keystoreProps = Properties().apply {
 android {
     sourceSets {
         // image processing engine shared with the desktop app (plain Java 8)
-        getByName("main") { java.srcDir("../../shared/imgproc") }
+        getByName("main") {
+            java.srcDir("../../shared/java")
+            // archive registry and lists shared with the desktop app
+            assets.srcDir("../../shared/data")
+        }
     }
     namespace = "com.kroryan.astrovia"
     compileSdk = 36
@@ -27,8 +31,9 @@ android {
         applicationId = "com.kroryan.astrovia"
         minSdk = 24
         targetSdk = 36
-        versionCode = 10
-        versionName = "0.6.4"
+        // one place for the version: ../VERSION and ../VERSION_CODE (see tools/set-version.sh)
+        versionCode = rootProject.file("../VERSION_CODE").readText().trim().toInt()
+        versionName = rootProject.file("../VERSION").readText().trim()
         vectorDrawables { useSupportLibrary = true }
     }
 

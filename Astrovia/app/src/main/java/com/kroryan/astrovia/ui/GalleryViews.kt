@@ -35,7 +35,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.kroryan.astrovia.SkyViewModel
-import com.kroryan.astrovia.data.gallery.DeepZoomPyramid
 import com.kroryan.astrovia.data.gallery.OutreachImage
 import com.kroryan.astrovia.data.gallery.TileLoader
 import com.kroryan.astrovia.data.gallery.TilePyramid
@@ -136,7 +135,7 @@ fun ImageExplorer(vm: SkyViewModel, img: OutreachImage, topInset: androidx.compo
                                     val url = p.tileUrl(level, col, row)
                                     val bmp = if (fetch) loader.request(url) else loader.peek(url)
                                     if (bmp != null) {
-                                        val lo = (p as? DeepZoomPyramid)?.leftOverlap(col) ?: 0; val to = (p as? DeepZoomPyramid)?.topOverlap(row) ?: 0
+                                        val lo = p.overlapLeft(col); val to = p.overlapTop(row)
                                         drawImage(bmp.asImageBitmap(), srcOffset = IntOffset(lo, to), srcSize = IntSize(r[2] - r[0], r[3] - r[1]),
                                             dstOffset = IntOffset(sx.toInt(), sy.toInt()), dstSize = IntSize(ceil(dw).toInt().coerceAtLeast(1), ceil(dh).toInt().coerceAtLeast(1)),
                                             filterQuality = FilterQuality.Medium)
