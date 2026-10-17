@@ -11,6 +11,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.OpenInBrowser
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -96,9 +100,12 @@ fun ImageExplorer(vm: SkyViewModel, img: OutreachImage) {
     Dialog(onDismissRequest = { vm.closeImage() }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         Surface(color = Color.Black, modifier = Modifier.fillMaxSize()) {
             Column(Modifier.safeDrawingPadding()) {
-                Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f).padding(start = 8.dp)) { Text(img.title, color = TextPrimary, maxLines = 1); Text(img.mission + " · " + img.id, color = TextSecondary, style = MaterialTheme.typography.bodySmall) }
-                    TextButton(onClick = { info = true }) { Text("Info") }
+                Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f).padding(start = 12.dp)) { Text(img.title, color = TextPrimary, maxLines = 1); Text(img.mission + " · " + img.id, color = TextSecondary, style = MaterialTheme.typography.bodySmall, maxLines = 1) }
+                    IconButton(onClick = { info = true }) { Icon(Icons.Filled.Info, contentDescription = "Information", tint = Color.White) }
+                    IconButton(onClick = { vm.showImageOnSky(img) }, enabled = img.corners.size >= 4) { Icon(Icons.Filled.Public, contentDescription = "Show on the sky", tint = if (img.corners.size >= 4) Color.White else Color.Gray) }
+                    IconButton(onClick = { vm.goToImage(img) }) { Icon(Icons.Filled.MyLocation, contentDescription = "Go to its position", tint = Color.White) }
+                    img.webPage?.let { w -> IconButton(onClick = { runCatching { ctx.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(w)).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) } }) { Icon(Icons.Filled.OpenInBrowser, contentDescription = "Web page", tint = Color.White) } }
                     IconButton(onClick = { vm.closeImage() }) { Icon(Icons.Filled.Close, contentDescription = "Close", tint = Color.White) }
                 }
                 Box(Modifier.weight(1f).fillMaxWidth().onSizeChanged { box = it }) {
@@ -145,11 +152,6 @@ fun ImageExplorer(vm: SkyViewModel, img: OutreachImage) {
                     } else {
                         Text(if (failed) "Could not open this picture" else "Opening picture...", color = TextSecondary, modifier = Modifier.align(Alignment.Center))
                     }
-                }
-                Row(Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { vm.showImageOnSky(img) }, enabled = img.corners.size >= 4) { Text("Show on the sky") }
-                    OutlinedButton(onClick = { vm.goToImage(img) }) { Text("Go to position") }
-                    img.webPage?.let { w -> OutlinedButton(onClick = { runCatching { ctx.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(w)).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) } }) { Text("Web page") } }
                 }
             }
         }

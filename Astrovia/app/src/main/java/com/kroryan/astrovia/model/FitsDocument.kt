@@ -20,6 +20,9 @@ class FitsDocument(
     val lo: Float = 0f,
     val hi: Float = 1f,
     val note: String? = null,
+    /** The file on disk (needed to process it) and the processing session, if started. */
+    val file: java.io.File? = null,
+    val proc: ProcSession? = null,
 )
 
 /** A FITS image drawn over the sky at its true position. */
@@ -34,3 +37,18 @@ class FitsOverlay(
 
 /** A picture with four known sky corners (top-left, top-right, bottom-right, bottom-left) drawn over the sky. */
 class QuadOverlay(val bitmap: Bitmap, val raCorners: DoubleArray, val decCorners: DoubleArray, val alpha: Float = 0.9f)
+
+/** Processing history of an open picture: every step keeps its result so it can be undone. */
+class ProcSession(
+    val history: List<cds.astrovia.imgproc.Img>,
+    val index: Int,
+    val log: List<String>,
+    val info: String? = null,
+    val stars: List<cds.astrovia.imgproc.Stars.Star> = emptyList(),
+    val showStars: Boolean = true,
+) {
+    val current: cds.astrovia.imgproc.Img get() = history[index]
+    val canUndo get() = index > 0
+    val canRedo get() = index < history.size - 1
+    val steps get() = log.take(index)
+}

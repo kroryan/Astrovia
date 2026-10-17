@@ -14,7 +14,7 @@ import java.io.File
 /** What a file chosen by the user turned out to be. */
 sealed class OpenedFile {
     /** A FITS file kept open for viewing (images and/or tables). */
-    class Fits(val name: String, val fits: FitsFile) : OpenedFile()
+    class Fits(val name: String, val fits: FitsFile, val file: File) : OpenedFile()
     /** A table with sky positions (VOTable, CSV, TSV). */
     class Table(val name: String, val rows: List<CatalogRow>, val totalRows: Int) : OpenedFile()
     class Failed(val name: String, val reason: String) : OpenedFile()
@@ -54,7 +54,7 @@ object FileOpener {
         val head = f.inputStream().use { i -> ByteArray(600).let { b -> val n = i.read(b); String(b, 0, maxOf(n, 0), Charsets.ISO_8859_1) } }
         return try {
             when {
-                head.startsWith("SIMPLE  =") -> OpenedFile.Fits(name, FitsFile.open(f))
+                head.startsWith("SIMPLE  =") -> OpenedFile.Fits(name, FitsFile.open(f), f)
                 head.contains("<VOTABLE", ignoreCase = true) || head.trimStart().startsWith("<?xml") -> {
                     val all = VotableParser.parse(f.readText())
                     OpenedFile.Table(name, vizier.rowsFromMaps(all), all.size)

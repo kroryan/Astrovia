@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 OUT=${OUT:-build/desktop}
 rm -rf "$OUT"; mkdir -p "$OUT/classes" "$OUT/jar"
 CP=$(ls lib/*.jar | tr '\n' ':')
-find src -name '*.java' > "$OUT/sources.txt"
+(find src -name "*.java"; find shared/imgproc -name "*.java") > "$OUT/sources.txt"
 javac -nowarn -encoding Cp1252 --release 8 -cp "$CP" -d "$OUT/classes" @"$OUT/sources.txt" 2>&1 | grep -v '^Note:' || true
 # resources next to the classes (same selection as build.xml)
 ( cd src && cp --parents *.gif *.jpg *.png Ala*.* Constellation.txt viewConfiguration.properties StandardForms.dic "../$OUT/classes/" 2>/dev/null || true )

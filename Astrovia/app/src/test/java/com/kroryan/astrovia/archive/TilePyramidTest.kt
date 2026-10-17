@@ -32,3 +32,15 @@ class TilePyramidTest {
         assertEquals(1, d.cols(d.thumbnailLevel()))
     }
 }
+
+class OutreachCornersTest {
+    @Test
+    fun cornersAreReorderedToTopLeftFirst() {
+        // IC 348 from the archive: bottom-left, bottom-right, top-right, top-left (counter-clockwise on the sky chart)
+        val ic = listOf(56.265245 to 32.320925, 56.364244 to 32.066126, 55.992460 to 31.962031, 55.892535 to 32.216538)
+        val o = com.kroryan.astrovia.data.gallery.OutreachImage.orderCorners(ic)
+        assertEquals(ic[3], o[0]); assertEquals(ic[0], o[3])
+        // an already clockwise polygon is left alone
+        assertEquals(o, com.kroryan.astrovia.data.gallery.OutreachImage.orderCorners(o))
+    }
+}

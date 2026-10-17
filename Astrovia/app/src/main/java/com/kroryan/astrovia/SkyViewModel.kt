@@ -22,6 +22,12 @@ import com.kroryan.astrovia.data.archive.Publication
 import com.kroryan.astrovia.data.archive.SolarSystemBody
 import com.kroryan.astrovia.model.Target
 import com.kroryan.astrovia.model.FitsDocument
+import com.kroryan.astrovia.model.ProcSession
+import cds.astrovia.imgproc.FitsIO
+import cds.astrovia.imgproc.Img
+import cds.astrovia.imgproc.Ops
+import cds.astrovia.imgproc.Stacker
+import cds.astrovia.imgproc.Stars
 import com.kroryan.astrovia.model.FitsOverlay
 import com.kroryan.astrovia.data.fits.ColorMap
 import com.kroryan.astrovia.data.fits.FitsRender
@@ -107,6 +113,10 @@ data class SkyUiState(
     val hitFilter: HitFilter? = null,
     val fieldCounts: Map<String, Int> = emptyMap(),
     val scanProgress: Pair<Int, Int>? = null,
+    val scanCenter: Triple<Double, Double, Double>? = null,
+    val procBusy: String? = null,
+    val closeSheetsTick: Int = 0,
+    val stackProgress: Pair<String, Float>? = null,
 ) {
     /** Archive results after the chart filter (tap a bar or a year in the charts). */
     val visibleHits: List<ArchiveHit> get() = hitFilter?.let { f -> archiveHits.filter(f.test) } ?: archiveHits
@@ -759,7 +769,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
     fun goToImage(img: com.kroryan.astrovia.data.gallery.OutreachImage) {
         stopMotion()
         val fov = ((img.fovDeg ?: 0.2) * 1.4).coerceIn(0.002, 180.0)
-        _state.update { it.copy(viewerImage = null, camera = SkyCamera.looking(SkyPosition(img.raDeg, img.decDeg), fov), cameraPlaced = true) }
+        _state.update { it.copy(viewerImage = null, closeSheetsTick = it.closeSheetsTick + 1, camera = SkyCamera.looking(SkyPosition(img.raDeg, img.decDeg), fov), cameraPlaced = true) }
     }
 
     /** Places the picture over the sky between its four corners (a coarse copy of it, up to about 1800 px). */
@@ -777,12 +787,208 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
             val ra = DoubleArray(4) { img.corners[it].first }; val dec = DoubleArray(4) { img.corners[it].second }
             val fov = ((img.fovDeg ?: 0.2) * 1.4).coerceIn(0.002, 180.0)
             stopMotion()
-            _state.update { it.copy(fileLoading = false, viewerImage = null, quadOverlay = com.kroryan.astrovia.model.QuadOverlay(bmp, ra, dec), camera = SkyCamera.looking(SkyPosition(img.raDeg, img.decDeg), fov), cameraPlaced = true) }
+            _state.update { it.copy(fileLoading = false, viewerImage = null, closeSheetsTick = it.closeSheetsTick + 1, quadOverlay = com.kroryan.astrovia.model.QuadOverlay(bmp, ra, dec), camera = SkyCamera.looking(SkyPosition(img.raDeg, img.decDeg), fov), cameraPlaced = true) }
             toast("${img.title} placed on the sky")
         }
     }
 
     fun clearQuadOverlay() = _state.update { it.copy(quadOverlay = null) }
+
+
+    // --- Image processing (engine shared with the desktop app) ---
+    private val stackCancel = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    private fun docWithProc(d: FitsDocument, proc: ProcSession, st: Stretch = d.stretch, cm: ColorMap = d.colorMap, lo0: Float? = null, hi0: Float? = null): FitsDocument {
+        val img = proc.current
+        val fi = com.kroryan.astrovia.data.fits.ProcRender.imageOf(img)
+        val (lo, hi) = if (lo0 != null && hi0 != null) lo0 to hi0 else FitsRender.cuts(fi.values)
+        return FitsDocument(d.name, d.fits, d.hdu, fi, com.kroryan.astrovia.data.fits.ProcRender.bitmapOf(img, fi, lo, hi, st, cm), st, cm, lo, hi, null, d.file, proc)
+    }
+
+    /** Loads the picture into the processing engine (first use). Very large pictures are binned 2x2 so they fit in memory. */
+    private suspend fun ensureProc(): ProcSession? {
+        val d = _state.value.fitsDoc ?: return null
+        d.proc?.let { return it }
+        val f = d.file ?: run { toast("This picture cannot be processed (no file)"); return null }
+        return withContext(Dispatchers.Default) {
+            try {
+                var img = FitsIO.read(f)
+                val log = arrayListOf("Original")
+                if (img.w.toLong() * img.h > MAX_PROC_PIXELS) { img = Ops.bin(img, 2); log.add("Binned 2x2 to fit in memory") }
+                ProcSession(listOf(img), 0, log)
+            } catch (e: Exception) { toast("Could not load the picture for processing: ${e.message}"); null }
+        }
+    }
+
+    /**
+     * Runs one processing step on the current picture: [op] works on a copy, the result is pushed on the history (undo / redo
+     * keep working), and the viewer shows it. [recut] recomputes the black / white levels (use it for stretches).
+     */
+    fun procRun(label: String, recut: Boolean = false, op: (Img) -> Img) {
+        if (_state.value.procBusy != null) return
+        _state.update { it.copy(procBusy = label) }
+        viewModelScope.launch {
+            try {
+                val pr = ensureProc() ?: return@launch
+                val d = _state.value.fitsDoc ?: return@launch
+                val out = withContext(Dispatchers.Default) { op(pr.current) }
+                // keep at most 6 states: the oldest are dropped (a large picture is heavy)
+                val hist = (pr.history.take(pr.index + 1) + out).takeLast(6)
+                val logs = (pr.log.take(pr.index + 1) + label).takeLast(6)
+                val np = ProcSession(hist, hist.size - 1, logs, null, emptyList())
+                val nd = withContext(Dispatchers.Default) { if (recut) docWithProc(d, np) else docWithProc(d, np, lo0 = d.lo, hi0 = d.hi) }
+                _state.update { it.copy(fitsDoc = nd) }
+            } catch (e: OutOfMemoryError) {
+                toast("Not enough memory for this step: try binning or cropping first")
+            } catch (e: Exception) {
+                toast("$label failed: ${e.message}")
+            } finally {
+                _state.update { it.copy(procBusy = null) }
+            }
+        }
+    }
+
+    private fun procStep(delta: Int) {
+        val d = _state.value.fitsDoc ?: return
+        val pr = d.proc ?: return
+        val i = (pr.index + delta).coerceIn(0, pr.history.size - 1)
+        if (i == pr.index) return
+        viewModelScope.launch {
+            val np = ProcSession(pr.history, i, pr.log, null, emptyList())
+            val nd = withContext(Dispatchers.Default) { docWithProc(d, np, lo0 = d.lo, hi0 = d.hi) }
+            _state.update { it.copy(fitsDoc = nd) }
+        }
+    }
+
+    fun procUndo() = procStep(-1)
+
+    fun procRedo() = procStep(1)
+
+    /** Back to the file as it was opened. */
+    fun procReset() {
+        val d = _state.value.fitsDoc ?: return
+        val pr = d.proc ?: return
+        val first = ProcSession(listOf(pr.history.first()), 0, listOf(pr.log.first()))
+        viewModelScope.launch {
+            val nd = withContext(Dispatchers.Default) { docWithProc(d, first) }
+            _state.update { it.copy(fitsDoc = nd) }
+        }
+    }
+
+    /** Measures the stars (count, FWHM, roundness) and the noise of the current picture; the stars are marked on it. */
+    fun procMeasure(sigma: Double) {
+        if (_state.value.procBusy != null) return
+        _state.update { it.copy(procBusy = "Measuring") }
+        viewModelScope.launch {
+            try {
+                val pr = ensureProc() ?: return@launch
+                val d = _state.value.fitsDoc ?: return@launch
+                val (text, stars) = withContext(Dispatchers.Default) {
+                    val img = pr.current
+                    val sb = StringBuilder()
+                    for (k in 0 until img.c) sb.append(if (img.c == 3) listOf("R", "G", "B")[k] else "Image").append(": ").append(Img.stats(img.p[k], img.w, img.h).toString()).append('\n')
+                    val rep = Stars.detect(img.luma(), img.w, img.h, sigma, 400)
+                    sb.append(rep.toString())
+                    sb.toString() to rep.stars
+                }
+                val np = ProcSession(pr.history, pr.index, pr.log, text, stars)
+                val nd = if (d.proc == null) d.copy2(np) else d.copy2(np)
+                _state.update { it.copy(fitsDoc = nd) }
+            } catch (e: Exception) {
+                toast("Measure failed: ${e.message}")
+            } finally {
+                _state.update { it.copy(procBusy = null) }
+            }
+        }
+    }
+
+    private fun FitsDocument.copy2(p: ProcSession) = FitsDocument(name, fits, hdu, image, bitmap, stretch, colorMap, lo, hi, note, file, p)
+
+    fun procShowStars(show: Boolean) {
+        val d = _state.value.fitsDoc ?: return
+        val pr = d.proc ?: return
+        _state.update { it.copy(fitsDoc = d.copy2(ProcSession(pr.history, pr.index, pr.log, pr.info, pr.stars, show))) }
+    }
+
+    /** Saves the processed picture as a 32-bit float FITS file in the place the user chose. */
+    fun procExportFits(uri: Uri) {
+        val d = _state.value.fitsDoc ?: return
+        val pr = d.proc ?: run { toast("Nothing processed yet"); return }
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                runCatching {
+                    val tmp = java.io.File(app.cacheDir, "export.fits")
+                    FitsIO.write(pr.current, tmp, *pr.steps.toTypedArray())
+                    app.contentResolver.openOutputStream(uri)?.use { o -> tmp.inputStream().use { it.copyTo(o) } }
+                    tmp.delete()
+                }.isSuccess
+            }
+            toast(if (ok) "Saved as FITS" else "Could not save the file")
+        }
+    }
+
+    /** Saves what the viewer shows (with the current stretch) as a PNG picture. */
+    fun procExportPng(uri: Uri) {
+        val bmp = _state.value.fitsDoc?.bitmap ?: return
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.IO) { runCatching { app.contentResolver.openOutputStream(uri)?.use { bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) } }.isSuccess }
+            toast(if (ok) "Saved as PNG" else "Could not save the picture")
+        }
+    }
+
+    // --- Stacking: calibration, registration and combination of many frames ---
+    class StackRequest(
+        val lights: List<Uri>, val darks: List<Uri>, val flats: List<Uri>, val bias: List<Uri>,
+        val mode: Int, val register: Boolean, val debayer: Boolean,
+    )
+
+    fun stackCancel() = stackCancel.set(true)
+
+    fun stackRun(req: StackRequest) {
+        if (_state.value.stackProgress != null) return
+        stackCancel.set(false)
+        _state.update { it.copy(stackProgress = "Copying files" to 0f) }
+        viewModelScope.launch {
+            val dir = java.io.File(app.cacheDir, "stack_" + System.currentTimeMillis()).apply { mkdirs() }
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    fun copyAll(list: List<Uri>, tag: String): List<java.io.File> = list.mapIndexed { i, u ->
+                        java.io.File(dir, "${tag}_$i.fits").also { f -> app.contentResolver.openInputStream(u)?.use { ins -> f.outputStream().use { ins.copyTo(it) } } }
+                    }
+                    val lights = copyAll(req.lights, "light")
+                    val prog = object : Stacker.Progress {
+                        override fun step(message: String, fraction: Double) { _state.update { it.copy(stackProgress = message to fraction.toFloat()) } }
+                        override fun cancelled() = stackCancel.get()
+                    }
+                    val p = Stacker.Params()
+                    p.mode = req.mode; p.register = req.register; p.debayer = req.debayer; p.tempDir = dir
+                    fun master(list: List<Uri>, tag: String): java.io.File? {
+                        if (list.isEmpty()) return null
+                        _state.update { it.copy(stackProgress = "Master $tag" to 0f) }
+                        val m = Stacker.master(copyAll(list, tag), p, prog)
+                        return java.io.File(dir, "master_$tag.fits").also { FitsIO.write(m, it) }
+                    }
+                    p.bias = master(req.bias, "bias"); p.dark = master(req.darks, "dark"); p.flat = master(req.flats, "flat")
+                    val r = Stacker.stack(lights, p, prog)
+                    val out = java.io.File(app.cacheDir, "stacked_${System.currentTimeMillis()}.fits")
+                    FitsIO.write(r.image, out, "Stacked ${r.used} frames")
+                    out to r
+                }
+                val (file, r) = result
+                val opened = withContext(Dispatchers.IO) { FileOpener.openFile(file, "Stack of ${r.used} frames") }
+                if (opened is OpenedFile.Fits) showFits(opened.name, opened.fits, opened.file)
+                val skipped = if (r.rejected > 0) ", ${r.rejected} skipped" else ""
+                toast("Stacked ${r.used} frames$skipped")
+            } catch (e: OutOfMemoryError) {
+                toast("Not enough memory to stack these pictures")
+            } catch (e: Exception) {
+                toast("Stacking: ${e.message ?: "failed"}")
+            } finally {
+                dir.deleteRecursively()
+                _state.update { it.copy(stackProgress = null) }
+            }
+        }
+    }
 
     // --- Light curves (TESS, Kepler, K2 and any FITS table with a time and a flux column) ---
     fun closeLightCurve() = _state.update { it.copy(lightCurve = null) }
@@ -843,7 +1049,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
                         toast("${res.name}: ${res.rows.size} sources shown on the sky")
                     }
                 }
-                is OpenedFile.Fits -> showFits(res.name, res.fits)
+                is OpenedFile.Fits -> showFits(res.name, res.fits, res.file)
             }
             _state.update { it.copy(fileLoading = false) }
         }
@@ -854,7 +1060,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
         clearMessageLater(msg)
     }
 
-    private suspend fun showFits(name: String, fits: com.kroryan.astrovia.data.fits.FitsFile) {
+    private suspend fun showFits(name: String, fits: com.kroryan.astrovia.data.fits.FitsFile, file: java.io.File? = null) {
         openFits?.close()
         openFits = fits
         val hdu = fits.imageHdus.firstOrNull()
@@ -869,27 +1075,27 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
             loadFitsTable(name, fits, t.index)
             return
         }
-        val doc = withContext(Dispatchers.Default) { buildFitsDoc(name, fits, hdu.index, Stretch.ASINH, ColorMap.GRAY, null, null) }
+        val doc = withContext(Dispatchers.Default) { buildFitsDoc(name, fits, hdu.index, Stretch.ASINH, ColorMap.GRAY, null, null, file) }
         _state.update { it.copy(fitsDoc = doc) }
     }
 
-    private fun buildFitsDoc(name: String, fits: com.kroryan.astrovia.data.fits.FitsFile, hduIndex: Int, st: Stretch, cm: ColorMap, lo0: Float?, hi0: Float?): FitsDocument {
+    private fun buildFitsDoc(name: String, fits: com.kroryan.astrovia.data.fits.FitsFile, hduIndex: Int, st: Stretch, cm: ColorMap, lo0: Float?, hi0: Float?, file: java.io.File? = null): FitsDocument {
         val hdu = fits.hdus[hduIndex]
         return try {
             val img = fits.readImage(hdu)
             val (lo, hi) = if (lo0 != null && hi0 != null) lo0 to hi0 else FitsRender.cuts(img.values)
             val argb = FitsRender.toArgb(img, lo, hi, st, cm)
             val bmp = android.graphics.Bitmap.createBitmap(argb, img.width, img.height, android.graphics.Bitmap.Config.ARGB_8888)
-            FitsDocument(name, fits, hdu, img, bmp, st, cm, lo, hi)
+            FitsDocument(name, fits, hdu, img, bmp, st, cm, lo, hi, null, file)
         } catch (e: Exception) {
-            FitsDocument(name, fits, hdu, null, null, note = e.message ?: "Could not read this HDU")
+            FitsDocument(name, fits, hdu, null, null, note = e.message ?: "Could not read this HDU", file = file)
         }
     }
 
     fun setFitsHdu(index: Int) {
         val d = _state.value.fitsDoc ?: return
         viewModelScope.launch {
-            val nd = withContext(Dispatchers.Default) { buildFitsDoc(d.name, d.fits, index, d.stretch, d.colorMap, null, null) }
+            val nd = withContext(Dispatchers.Default) { buildFitsDoc(d.name, d.fits, index, d.stretch, d.colorMap, null, null, d.file) }
             _state.update { it.copy(fitsDoc = nd) }
         }
     }
@@ -898,7 +1104,10 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
         val d = _state.value.fitsDoc ?: return
         val hdu = d.hdu ?: return
         viewModelScope.launch {
-            val nd = withContext(Dispatchers.Default) { buildFitsDoc(d.name, d.fits, hdu.index, st, cm, lo, hi) }
+            val nd = withContext(Dispatchers.Default) {
+                val pr = d.proc
+                if (pr != null) docWithProc(d, pr, st, cm, lo, hi) else buildFitsDoc(d.name, d.fits, hdu.index, st, cm, lo, hi, d.file)
+            }
             _state.update { s ->
                 // keep an overlay in sync with the style
                 val ov = s.fitsOverlay
@@ -1010,7 +1219,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
         val r = visibleRadiusDeg()
         val list = _state.value.archiveSources.filter { it.kind in listOf(com.kroryan.astrovia.data.archive.ArchiveKind.OBSERVATIONS, com.kroryan.astrovia.data.archive.ArchiveKind.SPECTRA, com.kroryan.astrovia.data.archive.ArchiveKind.CATALOGUES, com.kroryan.astrovia.data.archive.ArchiveKind.LIGHT_CURVES, com.kroryan.astrovia.data.archive.ArchiveKind.IMAGES, com.kroryan.astrovia.data.archive.ArchiveKind.ALERTS) }
             .let { l -> if (all) l else l.filter { it.centre == "ESA" || it.centre == "MAST" } }
-        _state.update { it.copy(fieldCounts = emptyMap(), scanProgress = 0 to list.size) }
+        _state.update { it.copy(fieldCounts = emptyMap(), scanProgress = 0 to list.size, scanCenter = Triple(c.raDeg, c.decDeg, r)) }
         scanJob = viewModelScope.launch {
             val gate = kotlinx.coroutines.sync.Semaphore(5)
             val done = java.util.concurrent.atomic.AtomicInteger(0)
@@ -1279,5 +1488,6 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
     companion object {
         // Initial FoV limit to avoid loading the whole sky at once on startup.
         private const val MAX_INITIAL_FOV = 60.0
+        private const val MAX_PROC_PIXELS = 24_000_000L
     }
 }

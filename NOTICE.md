@@ -50,3 +50,10 @@ public IVOA standards (TAP/ADQL, VOTable). They query these services; their term
 
 "ESA" and the names of the missions belong to their owners and are used only to describe the data. Astrovia is not
 affiliated with or endorsed by ESA, NASA, IMCCE or the CDS.
+
+## Image processing (0.6.3)
+
+The image processing tools are an independent implementation (`shared/imgproc`) of standard, well-documented algorithms
+(midtones transfer function, polynomial background fitting, median / Gaussian filters, unsharp mask, Richardson-Lucy
+deconvolution, sigma-clipped stacking...). Siril (https://siril.org, GPL v3) was used only as a reference for which low-level
+tools an astronomy image processor offers; no Siril code is included.

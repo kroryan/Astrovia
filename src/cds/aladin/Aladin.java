@@ -788,7 +788,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
    RGB,MOSAIC,BLINK,SPECTRUM,MREDO,GREY,SELECT,SELECTTAG,DETAG,TAGSELECT,SELECTALL,UNSELECT,PANEL,
    PANEL1,PANEL2C,PANEL2L,PANEL2T,PANEL4,PANEL9,PANEL16,NTOOL,DIST,DRAW,PHOT,TAG,STATSURF,STATSURFCIRC,
    STATSURFPOLY,CUT,SPECT,TRANSP,TRANSPON,CROP,COPY,CLONE,CLONE1,CLONE2,PLOTCAT,CONCAT,CONCAT1,CONCAT2,TABLEINFO,
-   SAVEVIEW,SAVESKY,ARCHIVES,EXPORTEPS,EXPORT,BACKUP,FOLD,INFOLD,ARITHM,MOC,MOCGENIMG,MOCGENPROBA,TMOCGEN,TMOCGENCAT,TMOCGENOBJ,
+   SAVEVIEW,SAVESKY,ARCHIVES,PROCESS,EXPORTEPS,EXPORT,BACKUP,FOLD,INFOLD,ARITHM,MOC,MOCGENIMG,MOCGENPROBA,TMOCGEN,TMOCGENCAT,TMOCGENOBJ,
    STMOCGEN,STMOCGENCAT,STMOCGENOBJ,STMOCGENMOC,MOCGEN,MOCPOL,MOCGENIMGS,MOCGENCAT,
    MOCM,MOCTOORDER,MOCSPLIT,MOCFILTERING,MOCCROP,MOCEXTRACTSMOC,MOCEXTRACTTMOC,MOCEXTRACTSTMOC,MOCHELP,MOCLOAD,MOCHIPS,
    HEALPIXARITHM,/*ADD,SUB,MUL,DIV,*/
@@ -1307,6 +1307,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
       SAVEVIEW= chaine.getString("MSAVEVIEW");
       SAVESKY= chaine.getString("MSAVESKY");
       ARCHIVES= chaine.getString("MARCHIVES");
+      PROCESS= chaine.getString("MPROCESS");
       EXPORTEPS=chaine.getString("MEXPORTEPS");
       EXPORT  = chaine.getString("MEXPORT");
       BACKUP  = chaine.getString("MBACKUP");
@@ -1436,7 +1437,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
                     {OPENDIRCAT+"|"+meta+" T"},{OPENDIRCUBE},
                {},{SEARCHDIR+"|"+meta+" E"},{FILTERDIR},
                {},{OPENFILE+"|"+meta+" O"}, {OPENURL}, {LASTFILE,"???"},
-               {},{OPENLOAD+"|"+meta+" L"}, {LOADTAP}, {LOADFOV}, {ARCHIVES},
+               {},{OPENLOAD+"|"+meta+" L"}, {LOADTAP}, {LOADFOV}, {ARCHIVES}, {PROCESS},
                {},{MSAVE+"|"+meta+" S"},{SAVEVIEW,"-"},{SAVESKY},{EXPORTEPS},{EXPORT},{BACKUP},
                {},{MPRINT+"|"+meta+" P"},
                {},{NEW+"|"+meta+" N"},
@@ -3311,6 +3312,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
       }
       if( isMenu(s,SAVESKY) ) { SkyCapture.run(this); return true; }
       if( isMenu(s,ARCHIVES) ) { ArchivesDialog.open(this); return true; }
+      if( isMenu(s,PROCESS) ) { ProcessDialog.open(this); return true; }
       if( isMenu(s,EXPORTEPS) ) save.saveFile(1,Save.getCodedFormat(Util.indexInArrayOf("EPS", fmt)),-1);
       else if( isMenu(s,BACKUP) ) save.saveFile(0);
       else if( isMenu(s,EXPORT) ) save.exportPlans();

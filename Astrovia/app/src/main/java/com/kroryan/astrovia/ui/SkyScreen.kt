@@ -153,7 +153,7 @@ fun SkyScreen(vm: SkyViewModel) {
                     },
                     onArchive = { src ->
                         vm.searchArchive(src)
-                        archivesTab = 1; archivesSection = 0; showArchives = true
+                        archivesTab = 0; archivesSection = 0; showArchives = true
                         scope.launch { drawerState.close() }
                     },
                     onOpenUrl = { u ->
@@ -373,10 +373,11 @@ fun SkyScreen(vm: SkyViewModel) {
     }
 
     if (showAbout) AboutDialog(onDismiss = { showAbout = false })
-    state.fitsDoc?.let { FitsViewer(vm, it) }
+    state.fitsDoc?.let { FitsViewer(vm, it, state.procBusy, state.stackProgress) }
     state.viewerImage?.let { ImageExplorer(vm, it) }
     state.lightCurve?.let { LightCurveView(it, onClose = { vm.closeLightCurve() }) }
     if (state.fileLoading) Dialog(onDismissRequest = {}) { androidx.compose.material3.CircularProgressIndicator() }
+    LaunchedEffect(state.closeSheetsTick) { if (state.closeSheetsTick > 0) showArchives = false }
     if (showArchives) ArchivesSheet(vm, state, archivesTab, archivesSection, onDismiss = { showArchives = false })
     state.selectedHit?.let { hit ->
         HitSheet(
@@ -384,7 +385,7 @@ fun SkyScreen(vm: SkyViewModel) {
             onImage = if (hit.source.kind == com.kroryan.astrovia.data.archive.ArchiveKind.IMAGES) com.kroryan.astrovia.data.gallery.OutreachImage.fromHit(hit)?.let { im -> { vm.openImage(im); vm.selectHit(null) } } else null,
             onPlot = hit.link?.takeIf { hit.source.kind == com.kroryan.astrovia.data.archive.ArchiveKind.LIGHT_CURVES || it.endsWith("_lc.fits") }?.let { u -> { vm.plotLightCurve(u, hit.title); vm.selectHit(null) } },
             onCenter = { vm.recenter(com.kroryan.astrovia.model.SkyPosition(hit.raDeg, hit.decDeg)) },
-            onPublications = { vm.loadPublications(hit.title); vm.selectHit(null); archivesTab = 2; archivesSection = 2; showArchives = true },
+            onPublications = { vm.loadPublications(hit.title); vm.selectHit(null); archivesTab = 3; archivesSection = 3; showArchives = true },
             onDismiss = { vm.selectHit(null) },
         )
     }
@@ -415,8 +416,8 @@ fun SkyScreen(vm: SkyViewModel) {
                     vm.recenter(selected.position)
                     vm.clearSelected()
                 },
-                onPapers = { vm.loadPublications(selected.mainId); vm.clearSelected(); archivesTab = 5; archivesSection = 3; showArchives = true },
-                onObservations = { vm.recenter(selected.position); vm.clearSelected(); vm.scanField(false); archivesTab = 3; showArchives = true },
+                onPapers = { vm.loadPublications(selected.mainId); vm.clearSelected(); archivesTab = 3; archivesSection = 3; showArchives = true },
+                onObservations = { vm.recenter(selected.position); vm.clearSelected(); vm.scanField(false); archivesTab = 1; showArchives = true },
             )
         }
     }

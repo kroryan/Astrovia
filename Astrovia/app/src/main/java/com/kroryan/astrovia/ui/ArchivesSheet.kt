@@ -13,9 +13,25 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
+import com.kroryan.astrovia.model.SkyPosition
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -57,16 +73,21 @@ fun ArchivesSheet(vm: SkyViewModel, state: SkyUiState, initialTab: Int = 0, init
             Text("Archives", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 16.dp))
             if (state.archiveLoading) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp))
             TabRow(selectedTabIndex = tab) {
-                listOf("Search", "Results (${state.visibleHits.size})", "Charts", "Overview", "Gallery", "Tools").forEachIndexed { i, t ->
-                    Tab(selected = tab == i, onClick = { tab = i }, text = { Text(t) })
+                val items = listOf(
+                    Triple("Archives", Icons.Filled.Dashboard, state.visibleHits.size),
+                    Triple("Gallery", Icons.Filled.PhotoLibrary, 0),
+                    Triple("Tools", Icons.Filled.Build, 0),
+                )
+                items.forEachIndexed { i, (label, icon, count) ->
+                    Tab(selected = tab == i, onClick = { tab = i }, icon = {
+                        if (count > 0) BadgedBox(badge = { Badge { Text(if (count > 999) "999+" else count.toString()) } }) { Icon(icon, contentDescription = label) }
+                        else Icon(icon, contentDescription = label)
+                    })
                 }
             }
             when (tab) {
-                0 -> SourcesTab(vm, state, onSearched = { tab = 1 })
-                1 -> ResultsTab(vm, state, onPicked = onDismiss)
-                2 -> ArchiveCharts(state.archiveHits, state.hitFilter, onFilter = { vm.setHitFilter(it) })
-                3 -> FieldOverview(vm, state, onOpened = { tab = 1 })
-                4 -> {
+                0 -> ExploreTab(vm, state, onPicked = onDismiss)
+                1 -> {
                     LaunchedEffect(Unit) { if (state.gallery == null && !state.archiveLoading) vm.loadGallery(state.galleryMission) }
                     GalleryTab(vm, state.gallery, state.archiveLoading && state.gallery == null, state.galleryMission, onMission = { vm.loadGallery(it) })
                 }
@@ -119,20 +140,77 @@ private fun SourcesTab(vm: SkyViewModel, state: SkyUiState, onSearched: () -> Un
     }
 }
 
+/**
+ * Archives, the way ESA Sky shows them: what exists in the field you are looking at, as bars per archive grouped by what it
+ * holds (observations, catalogues, spectra, light curves...). Tap a bar and that archive's results fill the list below,
+ * with their footprints on the sky. Charts of the results are one tap away.
+ */
 @Composable
-private fun ResultsTab(vm: SkyViewModel, state: SkyUiState, onPicked: () -> Unit) {
-    Column(Modifier.padding(horizontal = 16.dp)) {
-        Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            Text(state.archiveLabel ?: "No search yet", Modifier.weight(1f), color = TextPrimary)
-            TextButton(onClick = { vm.toggleArchiveVisibility() }, enabled = state.archiveHits.isNotEmpty()) {
-                Text(if (state.archiveVisible) "Hide" else "Show")
+private fun ExploreTab(vm: SkyViewModel, state: SkyUiState, onPicked: () -> Unit) {
+    var picker by remember { mutableStateOf(false) }
+    var overview by remember { mutableStateOf(true) }
+    var details by remember { mutableStateOf(false) }
+    var kind by remember { mutableStateOf(ArchiveKind.OBSERVATIONS) }
+    val byId = remember(state.archiveSources) { state.archiveSources.associateBy { it.id } }
+    val shownKinds = listOf(ArchiveKind.OBSERVATIONS, ArchiveKind.CATALOGUES, ArchiveKind.SPECTRA, ArchiveKind.LIGHT_CURVES, ArchiveKind.ALERTS, ArchiveKind.IMAGES)
+    val rows = remember(state.fieldCounts, byId) { state.fieldCounts.filterValues { it > 0 }.entries.mapNotNull { (id, n) -> byId[id]?.let { it to n } } }
+    val totals = remember(rows) { shownKinds.associateWith { k -> rows.filter { it.first.kind == k }.sumOf { it.second } } }
+    // look at the field when the panel opens (and again if the view has moved a lot since the last scan)
+    LaunchedEffect(Unit) {
+        val c = state.camera.center; val sc = state.scanCenter
+        val moved = sc == null || SkyPosition.separation(c, SkyPosition(sc.first, sc.second)) > sc.third * 0.5 || state.camera.fovDeg / 2 * 1.25 > sc.third * 2
+        if (state.scanProgress == null && moved) vm.scanField(false)
+    }
+    LaunchedEffect(rows.size) { if (rows.isNotEmpty() && totals[kind] == 0) shownKinds.firstOrNull { (totals[it] ?: 0) > 0 }?.let { kind = it } }
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("In this field", color = TextPrimary, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+            IconButton(onClick = { vm.scanField(false) }, enabled = state.scanProgress == null) { Icon(Icons.Filled.Refresh, contentDescription = "Scan this field again") }
+            TextButton(onClick = { picker = true }) { Icon(Icons.Filled.Search, contentDescription = null); Spacer(Modifier.width(4.dp)); Text("All archives") }
+            IconButton(onClick = { overview = !overview }) { Icon(if (overview) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, contentDescription = if (overview) "Fold the overview" else "Show the overview") }
+        }
+        state.scanProgress?.let { (d, t) -> LinearProgressIndicator(progress = { if (t == 0) 0f else d.toFloat() / t }, modifier = Modifier.fillMaxWidth()) }
+        if (overview) {
+            Row(Modifier.horizontalScroll(rememberScrollState()).padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                shownKinds.forEach { k ->
+                    val n = totals[k] ?: 0
+                    FilterChip(selected = kind == k, onClick = { kind = k }, label = { Text(if (n > 0) "${k.label} · ${compact(n)}" else k.label) })
+                }
             }
-            TextButton(onClick = { vm.clearArchive() }, enabled = state.archiveHits.isNotEmpty()) { Text("Clear") }
+            val g = rows.filter { it.first.kind == kind }.sortedByDescending { it.second }
+            val max = g.maxOfOrNull { it.second }?.coerceAtLeast(1) ?: 1
+            Column(Modifier.fillMaxWidth().heightIn(max = 250.dp).verticalScroll(rememberScrollState())) {
+                if (g.isEmpty()) Text(if (state.scanProgress != null) "Looking at the field…" else "Nothing of this kind in the field. Zoom out or move the view, or pick another type.", color = TextSecondary, modifier = Modifier.padding(vertical = 12.dp))
+                g.forEachIndexed { i, (src, n) ->
+                    val sel = state.archiveLabel == src.label
+                    Column(Modifier.fillMaxWidth().clickable { vm.searchArchive(src); overview = false }.padding(vertical = 4.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(src.label, color = if (sel) MaterialTheme.colorScheme.secondary else TextPrimary, modifier = Modifier.weight(1f), maxLines = 1, style = MaterialTheme.typography.bodyMedium)
+                            Text(compact(n), color = TextSecondary, style = MaterialTheme.typography.labelMedium)
+                        }
+                        Box(Modifier.padding(top = 3.dp).fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp)).background(Color(0x14FFFFFF))) {
+                            Box(Modifier.fillMaxWidth((n.toFloat() / max).coerceAtLeast(0.02f)).fillMaxHeight().clip(RoundedCornerShape(5.dp)).background(missionColor(src, i)))
+                        }
+                    }
+                }
+            }
+            HorizontalDivider(Modifier.padding(top = 4.dp))
         }
-        state.hitFilter?.let { f ->
-            AssistChip(onClick = { vm.setHitFilter(null) }, label = { Text("Showing: ${f.label}  ✕  (${state.visibleHits.size} of ${state.archiveHits.size})") })
+        // ---- results of the archive you tapped
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                if (state.archiveLabel == null) "Tap an archive to see its results here" else "${state.archiveLabel}: ${state.visibleHits.size}" + if (state.visibleHits.size != state.archiveHits.size) " of ${state.archiveHits.size}" else "",
+                color = TextPrimary, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f), maxLines = 2,
+            )
+            if (state.archiveHits.isNotEmpty()) {
+                IconButton(onClick = { details = !details }) { Icon(Icons.Filled.BarChart, contentDescription = "Charts of these results", tint = if (details) MaterialTheme.colorScheme.secondary else LocalContentColor.current) }
+                IconButton(onClick = { vm.toggleArchiveVisibility() }) { Icon(if (state.archiveVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff, contentDescription = if (state.archiveVisible) "Hide on the sky" else "Show on the sky") }
+                IconButton(onClick = { vm.clearArchive() }) { Icon(Icons.Filled.Close, contentDescription = "Clear results") }
+            }
         }
-        LazyColumn {
+        state.hitFilter?.let { f -> AssistChip(onClick = { vm.setHitFilter(null) }, label = { Text("Showing: ${f.label}   ✕") }, modifier = Modifier.padding(bottom = 4.dp)) }
+        if (details && state.archiveHits.isNotEmpty()) ArchiveCharts(state.archiveHits, state.hitFilter, onFilter = { vm.setHitFilter(it) }, modifier = Modifier.fillMaxWidth().heightIn(max = 280.dp), onPick = { vm.selectHit(it); onPicked() })
+        LazyColumn(Modifier.weight(1f)) {
             items(state.visibleHits) { h ->
                 ListItem(
                     headlineContent = { Text(h.title, maxLines = 1) },
@@ -142,7 +220,29 @@ private fun ResultsTab(vm: SkyViewModel, state: SkyUiState, onPicked: () -> Unit
             }
         }
     }
+    if (picker) {
+        androidx.compose.ui.window.Dialog(onDismissRequest = { picker = false }, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+            Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxSize()) {
+                Column(Modifier.safeDrawingPadding()) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 16.dp, top = 4.dp)) {
+                        Text("All archives", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { vm.scanField(true); picker = false }) { Text("Scan all") }
+                        IconButton(onClick = { picker = false }) { Icon(Icons.Filled.Close, contentDescription = "Close") }
+                    }
+                    SourcesTab(vm, state, onSearched = { picker = false; overview = false })
+                }
+            }
+        }
+    }
 }
+
+private fun compact(n: Int): String = when { n >= 1_000_000 -> "%.1fM".format(n / 1e6); n >= 10_000 -> "${n / 1000}k"; n >= 1000 -> "%.1fk".format(n / 1000.0); else -> n.toString() }
+
+private fun missionColor(src: com.kroryan.astrovia.data.archive.ArchiveSource, i: Int): Color {
+    val pal = listOf(0xFF38BDF8, 0xFFA78BFA, 0xFFFBBF24, 0xFF34D399, 0xFFF472B6, 0xFFFB923C, 0xFF2DD4BF, 0xFFF87171, 0xFF818CF8, 0xFFA3E635)
+    return Color(pal[Math.abs(src.mission.hashCode()) % pal.size])
+}
+
 
 private fun hitSubtitle(h: ArchiveHit): String {
     val keys = listOf("instrument", "instrument_name", "filter", "start_time", "t_min", "obs_collection", "class", "Class", "V mag", "disc_year", "phot_g_mean_mag")
@@ -206,7 +306,7 @@ private fun TargetsTool(vm: SkyViewModel, state: SkyUiState) {
         state.lists.keys.forEach { n -> FilterChip(selected = n == state.currentList, onClick = { vm.selectList(n) }, label = { Text(n) }) }
         state.builtInLists.keys.filter { it !in state.lists }.forEach { n -> AssistChip(onClick = { vm.copyBuiltIn(n) }, label = { Text("+ $n") }) }
     }
-    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         OutlinedTextField(value = newName, onValueChange = { newName = it }, singleLine = true, modifier = Modifier.weight(1f), label = { Text("New list name") })
         TextButton(onClick = { vm.createList(newName); newName = "" }, enabled = newName.isNotBlank()) { Text("Create") }
         TextButton(onClick = { vm.deleteList(state.currentList) }, enabled = editable) { Text("Delete") }
@@ -386,36 +486,3 @@ private fun ServicesTool(vm: SkyViewModel, state: SkyUiState) {
     }
 }
 
-/**
- * What every archive has in the field you are looking at, as bars grouped by type. Tap a bar to open that archive's
- * results (footprints on the sky). This is the equivalent of the counters of the ESA Sky left panel.
- */
-@Composable
-fun FieldOverview(vm: SkyViewModel, state: SkyUiState, onOpened: () -> Unit) {
-    val byId = remember(state.archiveSources) { state.archiveSources.associateBy { it.id } }
-    Column(Modifier.padding(horizontal = 16.dp).verticalScroll(rememberScrollState())) {
-        Text("How many results each archive has in this field. Tap one to see them on the sky.", color = TextSecondary, modifier = Modifier.padding(top = 8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 6.dp)) {
-            Button(onClick = { vm.scanField(false) }, enabled = state.scanProgress == null) { Text("Scan (ESA + MAST)") }
-            OutlinedButton(onClick = { vm.scanField(true) }, enabled = state.scanProgress == null) { Text("Scan all archives") }
-        }
-        state.scanProgress?.let { (d, t) -> LinearProgressIndicator(progress = { if (t == 0) 0f else d.toFloat() / t }, modifier = Modifier.fillMaxWidth()); Text("$d / $t archives", color = TextSecondary, style = MaterialTheme.typography.bodySmall) }
-        val rows = state.fieldCounts.filterValues { it > 0 }.entries.mapNotNull { (id, n) -> byId[id]?.let { it to n } }
-        val max = rows.maxOfOrNull { it.second }?.coerceAtLeast(1) ?: 1
-        ArchiveKind.entries.forEach { k ->
-            val g = rows.filter { it.first.kind == k }.sortedByDescending { it.second }
-            if (g.isNotEmpty()) {
-                Text("${k.label} (${g.sumOf { it.second }})", color = TextPrimary, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 10.dp, bottom = 2.dp))
-                g.forEach { (src, n) ->
-                    Column(Modifier.fillMaxWidth().clickable { vm.searchArchive(src); onOpened() }.padding(vertical = 3.dp)) {
-                        Row { Text(src.label, color = TextPrimary, modifier = Modifier.weight(1f), maxLines = 1); Text(n.toString(), color = TextSecondary) }
-                        Box(Modifier.fillMaxWidth(n.toFloat() / max).height(8.dp).background(Color(0xFF38BDF8)))
-                    }
-                }
-            }
-        }
-        if (state.scanProgress == null && state.fieldCounts.isNotEmpty() && rows.isEmpty()) Text("Nothing found in this field. Zoom out or move the view.", color = TextSecondary, modifier = Modifier.padding(top = 12.dp))
-        val failed = state.fieldCounts.count { it.value < 0 }
-        if (failed > 0) Text("$failed archives did not answer.", color = TextSecondary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
-    }
-}

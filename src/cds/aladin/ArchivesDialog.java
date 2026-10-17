@@ -40,7 +40,7 @@ public class ArchivesDialog extends JDialog {
    private final JTextField filter = new JTextField(14);
    private final JTextField raF = new JTextField("0", 9), decF = new JTextField("0", 9), radF = new JTextField("0.5", 6), maxF = new JTextField("2000", 6);
    private final JLabel status = new JLabel("Ready.");
-   private final JTabbedPane tabs = new JTabbedPane();
+   private final JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
    private final JTextField pubObject = new JTextField("M 42", 18);
    private final JButton pubGo = new JButton("Find publications (SIMBAD)");
 
@@ -61,8 +61,8 @@ public class ArchivesDialog extends JDialog {
       loadSources();
       loadCustom();
       loadLists();
-      tabs.addTab("Search", searchPanel());
-      tabs.addTab("Overview", overviewPanel());
+      tabs.addTab("Archives", overviewPanel());
+      tabs.addTab("All archives", searchPanel());
       tabs.addTab("Gallery", galleryPanel());
       tabs.addTab("Object", objectPanel());
       tabs.addTab("Light curves", lightCurvePanel());
@@ -80,6 +80,7 @@ public class ArchivesDialog extends JDialog {
       setSize(820, 620);
       setLocationRelativeTo(owner);
       useCurrentView();
+      SwingUtilities.invokeLater(new Runnable() { public void run() { scanField(false); } });
    }
 
    // ------------------------------------------------------------------ search tab (tree, organised like Available data)
@@ -709,20 +710,32 @@ public class ArchivesDialog extends JDialog {
    private final Map<String, Integer> counts = new ConcurrentHashMap<String, Integer>();
    private volatile boolean scanning = false;
 
+   private String ovKind = "obs";
+   private final Map<String, JToggleButton> kindButtons = new LinkedHashMap<String, JToggleButton>();
+   private static final String[][] OV_KINDS = { { "obs", "Observations" }, { "cat", "Catalogues" }, { "spec", "Spectra" }, { "lc", "Light curves" }, { "alert", "Events" }, { "img", "Images" } };
+
    private JPanel overviewPanel() {
       JPanel p = new JPanel(new BorderLayout(6, 6));
       p.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-      JButton scan = new JButton("Scan (ESA + MAST)"), all = new JButton("Scan all archives");
-      JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
-      top.add(scan); top.add(all); top.add(overviewStatus);
+      JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
+      ButtonGroup g = new ButtonGroup();
+      for (final String[] k : OV_KINDS) {
+         JToggleButton b = new JToggleButton(k[1], k[0].equals(ovKind));
+         g.add(b); top.add(b); kindButtons.put(k[0], b);
+         b.addActionListener(e -> { ovKind = k[0]; refreshOverview(lastScan); });
+      }
+      JButton scan = new JButton("Scan this field again"), all = new JButton("Scan all archives");
+      top.add(javax.swing.Box.createHorizontalStrut(12)); top.add(scan); top.add(all); top.add(overviewStatus);
       p.add(top, BorderLayout.NORTH);
       overviewRows.setLayout(new BoxLayout(overviewRows, BoxLayout.Y_AXIS));
       p.add(new JScrollPane(overviewRows), BorderLayout.CENTER);
-      p.add(new JLabel("How many results each archive has in the field of the Search tab. Click a row to load it in Astrovia."), BorderLayout.SOUTH);
-      scan.addActionListener(e -> scanField(false));
-      all.addActionListener(e -> scanField(true));
+      p.add(new JLabel("What exists in the field of the current view, per archive and type. Click a bar to load that archive's results in Astrovia."), BorderLayout.SOUTH);
+      scan.addActionListener(e -> { useCurrentView(); scanField(false); });
+      all.addActionListener(e -> { useCurrentView(); scanField(true); });
       return p;
    }
+
+   private List<Source> lastScan = new ArrayList<Source>();
 
    private int count(Source s, double ra, double dec, double rad) throws IOException {
       String q = String.format(Locale.US, "SELECT COUNT(*) AS n FROM %s WHERE 1=CONTAINS(POINT('ICRS',%s,%s),CIRCLE('ICRS',%.6f,%.6f,%.6f))%s", s.table, s.ra, s.dec, ra, dec, rad,
@@ -742,7 +755,7 @@ public class ArchivesDialog extends JDialog {
          if (s.kind.equals("sso") || s.kind.equals("exo")) continue;
          if (all || "ESA".equals(s.centre) || "MAST".equals(s.centre)) todo.add(s);
       }
-      counts.clear(); scanning = true;
+      counts.clear(); scanning = true; lastScan = todo; refreshOverview(todo);
       final java.util.concurrent.atomic.AtomicInteger done = new java.util.concurrent.atomic.AtomicInteger();
       final ExecutorService ex = Executors.newFixedThreadPool(5);
       for (final Source s : todo) ex.submit(new Runnable() { public void run() {
@@ -761,32 +774,45 @@ public class ArchivesDialog extends JDialog {
    private void refreshOverview(List<Source> todo) {
       overviewRows.removeAll();
       int max = 1;
-      for (Integer n : counts.values()) if (n != null && n > max) max = n;
-      for (int k = 1; k < KINDS.length; k++) {
-         List<Source> g = new ArrayList<Source>();
+      for (Source s : todo) { Integer n = counts.get(s.id); if (s.kind.equals(ovKind) && n != null && n > max) max = n; }
+      // totals on the type buttons
+      for (String[] k : OV_KINDS) {
          int total = 0;
-         for (Source s : todo) { Integer n = counts.get(s.id); if (s.kind.equals(KINDS[k]) && n != null && n > 0) { g.add(s); total += n; } }
-         if (g.isEmpty()) continue;
-         Collections.sort(g, new Comparator<Source>() { public int compare(Source a, Source b) { return counts.get(b.id) - counts.get(a.id); } });
-         JLabel h = new JLabel(KIND_LABELS[k] + " (" + total + ")");
-         h.setFont(h.getFont().deriveFont(Font.BOLD)); h.setBorder(BorderFactory.createEmptyBorder(8, 2, 2, 2));
-         overviewRows.add(h);
-         for (final Source s : g) {
-            final int n = counts.get(s.id), mx = max;
-            JPanel row = new JPanel(new BorderLayout(6, 0)) {
-               protected void paintComponent(Graphics gr) { super.paintComponent(gr); gr.setColor(new Color(56, 189, 248)); gr.fillRect(0, getHeight() - 5, (int) ((getWidth() - 4) * (n / (double) mx)), 4); }
-            };
-            row.setOpaque(false);
-            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
-            row.add(new JLabel(s.label), BorderLayout.CENTER);
-            row.add(new JLabel(String.valueOf(n)), BorderLayout.EAST);
-            row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            row.addMouseListener(new java.awt.event.MouseAdapter() { public void mouseClicked(java.awt.event.MouseEvent e) { searchSource(s); } });
-            overviewRows.add(row);
-         }
+         for (Source s : todo) { Integer n = counts.get(s.id); if (s.kind.equals(k[0]) && n != null && n > 0) total += n; }
+         JToggleButton b = kindButtons.get(k[0]);
+         if (b != null) b.setText(total > 0 ? k[1] + " (" + compact(total) + ")" : k[1]);
+      }
+      List<Source> g = new ArrayList<Source>();
+      for (Source s : todo) { Integer n = counts.get(s.id); if (s.kind.equals(ovKind) && n != null && n > 0) g.add(s); }
+      Collections.sort(g, new Comparator<Source>() { public int compare(Source a, Source b) { return counts.get(b.id) - counts.get(a.id); } });
+      if (g.isEmpty()) overviewRows.add(new JLabel(scanning ? "  Looking at the field ..." : "  Nothing of this kind in the field. Zoom out, move the view, or pick another type."));
+      int ci = 0;
+      for (final Source s : g) {
+         final int n = counts.get(s.id), mx = max, col = Math.abs((s.mission == null ? "" : s.mission).hashCode()) % PALETTE.length;
+         JPanel row = new JPanel(new BorderLayout(6, 0)) {
+            protected void paintComponent(Graphics gr) {
+               super.paintComponent(gr);
+               int bw = (int) ((getWidth() - 6) * (n / (double) mx)), y = getHeight() - 9;
+               gr.setColor(new Color(128, 128, 128, 50)); gr.fillRoundRect(0, y, getWidth() - 6, 7, 7, 7);
+               gr.setColor(PALETTE[col]); gr.fillRoundRect(0, y, Math.max(6, bw), 7, 7, 7);
+            }
+         };
+         row.setOpaque(false);
+         row.setBorder(BorderFactory.createEmptyBorder(2, 2, 12, 2));
+         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+         row.add(new JLabel(s.label), BorderLayout.CENTER);
+         row.add(new JLabel(compact(n)), BorderLayout.EAST);
+         row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+         row.setToolTipText("Load " + s.label + " in Astrovia");
+         row.addMouseListener(new java.awt.event.MouseAdapter() { public void mouseClicked(java.awt.event.MouseEvent e) { searchSource(s); } });
+         overviewRows.add(row);
       }
       overviewRows.revalidate(); overviewRows.repaint();
    }
+
+   private static final Color[] PALETTE = { new Color(0x38BDF8), new Color(0xA78BFA), new Color(0xFBBF24), new Color(0x34D399), new Color(0xF472B6), new Color(0xFB923C), new Color(0x2DD4BF), new Color(0xF87171), new Color(0x818CF8), new Color(0xA3E635) };
+
+   private static String compact(int n) { return n >= 1000000 ? String.format(Locale.US, "%.1fM", n / 1e6) : n >= 10000 ? (n / 1000) + "k" : n >= 1000 ? String.format(Locale.US, "%.1fk", n / 1000.0) : String.valueOf(n); }
 
    // ------------------------------------------------------------------ gallery of outreach pictures
    private final DefaultListModel<OutreachViewer.Pic> picModel = new DefaultListModel<OutreachViewer.Pic>();
@@ -1167,7 +1193,9 @@ public class ArchivesDialog extends JDialog {
    private static ArchivesDialog instance;
    static void open(Aladin aladin) {
       if (instance == null) instance = new ArchivesDialog(aladin.f != null ? aladin.f : null, aladin);
+      boolean fresh = !instance.isVisible();
       instance.setVisible(true);
       instance.toFront();
+      if (fresh && instance.aladin != null) { instance.useCurrentView(); instance.scanField(false); }
    }
 }

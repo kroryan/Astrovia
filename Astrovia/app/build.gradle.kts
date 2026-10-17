@@ -16,6 +16,10 @@ val keystoreProps = Properties().apply {
 }
 
 android {
+    sourceSets {
+        // image processing engine shared with the desktop app (plain Java 8)
+        getByName("main") { java.srcDir("../../shared/imgproc") }
+    }
     namespace = "com.kroryan.astrovia"
     compileSdk = 36
 
