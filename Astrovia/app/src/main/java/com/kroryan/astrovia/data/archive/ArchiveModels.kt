@@ -41,6 +41,8 @@ data class ArchiveSource(
     val format: String = "csv",
     /** Data centre that serves it (ESA, MAST, ESO, IRSA, HEASARC...). */
     val centre: String = "",
+    /** Column to sort by (brightest first) so a row limit keeps the most useful sources, not an arbitrary sample. */
+    val orderCol: String? = null,
 ) {
     fun toJson(): JSONObject = JSONObject().put("id", id).put("label", label).put("mission", mission).put("band", band).put("kind", kind.code)
         .put("table", table).put("ra", raCol).put("dec", decCol).put("idCol", idCol ?: JSONObject.NULL).put("nameCol", nameCol ?: JSONObject.NULL)
@@ -56,7 +58,7 @@ data class ArchiveSource(
                 table = o.getString("table"), raCol = o.getString("ra"), decCol = o.getString("dec"),
                 idCol = s("idCol"), nameCol = s("nameCol"), regionCol = s("regionCol"), linkCol = s("linkCol"),
                 tapUrl = s("tap") ?: defaultTap,
-                where = s("where"), format = s("fmt") ?: "csv", centre = s("centre") ?: "ESA",
+                where = s("where"), format = s("fmt") ?: "csv", centre = s("centre") ?: "ESA", orderCol = s("orderCol"),
             )
         }
     }

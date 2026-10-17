@@ -161,7 +161,8 @@ private fun ExploreTab(vm: SkyViewModel, state: SkyUiState, onPicked: () -> Unit
         val moved = sc == null || SkyPosition.separation(c, SkyPosition(sc.first, sc.second)) > sc.third * 0.5 || state.camera.fovDeg / 2 * 1.25 > sc.third * 2
         if (state.scanProgress == null && moved) vm.scanField(false)
     }
-    LaunchedEffect(rows.size) { if (rows.isNotEmpty() && totals[kind] == 0) shownKinds.firstOrNull { (totals[it] ?: 0) > 0 }?.let { kind = it } }
+    // when the scan is over and the chosen type is empty, show the first type that has something (observations first)
+    LaunchedEffect(state.scanProgress == null, rows.size) { if (state.scanProgress == null && rows.isNotEmpty() && (totals[kind] ?: 0) == 0) shownKinds.firstOrNull { (totals[it] ?: 0) > 0 }?.let { kind = it } }
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
         Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("In this field", color = TextPrimary, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))

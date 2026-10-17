@@ -1,7 +1,9 @@
 @file:Suppress("EmptyCatchBlock", "TooGenericExceptionThrown", "VariableNaming", "ImplicitDefaultLocale", "WildcardImport", "MagicNumber", "MaxLineLength", "ComplexCondition", "CyclomaticComplexMethod", "LongMethod", "ReturnCount", "LongParameterList", "SwallowedException", "TooGenericExceptionCaught", "NestedBlockDepth", "FunctionNaming", "LoopWithTooManyJumpStatements", "TooManyFunctions")
 package com.kroryan.astrovia.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -44,15 +46,16 @@ private fun fmtTick(v: Double, step: Double): String =
 
 /** Light-curve plot: pinch to zoom, drag to pan, double-tap-free; axes with ticks, optional error bars. */
 @Composable
-fun LightCurveView(lc: LightCurve, onClose: () -> Unit) {
+fun LightCurveView(lc: LightCurve, topInset: androidx.compose.ui.unit.Dp, bottomInset: androidx.compose.ui.unit.Dp, onClose: () -> Unit) {
     val t0 = lc.time.min(); val t1 = lc.time.max()
     var viewLo by remember(lc) { mutableDoubleStateOf(t0) }
     var viewHi by remember(lc) { mutableDoubleStateOf(t1) }
     val tm = rememberTextMeasurer()
     val style = TextStyle(color = TextSecondary, fontSize = 10.sp)
-    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+    BackHandler(onBack = onClose)
+    Box(Modifier.fillMaxSize().clickable(indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }) { }) {
         Surface(color = Color(0xFF0B0F1A), modifier = Modifier.fillMaxSize()) {
-            Column(Modifier.safeDrawingPadding()) {
+            Column(Modifier.padding(top = topInset, bottom = bottomInset)) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f).padding(start = 8.dp)) {
                         Text(lc.title, color = TextPrimary, maxLines = 1)

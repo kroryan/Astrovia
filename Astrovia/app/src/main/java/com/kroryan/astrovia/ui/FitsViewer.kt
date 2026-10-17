@@ -1,6 +1,7 @@
 @file:Suppress("EmptyCatchBlock", "TooGenericExceptionThrown", "VariableNaming", "ImplicitDefaultLocale", "WildcardImport", "MagicNumber", "MaxLineLength", "ComplexCondition", "CyclomaticComplexMethod", "LongMethod", "ReturnCount", "LongParameterList", "SwallowedException", "TooGenericExceptionCaught", "NestedBlockDepth", "FunctionNaming", "LoopWithTooManyJumpStatements", "TooManyFunctions")
 package com.kroryan.astrovia.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -64,7 +65,7 @@ private enum class Panel(val label: String, val icon: ImageVector) {
  * Process, Info, Save) and tapping the same icon again folds it away.
  */
 @Composable
-fun FitsViewer(vm: SkyViewModel, doc: FitsDocument, busy: String?, stack: Pair<String, Float>?) {
+fun FitsViewer(vm: SkyViewModel, doc: FitsDocument, busy: String?, stack: Pair<String, Float>?, topInset: androidx.compose.ui.unit.Dp, bottomInset: androidx.compose.ui.unit.Dp) {
     var scale by remember(doc.name) { mutableFloatStateOf(1f) }
     var offset by remember(doc.name) { mutableStateOf(Offset.Zero) }
     var placed by remember(doc.name, doc.hdu?.index) { mutableStateOf(false) }
@@ -89,7 +90,9 @@ fun FitsViewer(vm: SkyViewModel, doc: FitsDocument, busy: String?, stack: Pair<S
         }
     }
 
-    Dialog(onDismissRequest = { if (panel != null) panel = null else vm.closeFits() }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+    BackHandler { if (panel != null) panel = null else vm.closeFits() }
+    // Drawn over the sky screen, not in a Dialog: a Dialog gets no system-bar insets, which hid the dock under the navigation buttons.
+    Box(Modifier.fillMaxSize().clickable(indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }) { }) {
         Surface(color = Color.Black, modifier = Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize().onSizeChanged { box = it }) {
                 // ---- the picture
@@ -137,7 +140,7 @@ fun FitsViewer(vm: SkyViewModel, doc: FitsDocument, busy: String?, stack: Pair<S
 
                 // Everything that is not the picture lives in a box that respects the status and navigation bars
                 // (a Dialog does not pass those insets to navigationBarsPadding, which hid the dock behind the system buttons).
-                Box(Modifier.fillMaxSize().safeDrawingPadding()) {
+                Box(Modifier.fillMaxSize().padding(top = topInset, bottom = bottomInset)) {
                 // ---- top bar: small, translucent
                 Row(
                     Modifier.align(Alignment.TopCenter).fillMaxWidth().background2().padding(horizontal = 4.dp),

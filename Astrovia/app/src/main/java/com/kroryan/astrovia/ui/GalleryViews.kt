@@ -1,6 +1,7 @@
 @file:Suppress("EmptyCatchBlock", "TooGenericExceptionThrown", "VariableNaming", "ImplicitDefaultLocale", "WildcardImport", "MagicNumber", "MaxLineLength", "ComplexCondition", "CyclomaticComplexMethod", "LongMethod", "ReturnCount", "LongParameterList", "SwallowedException", "TooGenericExceptionCaught", "NestedBlockDepth", "FunctionNaming", "LoopWithTooManyJumpStatements", "TooManyFunctions")
 package com.kroryan.astrovia.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -73,7 +74,7 @@ fun GalleryTab(vm: SkyViewModel, images: List<OutreachImage>?, loading: Boolean,
 
 /** Full-resolution explorer of an outreach picture: only the tiles on screen are downloaded. */
 @Composable
-fun ImageExplorer(vm: SkyViewModel, img: OutreachImage) {
+fun ImageExplorer(vm: SkyViewModel, img: OutreachImage, topInset: androidx.compose.ui.unit.Dp, bottomInset: androidx.compose.ui.unit.Dp) {
     val scope = rememberCoroutineScope()
     var version by remember { mutableIntStateOf(0) }
     val loader = remember(img) { TileLoader(scope) { version++ } }
@@ -97,9 +98,10 @@ fun ImageExplorer(vm: SkyViewModel, img: OutreachImage) {
         pyr = TilePyramids.open(img.tilesUrl) { u -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { TileLoader.fetchText(u) } }
         failed = pyr == null
     }
-    Dialog(onDismissRequest = { vm.closeImage() }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+    BackHandler { vm.closeImage() }
+    Box(Modifier.fillMaxSize().clickable(indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }) { }) {
         Surface(color = Color.Black, modifier = Modifier.fillMaxSize()) {
-            Column(Modifier.safeDrawingPadding()) {
+            Column(Modifier.padding(top = topInset, bottom = bottomInset)) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f).padding(start = 12.dp)) { Text(img.title, color = TextPrimary, maxLines = 1); Text(img.mission + " · " + img.id, color = TextSecondary, style = MaterialTheme.typography.bodySmall, maxLines = 1) }
                     IconButton(onClick = { info = true }) { Icon(Icons.Filled.Info, contentDescription = "Information", tint = Color.White) }

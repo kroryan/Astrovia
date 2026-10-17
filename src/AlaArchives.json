@@ -44,7 +44,8 @@
    "nameCol": "name",
    "regionCol": null,
    "linkCol": null,
-   "centre": "ESA"
+   "centre": "ESA",
+   "orderCol": "j_m"
   },
   {
    "id": "t_v_akari_asteroids_flux_cat_fdw",
@@ -164,7 +165,8 @@
    "nameCol": null,
    "regionCol": null,
    "linkCol": null,
-   "centre": "ESA"
+   "centre": "ESA",
+   "orderCol": "phot_g_mean_mag"
   },
   {
    "id": "mv_hcv_catalogue",
@@ -494,7 +496,8 @@
    "nameCol": "name",
    "regionCol": null,
    "linkCol": null,
-   "centre": "ESA"
+   "centre": "ESA",
+   "orderCol": "w1mpro"
   },
   {
    "id": "mv_xsa_epic_source_cat_fdw",
@@ -1471,7 +1474,8 @@
    "regionCol": null,
    "linkCol": null,
    "tap": "https://gea.esac.esa.int/tap-server/tap",
-   "centre": "ESA"
+   "centre": "ESA",
+   "orderCol": "phot_g_mean_mag"
   },
   {
    "id": "hst_obscore",

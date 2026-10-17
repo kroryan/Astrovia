@@ -24,7 +24,7 @@ public class ArchivesDialog extends JDialog {
 
    /** One queryable table described in AlaArchives.json (or added by the user). */
    static final class Source {
-      String id, label, mission, band, kind, table, ra, dec, tap, where, centre, idCol, linkCol;
+      String id, label, mission, band, kind, table, ra, dec, tap, where, centre, idCol, linkCol, orderCol;
       boolean custom;
       public String toString() { return label; }
    }
@@ -182,7 +182,8 @@ public class ArchivesDialog extends JDialog {
 
    private String adql(Source s, double ra, double dec, double rad, int max) {
       return String.format(Locale.US, "SELECT TOP %d * FROM %s WHERE 1=CONTAINS(POINT('ICRS',%s,%s),CIRCLE('ICRS',%.6f,%.6f,%.6f))%s",
-            max, s.table, s.ra, s.dec, ra, dec, rad, s.where == null || s.where.isEmpty() ? "" : " AND (" + s.where + ")");
+            max, s.table, s.ra, s.dec, ra, dec, rad, s.where == null || s.where.isEmpty() ? "" : " AND (" + s.where + ")")
+            + (s.orderCol == null ? "" : " ORDER BY " + s.orderCol + " ASC");   // brightest first, so a row limit keeps the useful sources
    }
 
    private void doSearch() {
@@ -1124,6 +1125,7 @@ public class ArchivesDialog extends JDialog {
             x.tap = s.get("tap") != null ? (String) s.get("tap") : defTap;
             x.where = s.get("where") != null ? (String) s.get("where") : null;
             x.centre = s.get("centre") != null ? (String) s.get("centre") : "ESA";
+            x.orderCol = s.get("orderCol") != null ? (String) s.get("orderCol") : null;
             sources.add(x);
          }
       } catch (Exception ex) {

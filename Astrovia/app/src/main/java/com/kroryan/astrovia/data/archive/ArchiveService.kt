@@ -156,7 +156,7 @@ class ArchiveService(context: Context) {
             Locale.US,
             "SELECT TOP %d * FROM %s WHERE 1=CONTAINS(POINT('ICRS',%s,%s),CIRCLE('ICRS',%.6f,%.6f,%.6f))",
             maxRows, src.table, src.raCol, src.decCol, raDeg, decDeg, r,
-        ) + (src.where?.let { " AND ($it)" } ?: "")
+        ) + (src.where?.let { " AND ($it)" } ?: "") + (src.orderCol?.let { " ORDER BY $it ASC" } ?: "")
         val rows = tapRows(src.tapUrl, adql, src.format)
         rows.mapNotNull { row ->
             val m = row.entries.associate { it.key.lowercase() to it.value }
@@ -165,13 +165,19 @@ class ArchiveService(context: Context) {
             val dec = col(src.decCol)?.toDoubleOrNull() ?: return@mapNotNull null
             val id = col(src.idCol) ?: col(src.nameCol) ?: "%.5f%+.5f".format(Locale.US, ra, dec)
             ArchiveHit(
-                source = src, id = id, title = col(src.nameCol) ?: id, raDeg = ra, decDeg = dec,
+                source = src, id = id, title = hitTitle(src, col(src.nameCol), id), raDeg = ra, decDeg = dec,
                 footprints = Footprints.parse(col(src.regionCol)),
                 link = col(src.linkCol)?.takeIf { it.startsWith("http") },
-                fields = row.filterValues { it.isNotBlank() && it.length < 400 },
+                fields = row.filterValues { it.isNotBlank() && it.length < 400 && !junk.matches(it.trim()) },
             )
         }
     }
+
+    private val junk = Regex("\\[[A-Za-z]@[0-9a-f]+")   // Java object printed as text by some archives (e.g. "[D@1c2dcc74")
+
+    /** Observations are named like "target (observation id)", because many targets are just \"ANY\" or the same object. */
+    private fun hitTitle(src: ArchiveSource, name: String?, id: String): String =
+        if (name != null && name != id && (src.kind == ArchiveKind.OBSERVATIONS || src.kind == ArchiveKind.SPECTRA || src.kind == ArchiveKind.LIGHT_CURVES)) "$name  ($id)" else name ?: id
 
     /** Solar-system objects in the cone at the given Julian date. */
     suspend fun solarSystem(raDeg: Double, decDeg: Double, radiusDeg: Double, jd: Double): List<SolarSystemBody> =

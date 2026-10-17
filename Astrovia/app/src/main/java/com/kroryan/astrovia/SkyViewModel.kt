@@ -1226,7 +1226,8 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
     /** Radius (degrees) of the circle that covers the visible field, capped so queries stay fast. */
     private fun visibleRadiusDeg(): Double = (_state.value.camera.fovDeg / 2.0 * 1.25).coerceIn(0.005, 20.0)
 
-    fun searchArchive(src: ArchiveSource, maxRows: Int = 300) {
+    fun searchArchive(src: ArchiveSource, maxRows: Int = 0) {
+        val limit = if (maxRows > 0) maxRows else if (src.kind == com.kroryan.astrovia.data.archive.ArchiveKind.CATALOGUES) 1500 else 400
         val c = _state.value.camera.center
         val radius = visibleRadiusDeg()
         _state.update { it.copy(archiveLoading = true, message = null, selectedHit = null) }
@@ -1234,9 +1235,9 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
             var msg: String
             var hits: List<ArchiveHit> = emptyList()
             try {
-                hits = archives.coneSearch(src, c.raDeg, c.decDeg, radius, maxRows)
+                hits = archives.coneSearch(src, c.raDeg, c.decDeg, radius, limit)
                 msg = if (hits.isEmpty()) "${src.label}: nothing in this field" else
-                    "${src.label}: ${hits.size} result${if (hits.size == maxRows) "s (limit reached, zoom in)" else "s"}"
+                    "${src.label}: ${hits.size} result${if (hits.size == limit) "s (the ${if (src.orderCol != null) "brightest" else "first"} $limit; zoom in for more)" else "s"}"
             } catch (e: CancellationException) {
                 throw e
             } catch (e: java.io.IOException) {
@@ -1259,6 +1260,18 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
         stopMotion()
         _state.update { st ->
             st.copy(selectedHit = hit, camera = if (hit != null) st.camera.recenterTo(SkyPosition(hit.raDeg, hit.decDeg)) else st.camera)
+        }
+    }
+
+    /** A tap on the map: picks an archive result or a catalogue source under the finger (nothing else happens if there is none). */
+    fun tapAt(pos: SkyPosition, radiusDeg: Double) {
+        hitAt(pos, radiusDeg)?.let { hit -> _state.update { it.copy(selectedHit = hit) }; return }
+        val s = _state.value
+        if (!s.catalogVisible || s.catalogRows.isEmpty()) return
+        val closest = s.catalogRows.minByOrNull { SkyPosition.separation(pos, SkyPosition(it.raDeg, it.decDeg)) } ?: return
+        if (SkyPosition.separation(pos, SkyPosition(closest.raDeg, closest.decDeg)) <= radiusDeg) {
+            val obj = SimbadObject(mainId = closest.id, otype = closest.columns["otype"] ?: "Catalog Source", position = SkyPosition(closest.raDeg, closest.decDeg), magV = closest.mag, raw = closest.columns)
+            _state.update { it.copy(selected = obj) }
         }
     }
 

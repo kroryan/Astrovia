@@ -373,9 +373,9 @@ fun SkyScreen(vm: SkyViewModel) {
     }
 
     if (showAbout) AboutDialog(onDismiss = { showAbout = false })
-    state.fitsDoc?.let { FitsViewer(vm, it, state.procBusy, state.stackProgress) }
-    state.viewerImage?.let { ImageExplorer(vm, it) }
-    state.lightCurve?.let { LightCurveView(it, onClose = { vm.closeLightCurve() }) }
+    state.fitsDoc?.let { FitsViewer(vm, it, state.procBusy, state.stackProgress, topInset, bottomInset) }
+    state.viewerImage?.let { ImageExplorer(vm, it, topInset, bottomInset) }
+    state.lightCurve?.let { LightCurveView(it, topInset, bottomInset, onClose = { vm.closeLightCurve() }) }
     if (state.fileLoading) Dialog(onDismissRequest = {}) { androidx.compose.material3.CircularProgressIndicator() }
     LaunchedEffect(state.closeSheetsTick) { if (state.closeSheetsTick > 0) showArchives = false }
     if (showArchives) ArchivesSheet(vm, state, archivesTab, archivesSection, onDismiss = { showArchives = false })

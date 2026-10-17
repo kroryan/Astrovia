@@ -266,15 +266,18 @@ fun SkyCanvas(
                             } else {
                                 lastTapTime = now
                                 lastTapPos = firstPos
-                                if (measureModeState.value && propsState.value != null) {
-                                    val proj = cameraState.value.projection(w.toFloat(), h.toFloat())
+                                if (propsState.value != null) {
+                                    val cam = cameraState.value
+                                    val proj = cam.projection(w.toFloat(), h.toFloat())
                                     val radec = proj.inverse(firstPos.x, firstPos.y)
                                     val pos = SkyPosition(radec[0], radec[1])
-                                    // Wait out the double-tap window before committing the point.
+                                    val radiusDeg = LONG_PRESS_RADIUS_PX * cam.fovDeg / h
+                                    val measuring = measureModeState.value
+                                    // Wait out the double-tap window: a measure point, or a tap on an archive result / catalogue source.
                                     pendingMeasure?.cancel()
                                     pendingMeasure = scope.launch {
                                         delay(330)
-                                        vm.measureTap(pos)
+                                        if (measuring) vm.measureTap(pos) else vm.tapAt(pos, radiusDeg)
                                     }
                                 }
                             }
