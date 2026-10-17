@@ -129,6 +129,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
     val downloader = com.kroryan.astrovia.data.hips.HiPSDownloader(app)
     val catalogDownloader = com.kroryan.astrovia.data.vizier.CatalogDownloader(app)
     val archives: ArchiveService = ArchiveService(app)
+    private val listStore = com.kroryan.astrovia.model.TargetLists(app)
 
     // Releases the tile bitmaps when the app is hidden or the system is short of memory.
     private val memoryCallbacks = object : android.content.ComponentCallbacks2 {
@@ -1120,7 +1121,6 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     // --- Target lists: several named lists, built-in lists (Messier), import / export ---
-    private val listStore by lazy { com.kroryan.astrovia.model.TargetLists(app) }
 
     private fun loadLists() {
         val u = listStore.user()
