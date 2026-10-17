@@ -44,6 +44,8 @@ data class SolarSystemBody(
  */
 class ArchiveService(context: Context) {
     private val client = HttpClient.client
+    /** Counts of the field overview must answer quickly: a slow archive is skipped instead of blocking the scan. */
+    private val quick = HttpClient.client.newBuilder().callTimeout(20, java.util.concurrent.TimeUnit.SECONDS).readTimeout(20, java.util.concurrent.TimeUnit.SECONDS).build()
 
     val sources: List<ArchiveSource> by lazy {
         val txt = context.assets.open("archives.json").bufferedReader().use { it.readText() }
@@ -93,7 +95,7 @@ class ArchiveService(context: Context) {
     suspend fun countInField(src: ArchiveSource, raDeg: Double, decDeg: Double, radiusDeg: Double): Int = withContext(Dispatchers.IO) {
         val adql = String.format(Locale.US, "SELECT COUNT(*) AS n FROM %s WHERE 1=CONTAINS(POINT('ICRS',%s,%s),CIRCLE('ICRS',%.6f,%.6f,%.6f))", src.table, src.raCol, src.decCol, raDeg, decDeg, radiusDeg.coerceIn(0.0005, 90.0)) +
             (src.where?.let { " AND ($it)" } ?: "")
-        tapRows(src.tapUrl, adql, src.format).firstOrNull()?.values?.firstOrNull()?.toDoubleOrNull()?.toInt() ?: 0
+        tapRows(src.tapUrl, adql, src.format, fast = true).firstOrNull()?.values?.firstOrNull()?.toDoubleOrNull()?.toInt() ?: 0
     }
 
     // ---- user-added TAP services (external data centres) ----
@@ -206,14 +208,14 @@ class ArchiveService(context: Context) {
     }
 
     /** Runs an ADQL query and returns rows, in CSV or VOTable (TABLEDATA/BINARY) depending on what the archive supports. */
-    fun tapRows(base: String, adql: String, format: String = "csv"): List<Map<String, String>> {
-        val text = tapSync(base, adql, format)
+    fun tapRows(base: String, adql: String, format: String = "csv", fast: Boolean = false): List<Map<String, String>> {
+        val text = tapSync(base, adql, format, fast)
         return if (format == "votable" || text.trimStart().startsWith("<")) VotableTable.parse(text) else Csv.parse(text)
     }
 
-    private fun tapSync(base: String, adql: String, format: String = "csv"): String {
+    private fun tapSync(base: String, adql: String, format: String = "csv", fast: Boolean = false): String {
         val body = FormBody.Builder().add("REQUEST", "doQuery").add("LANG", "ADQL").add("FORMAT", format).add("QUERY", adql).build()
-        client.newCall(Request.Builder().url("$base/sync").post(body).build()).execute().use { r ->
+        (if (fast) quick else client).newCall(Request.Builder().url("$base/sync").post(body).build()).execute().use { r ->
             val text = r.body?.string().orEmpty()
             if (text.trimStart().startsWith("<") && format == "csv") {
                 val msg = Regex("QUERY_STATUS\" value=\"ERROR\">([^<]{0,300})").find(text)?.groupValues?.get(1)?.trim()

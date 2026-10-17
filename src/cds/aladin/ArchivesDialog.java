@@ -228,10 +228,12 @@ public class ArchivesDialog extends JDialog {
       } }, "Astrovia-archive-query").start();
    }
 
-   static byte[] fetch(String url) throws IOException {
+   static byte[] fetch(String url) throws IOException { return fetch(url, 120000); }
+
+   static byte[] fetch(String url, int readMs) throws IOException {
       URLConnection c = new URL(url).openConnection();
-      c.setConnectTimeout(20000);
-      c.setReadTimeout(120000);
+      c.setConnectTimeout(15000);
+      c.setReadTimeout(readMs);
       c.setRequestProperty("User-Agent", "Astrovia");
       InputStream in = c.getInputStream();
       try {
@@ -246,8 +248,10 @@ public class ArchivesDialog extends JDialog {
    private static String enc(String s) { try { return URLEncoder.encode(s, "UTF-8"); } catch (Exception e) { return s; } }
 
    /** Runs an ADQL query and returns the rows (CSV, falling back to VOTable TABLEDATA). */
-   static List<Map<String, String>> tap(String base, String adql) throws IOException {
-      String t = new String(fetch(base + "/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=csv&QUERY=" + enc(adql)), "UTF-8");
+   static List<Map<String, String>> tap(String base, String adql) throws IOException { return tap(base, adql, 120000); }
+
+   static List<Map<String, String>> tap(String base, String adql, int readMs) throws IOException {
+      String t = new String(fetch(base + "/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=csv&QUERY=" + enc(adql), readMs), "UTF-8");
       if (t.trim().startsWith("<")) return SimpleVotable.parse(t);
       return csv(t);
    }
@@ -740,13 +744,16 @@ public class ArchivesDialog extends JDialog {
    private int count(Source s, double ra, double dec, double rad) throws IOException {
       String q = String.format(Locale.US, "SELECT COUNT(*) AS n FROM %s WHERE 1=CONTAINS(POINT('ICRS',%s,%s),CIRCLE('ICRS',%.6f,%.6f,%.6f))%s", s.table, s.ra, s.dec, ra, dec, rad,
             s.where == null || s.where.isEmpty() ? "" : " AND (" + s.where + ")");
-      List<Map<String, String>> r = tap(s.tap, q);
+      List<Map<String, String>> r = tap(s.tap, q, 20000);   // a slow archive is skipped, it must not block the scan
       if (r.isEmpty() || r.get(0).isEmpty()) return 0;
       try { return (int) Double.parseDouble(r.get(0).values().iterator().next().trim()); } catch (NumberFormatException e) { return 0; }
    }
 
+   private int scanGen = 0;
+   private ExecutorService scanPool;
+
+   /** Counts what every archive has in the field of the Search tab. Calling it again restarts the scan on the current values. */
    private void scanField(final boolean all) {
-      if (scanning) return;
       final double ra, dec, rad;
       try { ra = Double.parseDouble(raF.getText().trim()); dec = Double.parseDouble(decF.getText().trim()); rad = Math.max(0.0005, Math.min(20, Double.parseDouble(radF.getText().trim()))); }
       catch (Exception e) { overviewStatus.setText("Check RA, Dec and radius in the Search tab."); return; }
@@ -755,18 +762,23 @@ public class ArchivesDialog extends JDialog {
          if (s.kind.equals("sso") || s.kind.equals("exo")) continue;
          if (all || "ESA".equals(s.centre) || "MAST".equals(s.centre)) todo.add(s);
       }
+      if (scanPool != null) scanPool.shutdownNow();          // a scan in progress is replaced by this one
+      final int gen = ++scanGen;
       counts.clear(); scanning = true; lastScan = todo; refreshOverview(todo);
       final java.util.concurrent.atomic.AtomicInteger done = new java.util.concurrent.atomic.AtomicInteger();
-      final ExecutorService ex = Executors.newFixedThreadPool(5);
+      final ExecutorService ex = Executors.newFixedThreadPool(6);
+      scanPool = ex;
       for (final Source s : todo) ex.submit(new Runnable() { public void run() {
          int n;
          try { n = count(s, ra, dec, rad); } catch (Exception e) { n = -1; }
+         if (gen != scanGen) return;
          counts.put(s.id, n);
          final int d = done.incrementAndGet();
          SwingUtilities.invokeLater(new Runnable() { public void run() {
+            if (gen != scanGen) return;
             overviewStatus.setText(d + " / " + todo.size() + " archives");
             if (d == todo.size() || d % 8 == 0) refreshOverview(todo);
-            if (d == todo.size()) { scanning = false; ex.shutdown(); }
+            if (d == todo.size()) { scanning = false; overviewStatus.setText(""); ex.shutdown(); }
          } });
       } });
    }

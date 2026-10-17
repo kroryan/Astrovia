@@ -165,7 +165,9 @@ private fun ExploreTab(vm: SkyViewModel, state: SkyUiState, onPicked: () -> Unit
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
         Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("In this field", color = TextPrimary, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-            IconButton(onClick = { vm.scanField(false) }, enabled = state.scanProgress == null) { Icon(Icons.Filled.Refresh, contentDescription = "Scan this field again") }
+            IconButton(onClick = { vm.scanField(false) }) {
+                if (state.scanProgress != null) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp) else Icon(Icons.Filled.Refresh, contentDescription = "Scan this field again")
+            }
             TextButton(onClick = { picker = true }) { Icon(Icons.Filled.Search, contentDescription = null); Spacer(Modifier.width(4.dp)); Text("All archives") }
             IconButton(onClick = { overview = !overview }) { Icon(if (overview) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, contentDescription = if (overview) "Fold the overview" else "Show the overview") }
         }

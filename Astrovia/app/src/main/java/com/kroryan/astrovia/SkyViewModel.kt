@@ -1190,28 +1190,34 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
 
     // --- Field overview: how much each archive has in the field (counts, tap to open) ---
     private var scanJob: Job? = null
+    private var scanGen = 0
 
+    /** Counts what every archive has in the field. Calling it again restarts the scan on the current view. */
     fun scanField(all: Boolean = false) {
         scanJob?.cancel()
+        val gen = ++scanGen
         val c = _state.value.camera.center
         val r = visibleRadiusDeg()
-        val list = _state.value.archiveSources.filter { it.kind in listOf(com.kroryan.astrovia.data.archive.ArchiveKind.OBSERVATIONS, com.kroryan.astrovia.data.archive.ArchiveKind.SPECTRA, com.kroryan.astrovia.data.archive.ArchiveKind.CATALOGUES, com.kroryan.astrovia.data.archive.ArchiveKind.LIGHT_CURVES, com.kroryan.astrovia.data.archive.ArchiveKind.IMAGES, com.kroryan.astrovia.data.archive.ArchiveKind.ALERTS) }
-            .let { l -> if (all) l else l.filter { it.centre == "ESA" || it.centre == "MAST" } }
+        val kinds = listOf(com.kroryan.astrovia.data.archive.ArchiveKind.OBSERVATIONS, com.kroryan.astrovia.data.archive.ArchiveKind.SPECTRA, com.kroryan.astrovia.data.archive.ArchiveKind.CATALOGUES, com.kroryan.astrovia.data.archive.ArchiveKind.LIGHT_CURVES, com.kroryan.astrovia.data.archive.ArchiveKind.IMAGES, com.kroryan.astrovia.data.archive.ArchiveKind.ALERTS)
+        val list = _state.value.archiveSources.filter { it.kind in kinds }.let { l -> if (all) l else l.filter { it.centre == "ESA" || it.centre == "MAST" } }
         _state.update { it.copy(fieldCounts = emptyMap(), scanProgress = 0 to list.size, scanCenter = Triple(c.raDeg, c.decDeg, r)) }
         scanJob = viewModelScope.launch {
-            val gate = kotlinx.coroutines.sync.Semaphore(5)
-            val done = java.util.concurrent.atomic.AtomicInteger(0)
-            val jobs = list.map { src ->
-                launch {
-                    gate.acquire()
-                    try {
-                        val n = try { archives.countInField(src, c.raDeg, c.decDeg, r) } catch (e: CancellationException) { throw e } catch (e: Exception) { -1 }
-                        _state.update { st -> st.copy(fieldCounts = st.fieldCounts + (src.id to n), scanProgress = done.incrementAndGet() to list.size) }
-                    } finally { gate.release() }
-                }
+            try {
+                val gate = kotlinx.coroutines.sync.Semaphore(6)
+                val done = java.util.concurrent.atomic.AtomicInteger(0)
+                list.map { src ->
+                    launch {
+                        gate.acquire()
+                        try {
+                            val n = try { archives.countInField(src, c.raDeg, c.decDeg, r) } catch (e: CancellationException) { throw e } catch (e: Exception) { -1 }
+                            _state.update { st -> if (gen != scanGen) st else st.copy(fieldCounts = st.fieldCounts + (src.id to n), scanProgress = done.incrementAndGet() to list.size) }
+                        } finally { gate.release() }
+                    }
+                }.forEach { it.join() }
+            } finally {
+                // only the newest scan may clear the progress: a cancelled one must not leave the panel stuck or erase a newer scan
+                if (gen == scanGen) _state.update { it.copy(scanProgress = null) }
             }
-            jobs.forEach { it.join() }
-            _state.update { it.copy(scanProgress = null) }
         }
     }
 
