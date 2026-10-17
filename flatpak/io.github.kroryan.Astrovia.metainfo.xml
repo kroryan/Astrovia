@@ -69,6 +69,14 @@
     <binary>astrovia</binary>
   </provides>
   <releases>
+    <release version="0.6.3" date="2026-10-17">
+      <description>
+        <ul>
+          <li>New Archives window: search about 100 mission archives and catalogues (JWST, HST, XMM-Newton, Gaia, eROSITA...) around the current view</li>
+          <li>Solar-system objects in the field, exoplanets, alerts, visibility windows, target lists and publications</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.6.2" date="2026-10-16">
       <description>
         <ul>

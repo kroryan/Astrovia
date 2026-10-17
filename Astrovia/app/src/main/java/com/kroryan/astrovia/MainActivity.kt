@@ -16,10 +16,18 @@ import com.kroryan.astrovia.ui.WelcomeScreen
 import com.kroryan.astrovia.ui.theme.AstroviaTheme
 
 class MainActivity : ComponentActivity() {
+    private val vmForLinks: SkyViewModel by viewModels()
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        intent.data?.let { vmForLinks.openViewLink(it) }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         val vm: SkyViewModel by viewModels()
+        intent?.data?.let { vm.openViewLink(it) }
         setContent {
             AstroviaTheme {
                 var accepted by remember { mutableStateOf(OnboardingPrefs.isAccepted(this)) }

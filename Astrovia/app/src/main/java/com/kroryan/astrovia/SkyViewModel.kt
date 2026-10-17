@@ -15,6 +15,12 @@ import com.kroryan.astrovia.data.simbad.SimbadObject
 import com.kroryan.astrovia.data.simbad.SimbadService
 import com.kroryan.astrovia.data.vizier.VizieRService
 import com.kroryan.astrovia.model.CatalogRow
+import com.kroryan.astrovia.data.archive.ArchiveHit
+import com.kroryan.astrovia.data.archive.ArchiveService
+import com.kroryan.astrovia.data.archive.ArchiveSource
+import com.kroryan.astrovia.data.archive.Publication
+import com.kroryan.astrovia.data.archive.SolarSystemBody
+import com.kroryan.astrovia.model.Target
 import com.kroryan.astrovia.model.Marker
 import com.kroryan.astrovia.model.Measurement
 import com.kroryan.astrovia.capture.CaptureFormat
@@ -62,6 +68,16 @@ data class SkyUiState(
     val downloadingTiles: Int = 0,
     val catalogVisible: Boolean = true,
     val activeCatalogId: String? = null,
+    // Multi-archive search (observations, spectra, catalogues, alerts, solar system, exoplanets...)
+    val archiveHits: List<ArchiveHit> = emptyList(),
+    val archiveLabel: String? = null,
+    val archiveLoading: Boolean = false,
+    val archiveVisible: Boolean = true,
+    val selectedHit: ArchiveHit? = null,
+    val solarBodies: List<SolarSystemBody> = emptyList(),
+    val publications: List<Publication>? = null,
+    val publicationsFor: String? = null,
+    val targets: List<Target> = emptyList(),
 )
 
 class SkyViewModel(app: Application) : AndroidViewModel(app) {
@@ -96,7 +112,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
             _state.update { it.copy(tileVersion = it.tileVersion + 1, downloadingTiles = tileRepo.activeDownloads) }
         }
         app.registerComponentCallbacks(memoryCallbacks)
-        _state.update { it.copy(settings = settings) }
+        _state.update { it.copy(settings = settings, targets = loadTargets()) }
         loadSurveyProperties(_state.value.survey)
         fetchSurveys()
     }
@@ -419,6 +435,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
      * loaded, it asks SIMBAD what is there.
      */
     fun longPressAt(pos: SkyPosition, radiusDeg: Double) {
+        hitAt(pos, radiusDeg)?.let { hit -> _state.update { it.copy(selectedHit = hit) }; return }
         val rows = _state.value.catalogRows
         if (rows.isEmpty() || !_state.value.catalogVisible) {
             identifyAt(pos.raDeg, pos.decDeg, radiusArcmin = (radiusDeg * 60.0).coerceIn(0.02, 30.0))
@@ -658,6 +675,194 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun clearMeasurements() = _state.update { it.copy(measurements = emptyList(), pendingMeasureFrom = null) }
+
+
+    // --- Multi-archive search (own implementation over IVOA TAP) ---
+    val archives = ArchiveService(app)
+
+    /** Radius (degrees) of the circle that covers the visible field, capped so queries stay fast. */
+    private fun visibleRadiusDeg(): Double = (_state.value.camera.fovDeg / 2.0 * 1.25).coerceIn(0.005, 20.0)
+
+    fun searchArchive(src: ArchiveSource, maxRows: Int = 300) {
+        val c = _state.value.camera.center
+        val radius = visibleRadiusDeg()
+        _state.update { it.copy(archiveLoading = true, message = null, selectedHit = null) }
+        viewModelScope.launch {
+            var msg: String
+            var hits: List<ArchiveHit> = emptyList()
+            try {
+                hits = archives.coneSearch(src, c.raDeg, c.decDeg, radius, maxRows)
+                msg = if (hits.isEmpty()) "${src.label}: nothing in this field" else
+                    "${src.label}: ${hits.size} result${if (hits.size == maxRows) "s (limit reached, zoom in)" else "s"}"
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: java.io.IOException) {
+                msg = "${src.label}: ${e.message ?: "no connection"}"
+            } catch (e: Exception) {
+                msg = "${src.label}: failed (${e.message})"
+            }
+            _state.update { it.copy(archiveLoading = false, archiveHits = hits, archiveLabel = src.label, archiveVisible = true, message = msg) }
+            clearMessageLater(msg)
+        }
+    }
+
+    fun clearArchive() = _state.update { it.copy(archiveHits = emptyList(), archiveLabel = null, selectedHit = null, solarBodies = emptyList()) }
+
+    fun toggleArchiveVisibility() = _state.update { it.copy(archiveVisible = !it.archiveVisible) }
+
+    fun selectHit(hit: ArchiveHit?) {
+        stopMotion()
+        _state.update { st ->
+            st.copy(selectedHit = hit, camera = if (hit != null) st.camera.recenterTo(SkyPosition(hit.raDeg, hit.decDeg)) else st.camera)
+        }
+    }
+
+    /** Hit under a sky position: inside a footprint, or the closest centre within [radiusDeg]. */
+    fun hitAt(pos: SkyPosition, radiusDeg: Double): ArchiveHit? {
+        val s = _state.value
+        if (!s.archiveVisible || s.archiveHits.isEmpty()) return null
+        val inside = s.archiveHits.filter { h -> h.footprints.any { it.contains(pos.raDeg, pos.decDeg) } }
+        if (inside.isNotEmpty()) return inside.minByOrNull { SkyPosition.separation(pos, SkyPosition(it.raDeg, it.decDeg)) }
+        val best = s.archiveHits.minByOrNull { SkyPosition.separation(pos, SkyPosition(it.raDeg, it.decDeg)) } ?: return null
+        return best.takeIf { SkyPosition.separation(pos, SkyPosition(best.raDeg, best.decDeg)) <= radiusDeg }
+    }
+
+    /** Solar-system bodies in the field right now (SkyBoT). They are shown as archive-style hits. */
+    fun searchSolarSystem() {
+        val c = _state.value.camera.center
+        val radius = visibleRadiusDeg()
+        _state.update { it.copy(archiveLoading = true, message = null) }
+        viewModelScope.launch {
+            var msg: String
+            var bodies: List<SolarSystemBody> = emptyList()
+            try {
+                val jd = com.kroryan.astrovia.sky.Visibility.julianDate(System.currentTimeMillis())
+                bodies = archives.solarSystem(c.raDeg, c.decDeg, radius, jd).filter { !it.raDeg.isNaN() && !it.decDeg.isNaN() }
+                msg = "Solar system: ${bodies.size} object${if (bodies.size == 1) "" else "s"} in the field now"
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                msg = "Solar system: ${if (e is java.io.IOException) e.message ?: "no connection" else "failed (${e.message})"}"
+            }
+            val src = ArchiveSource("skybot", "Solar-system objects (now)", "IMCCE", "Various",
+                com.kroryan.astrovia.data.archive.ArchiveKind.SOLAR_SYSTEM, "skybot", "ra", "dec", "name", "name", null, null, "")
+            val hits = bodies.map { b ->
+                ArchiveHit(src, if (b.number > 0) "(${b.number}) ${b.name}" else b.name, b.name, b.raDeg, b.decDeg, emptyList(), b.card?.takeIf { it.startsWith("http") },
+                    buildMap { put("Class", b.cls); b.vmag?.let { put("V mag", "%.1f".format(it)) }; if (b.number > 0) put("Number", b.number.toString()) })
+            }
+            _state.update { it.copy(archiveLoading = false, archiveHits = hits, archiveLabel = src.label, archiveVisible = true, solarBodies = bodies, message = msg) }
+            clearMessageLater(msg)
+        }
+    }
+
+    fun loadPublications(objectName: String) {
+        val name = objectName.trim()
+        if (name.isEmpty()) return
+        _state.update { it.copy(publications = null, publicationsFor = name, archiveLoading = true) }
+        viewModelScope.launch {
+            val list = try { archives.publications(name) } catch (e: CancellationException) { throw e } catch (e: Exception) { null }
+            val msg = if (list == null) "Could not read the publications of $name" else null
+            _state.update { it.copy(archiveLoading = false, publications = list ?: emptyList(), message = msg ?: it.message) }
+            msg?.let { clearMessageLater(it) }
+        }
+    }
+
+    // --- Target list (multi-object lists, kept on the device) ---
+    private val targetPrefs get() = app.getSharedPreferences("astrovia_targets", android.content.Context.MODE_PRIVATE)
+
+    private fun loadTargets(): List<Target> = runCatching { Target.listFromJson(targetPrefs.getString("list", "[]").orEmpty()) }.getOrDefault(emptyList())
+
+    private fun saveTargets(list: List<Target>) { targetPrefs.edit().putString("list", Target.listToJson(list)).apply() }
+
+    /** Resolves one name per line with SIMBAD and adds the ones found. */
+    fun addTargets(namesText: String) {
+        val names = namesText.lines().map { it.trim() }.filter { it.isNotEmpty() }.distinct().take(200)
+        if (names.isEmpty()) return
+        _state.update { it.copy(archiveLoading = true, message = null) }
+        viewModelScope.launch {
+            val found = ArrayList<Target>()
+            var failed = 0
+            for (n in names) {
+                try {
+                    val o = simbad.search(n).firstOrNull()
+                    if (o != null) found.add(Target(o.mainId, o.position.raDeg, o.position.decDeg)) else failed++
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    failed++
+                }
+            }
+            val all = (_state.value.targets + found).distinctBy { it.name }
+            saveTargets(all)
+            val msg = "Targets: ${found.size} added" + if (failed > 0) ", $failed not found" else ""
+            _state.update { it.copy(archiveLoading = false, targets = all, message = msg) }
+            clearMessageLater(msg)
+        }
+    }
+
+    fun removeTarget(t: Target) {
+        val all = _state.value.targets - t
+        saveTargets(all)
+        _state.update { it.copy(targets = all) }
+    }
+
+    fun goToTarget(t: Target) {
+        stopMotion()
+        _state.update { it.copy(camera = it.camera.recenterTo(SkyPosition(t.raDeg, t.decDeg))) }
+    }
+
+    // --- Sessions and view links ---
+    /** A shareable link to the current view: astrovia://view?ra=..&dec=..&fov=..&survey=.. */
+    fun viewLink(): String {
+        val s = _state.value
+        val c = s.camera.center
+        return String.format(java.util.Locale.US, "astrovia://view?ra=%.6f&dec=%.6f&fov=%.5f&survey=%s", c.raDeg, c.decDeg, s.camera.fovDeg,
+            java.net.URLEncoder.encode(s.survey.id, "UTF-8"))
+    }
+
+    /** Opens an astrovia://view link (from a share or an intent). Returns false if it is not one. */
+    fun openViewLink(uri: Uri): Boolean {
+        if (uri.scheme != "astrovia" || uri.host != "view") return false
+        val ra = uri.getQueryParameter("ra")?.toDoubleOrNull() ?: return false
+        val dec = uri.getQueryParameter("dec")?.toDoubleOrNull() ?: return false
+        val fov = uri.getQueryParameter("fov")?.toDoubleOrNull()?.coerceIn(0.0005, 180.0) ?: _state.value.camera.fovDeg
+        uri.getQueryParameter("survey")?.let { id ->
+            _state.value.availableSurveys.firstOrNull { it.id == id }?.let { setSurvey(it) }
+        }
+        stopMotion()
+        _state.update { it.copy(camera = SkyCamera.looking(SkyPosition(ra, dec), fov), cameraPlaced = true) }
+        return true
+    }
+
+    /** Whole session (view, survey, markers, targets) as JSON text. */
+    fun exportSession(): String {
+        val s = _state.value
+        val c = s.camera.center
+        val o = org.json.JSONObject()
+        o.put("app", "astrovia").put("version", 1).put("ra", c.raDeg).put("dec", c.decDeg).put("fov", s.camera.fovDeg).put("survey", s.survey.id)
+        o.put("markers", org.json.JSONArray().also { a -> s.markers.forEach { m -> a.put(org.json.JSONObject().put("ra", m.position.raDeg).put("dec", m.position.decDeg).put("label", m.label).put("color", m.color)) } })
+        o.put("targets", org.json.JSONArray(Target.listToJson(s.targets)))
+        return o.toString(2)
+    }
+
+    fun importSession(text: String): Boolean {
+        val o = runCatching { org.json.JSONObject(text) }.getOrNull() ?: return false
+        if (o.optString("app") != "astrovia") return false
+        val markers = o.optJSONArray("markers")?.let { a ->
+            List(a.length()) { i -> a.getJSONObject(i).let { m -> Marker(position = SkyPosition(m.getDouble("ra"), m.getDouble("dec")), label = m.optString("label"), color = m.optLong("color", 0xFFEF4444)) } }
+        }.orEmpty()
+        val targets = runCatching { Target.listFromJson(o.optJSONArray("targets")?.toString() ?: "[]") }.getOrDefault(emptyList())
+        o.optString("survey").takeIf { it.isNotEmpty() }?.let { id -> _state.value.availableSurveys.firstOrNull { it.id == id }?.let { setSurvey(it) } }
+        stopMotion()
+        saveTargets(targets)
+        _state.update {
+            it.copy(
+                camera = SkyCamera.looking(SkyPosition(o.getDouble("ra"), o.getDouble("dec")), o.getDouble("fov").coerceIn(0.0005, 180.0)),
+                cameraPlaced = true, markers = markers, targets = targets,
+            )
+        }
+        return true
+    }
 
     private val app get() = getApplication<Application>()
 

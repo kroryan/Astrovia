@@ -332,6 +332,44 @@ fun SkyCanvas(
             }
         }
 
+        // Archive results: footprints (polygons) or small diamonds for point-like results
+        if (state.archiveVisible) {
+            val sel = state.selectedHit
+            for (hit in state.archiveHits) {
+                val color = archiveColor(hit.source.kind)
+                val isSel = hit === sel
+                val a = if (isSel) 1f else 0.75f
+                var drewPoly = false
+                for (poly in hit.footprints) {
+                    val n = poly.ra.size
+                    if (n < 3) continue
+                    val path = androidx.compose.ui.graphics.Path()
+                    var ok = true
+                    var anyOn = false
+                    for (i in 0 until n) {
+                        val q = proj.forward(poly.ra[i], poly.dec[i])
+                        if (q == null) { ok = false; break }
+                        if (q[0] > -50f && q[0] < size.width + 50f && q[1] > -50f && q[1] < size.height + 50f) anyOn = true
+                        if (i == 0) path.moveTo(q[0], q[1]) else path.lineTo(q[0], q[1])
+                    }
+                    if (!ok || !anyOn) continue
+                    path.close()
+                    drawPath(path, color.copy(alpha = if (isSel) 0.25f else 0.08f))
+                    drawPath(path, color.copy(alpha = a), style = Stroke(width = if (isSel) 3.5f else 1.5f))
+                    drewPoly = true
+                }
+                if (!drewPoly) {
+                    val p = proj.forward(hit.raDeg, hit.decDeg) ?: continue
+                    if (p[0] < -20f || p[0] > size.width + 20f || p[1] < -20f || p[1] > size.height + 20f) continue
+                    val r = if (isSel) 9f else 5f
+                    val d = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(p[0], p[1] - r); lineTo(p[0] + r, p[1]); lineTo(p[0], p[1] + r); lineTo(p[0] - r, p[1]); close()
+                    }
+                    drawPath(d, color.copy(alpha = a), style = Stroke(width = if (isSel) 3f else 2f))
+                }
+            }
+        }
+
         // Manual markers
         for (m in state.markers) {
             val p = proj.forward(m.position.raDeg, m.position.decDeg) ?: continue
@@ -358,4 +396,14 @@ fun SkyCanvas(
         drawLine(GridLine, Offset(c.x - 12f, c.y), Offset(c.x + 12f, c.y), strokeWidth = 1f)
         drawLine(GridLine, Offset(c.x, c.y - 12f), Offset(c.x, c.y + 12f), strokeWidth = 1f)
     }
+}
+
+private fun archiveColor(kind: com.kroryan.astrovia.data.archive.ArchiveKind): androidx.compose.ui.graphics.Color = when (kind) {
+    com.kroryan.astrovia.data.archive.ArchiveKind.OBSERVATIONS -> androidx.compose.ui.graphics.Color(0xFF38BDF8)
+    com.kroryan.astrovia.data.archive.ArchiveKind.SPECTRA -> androidx.compose.ui.graphics.Color(0xFFA78BFA)
+    com.kroryan.astrovia.data.archive.ArchiveKind.CATALOGUES -> androidx.compose.ui.graphics.Color(0xFFFACC15)
+    com.kroryan.astrovia.data.archive.ArchiveKind.ALERTS -> androidx.compose.ui.graphics.Color(0xFFF87171)
+    com.kroryan.astrovia.data.archive.ArchiveKind.SOLAR_SYSTEM -> androidx.compose.ui.graphics.Color(0xFFFB923C)
+    com.kroryan.astrovia.data.archive.ArchiveKind.IMAGES -> androidx.compose.ui.graphics.Color(0xFFF472B6)
+    com.kroryan.astrovia.data.archive.ArchiveKind.EXOPLANETS -> androidx.compose.ui.graphics.Color(0xFF34D399)
 }

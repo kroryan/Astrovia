@@ -30,6 +30,18 @@ FITS images and MOC coverage, in a modern dark interface. Free, no ads, no track
 | **Desktop** (Linux, Windows) | this repository (`src/`) | Java/Swing, based on Aladin Desktop. See [DESKTOP.md](DESKTOP.md) |
 | **Android** | [`Astrovia/`](Astrovia/README.md) | Native Kotlin / Jetpack Compose app |
 
+## Highlights (0.6.3)
+
+- **Archives: multi-mission search (new, Android and desktop).** One window/sheet to search around the view you are looking at, over about 100 archives and catalogues:
+  - *Observations and spectra:* JWST, HST, XMM-Newton, Chandra, Herschel, ALMA, Spitzer, AKARI, ISO, IUE, Suzaku, CHEOPS, CoRoT, Euclid mosaics, LAMOST and more.
+  - *Catalogues:* Gaia DR3, Hipparcos, Tycho-2, 2MASS, AllWISE, eROSITA, ROSAT, Fermi, Planck, Chandra, XMM, Herschel, INTEGRAL, Hubble Source Catalog...
+  - *Alerts* (gravitational waves, IceCube), *outreach images* (Webb, Hubble, Euclid), *exoplanets* (NASA Exoplanet Archive) and *solar-system objects* in the field right now (IMCCE SkyBoT).
+  - Android draws the observation footprints on the sky; tap one to see its details and open or download the data.
+- **Science tools:** visibility windows for JWST / Euclid (Sun-angle limits), target lists resolved with SIMBAD, publications of an object (SIMBAD to ADS), and shareable view links / sessions (`astrovia://view?ra=..&dec=..&fov=..`).
+- All the offline download features of 0.6.2 are unchanged.
+
+The Archives feature is an original implementation on top of public IVOA protocols (TAP/ADQL, VOTable) and the services above; see [NOTICE.md](NOTICE.md) for the data acknowledgements.
+
 ## Highlights (0.6.2)
 
 - **All-sky view like Aladin Desktop** (Android): zoom all the way out and a sky survey becomes the whole-sky oval, a planet becomes a disc you can rotate. You can zoom and navigate inside both. Tiles are drawn as one continuous mesh, so there are no gaps between them at any zoom.

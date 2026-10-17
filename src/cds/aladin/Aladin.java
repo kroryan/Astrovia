@@ -213,7 +213,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
 
    /** Numero de version */
    static public final    String VERSION = "v12.060";   // Aladin engine version this build is based on
-   static public final    String ASTROVIA_VERSION = "0.6.2";
+   static public final    String ASTROVIA_VERSION = "0.6.3";
    static protected final String AUTHORS = "P.Fernique, T.Boch, A.Oberto, F.Bonnarel, Chaitra & al";
 //   static protected final String OUTREACH_VERSION = "    *** UNDERGRADUATE MODE (based on "+VERSION+") ***";
    static protected final String BETA_VERSION     = "  (engine "+VERSION+")";
@@ -788,7 +788,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
    RGB,MOSAIC,BLINK,SPECTRUM,MREDO,GREY,SELECT,SELECTTAG,DETAG,TAGSELECT,SELECTALL,UNSELECT,PANEL,
    PANEL1,PANEL2C,PANEL2L,PANEL2T,PANEL4,PANEL9,PANEL16,NTOOL,DIST,DRAW,PHOT,TAG,STATSURF,STATSURFCIRC,
    STATSURFPOLY,CUT,SPECT,TRANSP,TRANSPON,CROP,COPY,CLONE,CLONE1,CLONE2,PLOTCAT,CONCAT,CONCAT1,CONCAT2,TABLEINFO,
-   SAVEVIEW,SAVESKY,EXPORTEPS,EXPORT,BACKUP,FOLD,INFOLD,ARITHM,MOC,MOCGENIMG,MOCGENPROBA,TMOCGEN,TMOCGENCAT,TMOCGENOBJ,
+   SAVEVIEW,SAVESKY,ARCHIVES,EXPORTEPS,EXPORT,BACKUP,FOLD,INFOLD,ARITHM,MOC,MOCGENIMG,MOCGENPROBA,TMOCGEN,TMOCGENCAT,TMOCGENOBJ,
    STMOCGEN,STMOCGENCAT,STMOCGENOBJ,STMOCGENMOC,MOCGEN,MOCPOL,MOCGENIMGS,MOCGENCAT,
    MOCM,MOCTOORDER,MOCSPLIT,MOCFILTERING,MOCCROP,MOCEXTRACTSMOC,MOCEXTRACTTMOC,MOCEXTRACTSTMOC,MOCHELP,MOCLOAD,MOCHIPS,
    HEALPIXARITHM,/*ADD,SUB,MUL,DIV,*/
@@ -1306,6 +1306,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
       CONCAT2 = chaine.getString("VWCONCATMULTI");
       SAVEVIEW= chaine.getString("MSAVEVIEW");
       SAVESKY= chaine.getString("MSAVESKY");
+      ARCHIVES= chaine.getString("MARCHIVES");
       EXPORTEPS=chaine.getString("MEXPORTEPS");
       EXPORT  = chaine.getString("MEXPORT");
       BACKUP  = chaine.getString("MBACKUP");
@@ -1435,7 +1436,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
                     {OPENDIRCAT+"|"+meta+" T"},{OPENDIRCUBE},
                {},{SEARCHDIR+"|"+meta+" E"},{FILTERDIR},
                {},{OPENFILE+"|"+meta+" O"}, {OPENURL}, {LASTFILE,"???"},
-               {},{OPENLOAD+"|"+meta+" L"}, {LOADTAP}, {LOADFOV}, 
+               {},{OPENLOAD+"|"+meta+" L"}, {LOADTAP}, {LOADFOV}, {ARCHIVES},
                {},{MSAVE+"|"+meta+" S"},{SAVEVIEW,"-"},{SAVESKY},{EXPORTEPS},{EXPORT},{BACKUP},
                {},{MPRINT+"|"+meta+" P"},
                {},{NEW+"|"+meta+" N"},
@@ -2534,7 +2535,11 @@ DropTargetListener, DragSourceListener, DragGestureListener
       // Top-right: sky capture button (HiPS image only) next to the logo, outside the sky view.
       JPanel hautDroite = new JPanel(new BorderLayout(4,0));
       hautDroite.setBackground( getBackground());
-      hautDroite.add(new SkyCapture.Button(this),BorderLayout.WEST);
+      JPanel botones = new JPanel(new FlowLayout(FlowLayout.LEFT,2,0));
+      botones.setBackground( getBackground());
+      botones.add(new ArchivesButton(this));
+      botones.add(new SkyCapture.Button(this));
+      hautDroite.add(botones,BorderLayout.WEST);
       hautDroite.add(logo,BorderLayout.CENTER);
       haut.add(hautDroite,BorderLayout.EAST);
 
@@ -3305,6 +3310,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
          }
       }
       if( isMenu(s,SAVESKY) ) { SkyCapture.run(this); return true; }
+      if( isMenu(s,ARCHIVES) ) { ArchivesDialog.open(this); return true; }
       if( isMenu(s,EXPORTEPS) ) save.saveFile(1,Save.getCodedFormat(Util.indexInArrayOf("EPS", fmt)),-1);
       else if( isMenu(s,BACKUP) ) save.saveFile(0);
       else if( isMenu(s,EXPORT) ) save.exportPlans();

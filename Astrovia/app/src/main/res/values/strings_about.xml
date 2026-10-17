@@ -11,7 +11,7 @@
     <string name="notice_license_title">Free and open source</string>
     <string name="notice_license_body">Free, no ads and no tracking. Licensed under the GNU General Public License v3 (GPL-3.0). The source code is publicly available.</string>
     <string name="notice_data_title">Data and privacy</string>
-    <string name="notice_data_body">Astrovia has no accounts and collects no personal data. To show images and catalogs it connects to public astronomical services (HiPS servers, Simbad and VizieR at CDS); the coordinates and names you search are sent to those servers. This research has made use of the SIMBAD database and the VizieR catalogue access tool, operated at CDS, Strasbourg, France.</string>
+    <string name="notice_data_body">Astrovia has no accounts and collects no personal data. To show images and catalogs it connects to public astronomical services (HiPS servers, Simbad and VizieR at CDS); the coordinates and names you search are sent to those servers. This research has made use of the SIMBAD database and the VizieR catalogue access tool, operated at CDS, Strasbourg, France. The Archives search also queries the ESA archives (ESA Sky TAP, Gaia, HST), the NASA Exoplanet Archive and IMCCE SkyBoT; the coordinates of the field you look at are sent to them. Their data terms and citations apply.</string>
     <string name="welcome_accept">I understand, continue</string>
     <string name="about_open_source">Source code</string>
     <string name="about_close">Close</string>

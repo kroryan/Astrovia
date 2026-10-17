@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.TravelExplore
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -96,6 +97,9 @@ fun SkyScreen(vm: SkyViewModel) {
     var showCatalogSheet by remember { mutableStateOf(false) }
     var showSettingsSheet by remember { mutableStateOf(false) }
     var showDownloadSheet by remember { mutableStateOf(false) }
+    var showArchives by remember { mutableStateOf(false) }
+    var archivesTab by remember { mutableStateOf(0) }
+    var archivesSection by remember { mutableStateOf(0) }
 
     val catalogList = remember { VizieRService().catalogs }
     var maxRowsInput by remember { mutableStateOf("500") }
@@ -272,6 +276,9 @@ fun SkyScreen(vm: SkyViewModel) {
                         IconButton(onClick = { showDownloadSheet = true }) {
                             Icon(Icons.Filled.CloudDownload, contentDescription = "Download HiPS", tint = androidx.compose.ui.graphics.Color.White)
                         }
+                        IconButton(onClick = { archivesTab = 0; archivesSection = 0; showArchives = true }) {
+                            Icon(Icons.Filled.TravelExplore, contentDescription = "Archives", tint = androidx.compose.ui.graphics.Color.White)
+                        }
                         IconButton(onClick = { showCatalogSheet = true }) {
                             Icon(Icons.Filled.TableChart, contentDescription = stringResource(R.string.catalogs), tint = androidx.compose.ui.graphics.Color.White)
                         }
@@ -372,6 +379,15 @@ fun SkyScreen(vm: SkyViewModel) {
     }
 
     if (showAbout) AboutDialog(onDismiss = { showAbout = false })
+    if (showArchives) ArchivesSheet(vm, state, archivesTab, archivesSection, onDismiss = { showArchives = false })
+    state.selectedHit?.let { hit ->
+        HitSheet(
+            hit = hit,
+            onCenter = { vm.recenter(com.kroryan.astrovia.model.SkyPosition(hit.raDeg, hit.decDeg)) },
+            onPublications = { vm.loadPublications(hit.title); vm.selectHit(null); archivesTab = 2; archivesSection = 2; showArchives = true },
+            onDismiss = { vm.selectHit(null) },
+        )
+    }
     if (showCaptureDialog) {
         CaptureOptionsDialog(
             vm = vm,

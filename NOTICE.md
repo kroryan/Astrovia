@@ -37,3 +37,15 @@ The corresponding source code of every distributed version is in this repository
 This application makes use of the SIMBAD database and the VizieR catalogue access tool, operated at CDS,
 Strasbourg, France, and of HiPS surveys served by their respective data providers; their terms of use and
 citations apply.
+
+## Archives feature (0.6.3)
+
+The "Archives" window (desktop) and sheet (Android) are an original implementation written for Astrovia on top of
+public IVOA standards (TAP/ADQL, VOTable). They query these services; their terms of use and citation requests apply:
+
+- ESA archives (XMM-Newton, Herschel, HST, JWST, Gaia, Euclid...) through the ESA Sky archive TAP service (sky.esa.int/esasky-tap), the Gaia archive and the HST archive.
+- NASA Exoplanet Archive (exoplanetarchive.ipac.caltech.edu).
+- IMCCE SkyBoT (solar-system objects) and SIMBAD (CDS) for names and publications; ADS links for papers.
+
+"ESA" and the names of the missions belong to their owners and are used only to describe the data. Astrovia is not
+affiliated with or endorsed by ESA, NASA, IMCCE or the CDS.

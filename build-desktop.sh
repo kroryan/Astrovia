@@ -12,6 +12,6 @@ javac -nowarn -encoding Cp1252 --release 8 -cp "$CP" -d "$OUT/classes" @"$OUT/so
 # merge dependency jars
 for j in lib/*.jar; do ( cd "$OUT/jar" && unzip -qo "../../../$j" -x 'META-INF/*' ); done
 cp -r "$OUT/classes/." "$OUT/jar/"
-printf 'Main-Class: cds.astrovia.Astrovia\nImplementation-Title: Astrovia\nImplementation-Version: %s\n' "${ASTROVIA_VERSION:-0.6.2}" > "$OUT/MANIFEST.MF"
+printf 'Main-Class: cds.astrovia.Astrovia\nImplementation-Title: Astrovia\nImplementation-Version: %s\n' "${ASTROVIA_VERSION:-0.6.3}" > "$OUT/MANIFEST.MF"
 jar --create --file "$OUT/Astrovia.jar" --manifest "$OUT/MANIFEST.MF" -C "$OUT/jar" .
 ls -la "$OUT/Astrovia.jar"
