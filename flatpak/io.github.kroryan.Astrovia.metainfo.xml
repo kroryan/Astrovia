@@ -69,6 +69,11 @@
     <binary>astrovia</binary>
   </provides>
   <releases>
+    <release version="0.7.2" date="2026-10-18">
+      <description>
+        <p>Loading a catalogue (SIMBAD, VizieR...) no longer breaks navigation on the desktop: dragging empty sky pans again (Shift for a selection rectangle) and the false "uncompatible spatial references" warning is gone.</p>
+      </description>
+    </release>
     <release version="0.7.1" date="2026-10-18">
       <description>
         <ul>

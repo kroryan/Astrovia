@@ -679,7 +679,8 @@ public final class Projection {
    protected boolean isUncompatibleBody( Projection p ) {
 
       int r = isUncompatibleBody1( p );
-      if( r!=1 ) {
+      // Unknown body (r==-1, e.g. a plain VOTable catalogue) is not a conflict: only warn when sure
+      if( r==0 ) {
          Plan plan = p.plan;
          if( !Aladin.aladin.isFullScreen() ) {
             Aladin.aladin.uncompatibleFrameWarning(getBody(), p.getBody());

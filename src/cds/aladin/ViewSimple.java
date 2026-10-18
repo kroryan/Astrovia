@@ -2108,8 +2108,11 @@ DropTargetListener, DragSourceListener, DragGestureListener {
 
    /** Retourne le Tool courant avec la possibilité de passer directement
     * en PAN avec la touche ALT enfoncée    */
+   private boolean panFromSelect=false;
+
    private int getTool(MouseEvent e) {
       int tool = aladin.toolBox.getTool();
+      if( panFromSelect && tool==ToolBox.SELECT ) tool=ToolBox.PAN;
       if( ((e.getModifiers() & java.awt.event.InputEvent.BUTTON2_MASK) !=0 || e.isAltDown() )
             && pref instanceof PlanBG ) tool=ToolBox.PAN;
 
@@ -2162,6 +2165,14 @@ DropTargetListener, DragSourceListener, DragGestureListener {
       }
       
       boolean boutonDroit = (e.getModifiers() & java.awt.event.InputEvent.BUTTON3_MASK) !=0 && fullScreen;
+      // A plain drag that starts on empty sky pans the view, even when catalogues are loaded
+      // (a rectangle selection then needs Shift). Upstream only panned without any catalogue.
+      panFromSelect=false;
+      if( aladin.toolBox.getTool()==ToolBox.SELECT && !boutonDroit && !e.isShiftDown() && !e.isControlDown() && !e.isAltDown()
+            && view.newobj==null && vs.pref instanceof PlanBG && Projection.isOk(vs.getProj()) ) {
+         PointD q = vs.getPosition(x,y);
+         if( calque.getObjWith(vs,q.x,q.y).isEmpty() && testPoigneeTag(q.x,q.y)==null ) panFromSelect=true;
+      }
       int tool = getTool(e);
       boolean flagshift = e.isShiftDown() ;
 
@@ -2564,6 +2575,7 @@ DropTargetListener, DragSourceListener, DragGestureListener {
       }
       
       mouseReleased1(e.getX(),e.getY(),e);
+      panFromSelect=false;
       if( createCoteDist() ) repaint();
       aladin.sendMouseObserver();
    }
