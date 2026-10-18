@@ -23,6 +23,8 @@ data class HiPSProperties(
     /** `hips_pixel_cut` (used to stretch FITS tiles to an 8-bit picture); null if not declared. */
     val pixelCutMin: Double? = null,
     val pixelCutMax: Double? = null,
+    /** `moc_sky_fraction`: share of the sky the survey covers (1.0 = all sky or unknown). */
+    val skyFraction: Double = 1.0,
 ) {
     val ext: String get() = when (tileFormat.lowercase()) {
         "png" -> "png"
@@ -74,6 +76,7 @@ object HiPSPropertiesParser {
             initialFov = (map["hips_initial_fov"] ?: "60").toDoubleOrNull() ?: 60.0,
             pixelCutMin = cut.getOrNull(0),
             pixelCutMax = cut.getOrNull(1),
+            skyFraction = (map["moc_sky_fraction"] ?: "1").toDoubleOrNull()?.takeIf { it in 0.0..1.0 } ?: 1.0,
         )
     }
 }

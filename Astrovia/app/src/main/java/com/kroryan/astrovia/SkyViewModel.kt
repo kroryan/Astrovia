@@ -84,6 +84,7 @@ data class SkyUiState(
     // Multi-archive search (observations, spectra, catalogues, alerts, solar system, exoplanets...)
     val archiveHits: List<ArchiveHit> = emptyList(),
     val archiveLabel: String? = null,
+    val archiveSource: ArchiveSource? = null,
     val archiveLoading: Boolean = false,
     val archiveVisible: Boolean = true,
     val selectedHit: ArchiveHit? = null,
@@ -119,6 +120,13 @@ data class SkyUiState(
 ) {
     /** Archive results after the chart filter (tap a bar or a year in the charts). */
     val visibleHits: List<ArchiveHit> get() = hitFilter?.let { f -> archiveHits.filter(f.test) } ?: archiveHits
+
+    /** The sky tools act on every overlay: VizieR catalogue rows and archive results (observations, spectra, ...). */
+    val layersVisible: Boolean get() = when {
+        archiveHits.isNotEmpty() && catalogRows.isNotEmpty() -> catalogVisible || archiveVisible
+        archiveHits.isNotEmpty() -> archiveVisible
+        else -> catalogVisible
+    }
 }
 
 /** A filter chosen by tapping a chart: [label] is shown to the user, [test] decides which results stay. */
@@ -278,7 +286,17 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
                         com.kroryan.astrovia.sky.ProjectionKind.HAMMER
                     }
                     val cam = if (it.cameraPlaced) {
-                        it.camera.copy(kind = kind).clampedTo(viewW, viewH)
+                        // A survey that covers a small part of the sky (EROS, a mission field...) is blank anywhere
+                        // else: go to its own initial view unless the user is already looking at it.
+                        val ic = props.initialIcrs
+                        val ini = SkyPosition(ic[0], ic[1])
+                        val farAway = props.skyFraction < 0.5 && props.skyFrame != com.kroryan.astrovia.sky.SkyFrame.BODY &&
+                            SkyPosition.separation(it.camera.center, ini) > maxOf(props.initialFov, it.camera.fovDeg / 2.0)
+                        if (farAway) {
+                            SkyCamera.looking(ini, props.initialFov.coerceIn(SkyCamera.MIN_FOV, MAX_INITIAL_FOV), kind).clampedTo(viewW, viewH)
+                        } else {
+                            it.camera.copy(kind = kind).clampedTo(viewW, viewH)
+                        }
                     } else {
                         val ic = props.initialIcrs
                         val fov = props.initialFov.coerceIn(SkyCamera.MIN_FOV, MAX_INITIAL_FOV)
@@ -514,7 +532,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
             clearMessageLater(note)
         }
         val radius = (s.camera.fovDeg / 2.0).coerceIn(0.05, 60.0) * 60.0 // arcmin
-        _state.update { it.copy(catalogLoading = true, message = null, activeCatalogId = catalogId) }
+        _state.update { it.copy(catalogLoading = true, message = null, activeCatalogId = catalogId, archiveSource = null) }
         viewModelScope.launch {
             try {
                 val rows = if (catalogId == "SIMBAD") {
@@ -562,7 +580,19 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
 
     fun clearCatalog() = _state.update { it.copy(catalogRows = emptyList(), catalogVisible = true, activeCatalogId = null) }
 
-    fun toggleCatalogVisibility() = _state.update { it.copy(catalogVisible = !it.catalogVisible) }
+    fun toggleCatalogVisibility() = _state.update { val v = !it.layersVisible; it.copy(catalogVisible = v, archiveVisible = v) }
+
+    /** Repeats the last overlay query on the current view: the catalogue loaded, or the archive search shown. */
+    fun reloadOverlay(maxRows: Int) {
+        val s = _state.value
+        val cat = s.activeCatalogId
+        val src = s.archiveSource
+        when {
+            cat != null -> loadCatalog(cat, maxRows)
+            src != null && src.id == "skybot" -> searchSolarSystem()
+            src != null -> searchArchive(src)
+        }
+    }
 
     // --- Sky capture (screenshot of the HiPS only) ---
     private var captureJob: Job? = null
@@ -1230,7 +1260,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
         val limit = if (maxRows > 0) maxRows else if (src.kind == com.kroryan.astrovia.data.archive.ArchiveKind.CATALOGUES) 1500 else 400
         val c = _state.value.camera.center
         val radius = visibleRadiusDeg()
-        _state.update { it.copy(archiveLoading = true, message = null, selectedHit = null) }
+        _state.update { it.copy(archiveLoading = true, message = null, selectedHit = null, activeCatalogId = null) }
         viewModelScope.launch {
             var msg: String
             var hits: List<ArchiveHit> = emptyList()
@@ -1245,12 +1275,12 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: Exception) {
                 msg = "${src.label}: failed (${e.message})"
             }
-            _state.update { it.copy(archiveLoading = false, archiveHits = hits, archiveLabel = src.label, archiveVisible = true, hitFilter = null, message = msg) }
+            _state.update { it.copy(archiveLoading = false, archiveHits = hits, archiveLabel = src.label, archiveSource = src, archiveVisible = true, hitFilter = null, message = msg) }
             clearMessageLater(msg)
         }
     }
 
-    fun clearArchive() = _state.update { it.copy(archiveHits = emptyList(), archiveLabel = null, selectedHit = null, solarBodies = emptyList(), hitFilter = null) }
+    fun clearArchive() = _state.update { it.copy(archiveHits = emptyList(), archiveLabel = null, archiveSource = null, selectedHit = null, solarBodies = emptyList(), hitFilter = null) }
 
     fun setHitFilter(f: HitFilter?) = _state.update { s -> s.copy(hitFilter = if (f == null || s.hitFilter?.label == f.label) null else f, selectedHit = null) }
 
@@ -1309,7 +1339,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
                 ArchiveHit(src, if (b.number > 0) "(${b.number}) ${b.name}" else b.name, b.name, b.raDeg, b.decDeg, emptyList(), b.card?.takeIf { it.startsWith("http") },
                     buildMap { put("Class", b.cls); b.vmag?.let { put("V mag", "%.1f".format(it)) }; if (b.number > 0) put("Number", b.number.toString()) })
             }
-            _state.update { it.copy(archiveLoading = false, archiveHits = hits, archiveLabel = src.label, archiveVisible = true, solarBodies = bodies, message = msg) }
+            _state.update { it.copy(archiveLoading = false, archiveHits = hits, archiveLabel = src.label, archiveSource = src, archiveVisible = true, solarBodies = bodies, message = msg) }
             clearMessageLater(msg)
         }
     }
