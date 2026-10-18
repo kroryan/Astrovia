@@ -21,7 +21,7 @@ It reuses the same CDS web services as Aladin Desktop:
 - Survey selector (DSS2 color, 2MASS, ALLWISE, GALEX, …).
 - Object search by name (Simbad) and map centering.
 - Tap the sky to identify the object (Simbad cone search).
-- VizieR catalog overlays (Gaia DR3, 2MASS, Tycho-2, SDSS…).
+- SIMBAD and VizieR catalogues (Gaia DR3, 2MASS, Tycho-2, SDSS…) inside the Archives panel, with field counts, charts and footprints like any other archive.
 - Manual markers and angular distance measurements (great circle).
 - Status bar with center RA/Dec/FoV.
 

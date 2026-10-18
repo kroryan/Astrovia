@@ -191,7 +191,8 @@ public class ArchivesDialog extends JDialog {
          double ra = Double.parseDouble(raF.getText().trim()), dec = Double.parseDouble(decF.getText().trim());
          double rad = Math.max(0.0005, Math.min(90.0, Double.parseDouble(radF.getText().trim())));
          int max = Math.max(1, Math.min(100000, Integer.parseInt(maxF.getText().trim())));
-         String url = s.tap + "/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=votable&QUERY=" + URLEncoder.encode(adql(s, ra, dec, rad, max), "UTF-8");
+         String url = cds.astrovia.sky.Adql.VIZIER.equals(s.tap) ? cds.astrovia.sky.Adql.vizierCone(s.table, ra, dec, rad, max)   // VizieR tables use VizieR's own service
+            : s.tap + "/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=votable&QUERY=" + URLEncoder.encode(adql(s, ra, dec, rad, max), "UTF-8");
          loadUrl(url, s.label);
       } catch (Exception ex) {
          status.setText("Check RA, Dec, radius and max rows (numbers).");
@@ -660,6 +661,9 @@ public class ArchivesDialog extends JDialog {
    private List<Source> lastScan = new ArrayList<Source>();
 
    private int count(Source s, double ra, double dec, double rad) throws IOException {
+      if( cds.astrovia.sky.Adql.VIZIER.equals(s.tap) ) {   // no cheap count in VizieR: up to 1000 rows are read and counted
+         return cds.astrovia.sky.VotableReader.parse(new String(fetch(cds.astrovia.sky.Adql.vizierCone(s.table, ra, dec, rad, 1000), 45000), "UTF-8")).size();
+      }
       String q = cds.astrovia.sky.Adql.count(s.table, s.ra, s.dec, ra, dec, rad, s.where);
       List<Map<String, String>> r = tap(s.tap, q, 45000);   // a slow archive is skipped, it must not block the scan
       if (r.isEmpty() || r.get(0).isEmpty()) return 0;
@@ -677,7 +681,7 @@ public class ArchivesDialog extends JDialog {
       final List<Source> todo = new ArrayList<Source>();
       for (Source s : sources) {
          if (s.kind.equals("sso") || s.kind.equals("exo")) continue;
-         if (all || "ESA".equals(s.centre) || "MAST".equals(s.centre)) todo.add(s);
+         if (all || "ESA".equals(s.centre) || "MAST".equals(s.centre) || "CDS".equals(s.centre)) todo.add(s);
       }
       if (scanPool != null) scanPool.shutdownNow();          // a scan in progress is replaced by this one
       final int gen = ++scanGen;

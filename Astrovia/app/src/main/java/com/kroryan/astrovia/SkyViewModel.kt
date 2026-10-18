@@ -1245,7 +1245,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
         val c = _state.value.camera.center
         val r = visibleRadiusDeg()
         val kinds = listOf(com.kroryan.astrovia.data.archive.ArchiveKind.OBSERVATIONS, com.kroryan.astrovia.data.archive.ArchiveKind.SPECTRA, com.kroryan.astrovia.data.archive.ArchiveKind.CATALOGUES, com.kroryan.astrovia.data.archive.ArchiveKind.LIGHT_CURVES, com.kroryan.astrovia.data.archive.ArchiveKind.IMAGES, com.kroryan.astrovia.data.archive.ArchiveKind.ALERTS)
-        val list = _state.value.archiveSources.filter { it.kind in kinds }.let { l -> if (all) l else l.filter { it.centre == "ESA" || it.centre == "MAST" } }
+        val list = _state.value.archiveSources.filter { it.kind in kinds }.let { l -> if (all) l else l.filter { it.centre == "ESA" || it.centre == "MAST" || it.centre == "CDS" } }
         _state.update { it.copy(fieldCounts = emptyMap(), scanProgress = 0 to list.size, scanCenter = Triple(c.raDeg, c.decDeg, r)) }
         scanJob = viewModelScope.launch {
             try {

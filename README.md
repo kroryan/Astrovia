@@ -30,6 +30,10 @@ FITS images and MOC coverage, in a modern dark interface. Free, no ads, no track
 | **Desktop** (Linux, Windows) | this repository (`src/`) | Java/Swing, based on Aladin Desktop. See [DESKTOP.md](DESKTOP.md) |
 | **Android** | [`Astrovia/`](Astrovia/README.md) | Native Kotlin / Jetpack Compose app |
 
+## Highlights (0.7.1)
+
+- **SIMBAD and VizieR are archives too** (Android and desktop): *SIMBAD objects* and 19 popular VizieR catalogues (Gaia DR3 and DR2, 2MASS, Tycho-2, Hipparcos, UCAC4, NOMAD, Pan-STARRS, WISE, SDSS DR16, USNO-B, GSC 2.3, NGC 2000, PGC, Bright Star Catalogue, TESS Input Catalog, APASS, VSX...) are listed with the rest of the catalogues. They show up in the field overview with their counts (VizieR counts stop at 1000), in the results list, charts and footprints, and with the same buttons as any other archive. The separate "VizieR catalogs" button of the Android toolbar is gone.
+
 ## Highlights (0.7.0)
 
 - **Planets, moons, asteroids and everything else is on by default.** The desktop "Available data" now shows the whole *Solar system* branch (Mars, the Moon, Venus, Mercury, Jupiter's moons, Ceres...) without turning anything on; it can still be switched off in *Edit > Preferences > Planetary data*.

@@ -42,11 +42,12 @@ Upload the `.msix` (the Store signs it).
 
 ## apt repository
 
-Recommended: GitHub Pages (static, free, same repo). Sign with GPG for production:
+The repository is served from the website (WordPress plugin, *Astrovia Page > Linux repository*). Sign it with the GPG
+key kept in `credenciales/` (see `credenciales/GUIA.md`):
 
 ```
 GPG_KEY=<fingerprint> ./package-desktop.sh
-# publish release/desktop/apt-repo/ to the gh-pages branch
+# upload release/desktop/astrovia-apt-repo.zip in the plugin and set "Latest version"
 ```
 
 Users:

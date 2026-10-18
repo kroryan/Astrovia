@@ -69,6 +69,13 @@
     <binary>astrovia</binary>
   </provides>
   <releases>
+    <release version="0.7.1" date="2026-10-18">
+      <description>
+        <ul>
+          <li>SIMBAD and popular VizieR catalogues listed with the archives (counts, charts, results); remove-catalogues button; Center zooms to the object</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.7.0" date="2026-10-18">
       <description>
         <ul>

@@ -19,6 +19,20 @@ public final class Adql {
       return String.format(Locale.US, "SELECT TOP %d * FROM %s WHERE ", top, table) + circle(raCol, decCol, ra, dec, radiusDeg) + tail(where, orderCol);
    }
 
+   /** Source whose "tap" is this value is a VizieR table, read through VizieR's own cone-search service (no TAP involved). */
+   public static final String VIZIER = "vizier";
+
+   /** VizieR cone search as a VOTable: the table id is the VizieR catalogue name (e.g. II/246/out); _RAJ2000/_DEJ2000 are added in degrees. */
+   public static String vizierCone(String table, double ra, double dec, double radiusDeg, int max) {
+      String c;
+      try {
+         c = java.net.URLEncoder.encode(String.format(Locale.US, "%.6f %+.6f", ra, dec), "UTF-8");
+         table = java.net.URLEncoder.encode(table, "UTF-8");
+      } catch (java.io.UnsupportedEncodingException e) { throw new IllegalStateException(e); }
+      return String.format(Locale.US, "https://vizier.cds.unistra.fr/viz-bin/votable?-source=%s&-c=%s&-c.rm=%.5f&-out.add=_RAJ,_DEJ&-out.max=%d&-out.meta=DhuL&-oc.form=dm",
+         table, c, Math.max(0.0005, Math.min(90.0, radiusDeg)) * 60.0, max);
+   }
+
    /** Number of rows of a table inside a cone. */
    public static String count(String table, String raCol, String decCol, double ra, double dec, double radiusDeg, String where) {
       return "SELECT COUNT(*) AS n FROM " + table + " WHERE " + circle(raCol, decCol, ra, dec, radiusDeg) + tail(where, null);

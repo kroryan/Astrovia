@@ -102,7 +102,6 @@ fun SkyScreen(vm: SkyViewModel) {
     val state by vm.state.collectAsState()
     val drawerState = rememberDrawerState(initialValue = androidx.compose.material3.DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var showCatalogSheet by remember { mutableStateOf(false) }
     var showSettingsSheet by remember { mutableStateOf(false) }
     var showDownloadSheet by remember { mutableStateOf(false) }
     var showArchives by remember { mutableStateOf(false) }
@@ -110,8 +109,7 @@ fun SkyScreen(vm: SkyViewModel) {
     var archivesTab by remember { mutableStateOf(0) }
     var archivesSection by remember { mutableStateOf(0) }
 
-    val catalogList = remember { VizieRService().catalogs }
-    var maxRowsInput by remember { mutableStateOf("500") }
+    val maxRowsInput = "500"
 
     var surveySearch by remember { mutableStateOf("") }
     var showAbout by remember { mutableStateOf(false) }
@@ -271,9 +269,6 @@ fun SkyScreen(vm: SkyViewModel) {
                         IconButton(onClick = { archivesTab = 0; archivesSection = 0; showArchives = true }) {
                             Icon(Icons.Filled.TravelExplore, contentDescription = "Archives", tint = androidx.compose.ui.graphics.Color.White)
                         }
-                        IconButton(onClick = { showCatalogSheet = true }) {
-                            Icon(Icons.Filled.TableChart, contentDescription = stringResource(R.string.catalogs), tint = androidx.compose.ui.graphics.Color.White)
-                        }
                     }
                 }
             }
@@ -423,53 +418,6 @@ fun SkyScreen(vm: SkyViewModel) {
         }
     }
 
-    // Bottom sheet: catalog selector
-    if (showCatalogSheet) {
-        val sheetState = rememberModalBottomSheetState()
-        ModalBottomSheet(
-            onDismissRequest = { showCatalogSheet = false },
-            sheetState = sheetState,
-        ) {
-            Column(Modifier.padding(16.dp)) {
-                Text("VizieR Catalogs", style = MaterialTheme.typography.titleLarge)
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = maxRowsInput,
-                    onValueChange = { maxRowsInput = it.filter { ch -> ch.isDigit() }.take(5) },
-                    label = { Text("Max rows (e.g. 500)") },
-                    singleLine = true,
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                    ),
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                )
-                LazyColumn {
-                    items(catalogList) { cat ->
-                        NavigationDrawerItem(
-                            label = { Text(cat.name) },
-                            selected = false,
-                            onClick = {
-                                val limit = maxRowsInput.toIntOrNull() ?: 500
-                                vm.loadCatalog(cat.id, limit)
-                                showCatalogSheet = false
-                            },
-                            modifier = Modifier.padding(vertical = 2.dp),
-                        )
-                    }
-                    item {
-                        NavigationDrawerItem(
-                            label = { Text("Remove catalog") },
-                            selected = false,
-                            onClick = {
-                                vm.clearCatalog()
-                                showCatalogSheet = false
-                            },
-                        )
-                    }
-                }
-            }
-        }
-    }
 
     // Bottom sheet: settings (cache, quality, concurrency)
     if (showSettingsSheet) {

@@ -97,6 +97,14 @@ class ArchiveService(context: Context) {
 
     /** Number of rows of a source inside a cone: the counts shown in the field overview. */
     suspend fun countInField(src: ArchiveSource, raDeg: Double, decDeg: Double, radiusDeg: Double): Int = withContext(Dispatchers.IO) {
+        if (src.tapUrl == Adql.VIZIER) {
+            // VizieR has no cheap count: ask for up to 1000 rows and count them ("1000" then means "1000 or more")
+            val text = quick.newCall(Request.Builder().url(Adql.vizierCone(src.table, raDeg, decDeg, radiusDeg, 1000)).build()).execute().use { r ->
+                if (!r.isSuccessful) throw java.io.IOException("VizieR answered HTTP ${r.code}")
+                r.body?.string().orEmpty()
+            }
+            return@withContext VotableTable.parse(text).size
+        }
         val adql = Adql.count(src.table, src.raCol, src.decCol, raDeg, decDeg, radiusDeg, src.where)
         tapRows(src.tapUrl, adql, src.format, fast = true).firstOrNull()?.values?.firstOrNull()?.toDoubleOrNull()?.toInt() ?: 0
     }
@@ -154,8 +162,11 @@ class ArchiveService(context: Context) {
     suspend fun coneSearch(
         src: ArchiveSource, raDeg: Double, decDeg: Double, radiusDeg: Double, maxRows: Int = 300,
     ): List<ArchiveHit> = withContext(Dispatchers.IO) {
-        val adql = Adql.cone(src.table, src.raCol, src.decCol, raDeg, decDeg, radiusDeg, maxRows, src.where, src.orderCol)
-        val rows = tapRows(src.tapUrl, adql, src.format)
+        val rows = if (src.tapUrl == Adql.VIZIER) {
+            VotableTable.parse(get(Adql.vizierCone(src.table, raDeg, decDeg, radiusDeg, maxRows)))
+        } else {
+            tapRows(src.tapUrl, Adql.cone(src.table, src.raCol, src.decCol, raDeg, decDeg, radiusDeg, maxRows, src.where, src.orderCol), src.format)
+        }
         rows.mapNotNull { row ->
             val m = row.entries.associate { it.key.lowercase() to it.value }
             fun col(c: String?) = c?.let { m[it.lowercase()] }?.trim()?.takeIf { it.isNotEmpty() }
