@@ -414,11 +414,11 @@ fun SkyScreen(vm: SkyViewModel) {
             ObjectSheetContent(
                 obj = selected, vm = vm, info = state.objectInfo, loading = state.objectLoading,
                 onCenter = {
-                    vm.recenter(selected.position)
+                    vm.focusOn(selected.position, state.objectInfo?.sizeArcmin)
                     vm.clearSelected()
                 },
                 onPapers = { vm.loadPublications(selected.mainId); vm.clearSelected(); archivesTab = 3; archivesSection = 3; showArchives = true },
-                onObservations = { vm.recenter(selected.position); vm.clearSelected(); vm.scanField(false); archivesTab = 0; showArchives = true },
+                onObservations = { vm.focusOn(selected.position); vm.clearSelected(); vm.scanField(false); archivesTab = 0; showArchives = true },
             )
         }
     }

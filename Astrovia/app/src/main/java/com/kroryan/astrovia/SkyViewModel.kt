@@ -393,6 +393,20 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
         _state.update { it.copy(camera = it.camera.zoom(factor, w, h, fx, fy)) }
     }
 
+    /**
+     * Goes to an object: centres on it and, if the view is much wider than the object, zooms in on it
+     * (centring alone does nothing visible when the whole sky is on screen). It never zooms out.
+     */
+    fun focusOn(pos: SkyPosition, sizeArcmin: Double? = null) {
+        stopMotion()
+        val target = ((sizeArcmin ?: 0.0) * 4.0 / 60.0).coerceIn(2.0, 10.0)
+        _state.update {
+            var cam = it.camera.recenterTo(pos)
+            if (cam.fovDeg > target * 1.5) cam = cam.copy(fovDeg = target).clampedTo(viewW, viewH)
+            it.copy(camera = cam)
+        }
+    }
+
     fun recenter(pos: SkyPosition) {
         stopMotion()
         _state.update { it.copy(camera = it.camera.recenterTo(pos)) }
@@ -461,9 +475,10 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
                     searching = false,
                     selected = found,
                     message = msg,
-                    camera = if (found != null) it.camera.recenterTo(found.position) else it.camera,
+                    camera = it.camera,
                 )
             }
+            if (found != null) focusOn(found.position)
             clearMessageLater(msg)
         }
     }
@@ -1444,8 +1459,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun goToTarget(t: Target) {
-        stopMotion()
-        _state.update { it.copy(camera = it.camera.recenterTo(SkyPosition(t.raDeg, t.decDeg))) }
+        focusOn(SkyPosition(t.raDeg, t.decDeg))
     }
 
     // --- Object explorer ---
