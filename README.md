@@ -30,6 +30,16 @@ FITS images and MOC coverage, in a modern dark interface. Free, no ads, no track
 | **Desktop** (Linux, Windows) | this repository (`src/`) | Java/Swing, based on Aladin Desktop. See [DESKTOP.md](DESKTOP.md) |
 | **Android** | [`Astrovia/`](Astrovia/README.md) | Native Kotlin / Jetpack Compose app |
 
+## Highlights (0.7.0)
+
+- **Planets, moons, asteroids and everything else is on by default.** The desktop "Available data" now shows the whole *Solar system* branch (Mars, the Moon, Venus, Mercury, Jupiter's moons, Ceres...) without turning anything on; it can still be switched off in *Edit > Preferences > Planetary data*.
+- **Sky tools work on every overlay** (Android): hide, reload and the new **remove catalogues** button act on VizieR catalogues *and* on archive results (observations, spectra...). The last overlay you put on the sky replaces the previous one.
+- **"Observations here" and "Papers"** from an object open straight on that object's field overview and publications.
+- **Centre means centre** (Android): *Center*, search and list targets go to the object and zoom in when you were looking at the whole sky.
+- **Surveys that cover a small part of the sky** (EROS, mission fields...) open on their own area instead of a black screen (Android).
+- **No false "uncompatible spatial references" warning** for HiPS whose properties do not declare a frame (desktop).
+- HiPS from China-VO, ESA, JAXA, NASA and other agencies come from the CDS registry and appear in the same panel.
+
 ## Highlights (0.6.5)
 
 - **One "Available data" for everything (Android and desktop).** Sky surveys (HiPS) and archives live in the same panel, which you can organise as you like: *default folders*, *by wavelength* (gamma-ray, hard X-ray, soft X-ray, UV, optical, near / mid / far infrared, sub-mm, radio), *by mission* or *by data centre*, with a search box and band filters. Every HiPS of every wavelength (radio, gamma, X-ray...) is there, and you can open any HiPS by URL.
