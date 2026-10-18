@@ -546,7 +546,8 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
                         "Showing the first ${rows.size} objects (the limit): zoom in or raise the limit to see more"
                     else -> "Loaded ${rows.size} objects"
                 }
-                _state.update { it.copy(catalogLoading = false, catalogRows = rows, message = msg) }
+                // the last overlay wins: a new catalogue replaces any archive result on the sky
+                _state.update { it.copy(catalogLoading = false, catalogRows = rows, catalogVisible = true, message = msg, archiveHits = emptyList(), archiveLabel = null, archiveSource = null, solarBodies = emptyList(), hitFilter = null, selectedHit = null) }
                 clearMessageLater(msg)
             } catch (e: CancellationException) {
                 throw e
@@ -1275,9 +1276,15 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: Exception) {
                 msg = "${src.label}: failed (${e.message})"
             }
-            _state.update { it.copy(archiveLoading = false, archiveHits = hits, archiveLabel = src.label, archiveSource = src, archiveVisible = true, hitFilter = null, message = msg) }
+            _state.update { it.copy(archiveLoading = false, archiveHits = hits, archiveLabel = src.label, archiveSource = src, archiveVisible = true, hitFilter = null, message = msg, catalogRows = emptyList(), activeCatalogId = null) }
             clearMessageLater(msg)
         }
+    }
+
+    /** Removes every overlay of catalogues and archive results from the sky. */
+    fun clearOverlays() = _state.update {
+        it.copy(catalogRows = emptyList(), catalogVisible = true, activeCatalogId = null, archiveHits = emptyList(), archiveLabel = null, archiveSource = null,
+            selectedHit = null, solarBodies = emptyList(), hitFilter = null, selected = null)
     }
 
     fun clearArchive() = _state.update { it.copy(archiveHits = emptyList(), archiveLabel = null, archiveSource = null, selectedHit = null, solarBodies = emptyList(), hitFilter = null) }
@@ -1339,7 +1346,7 @@ class SkyViewModel(app: Application) : AndroidViewModel(app) {
                 ArchiveHit(src, if (b.number > 0) "(${b.number}) ${b.name}" else b.name, b.name, b.raDeg, b.decDeg, emptyList(), b.card?.takeIf { it.startsWith("http") },
                     buildMap { put("Class", b.cls); b.vmag?.let { put("V mag", "%.1f".format(it)) }; if (b.number > 0) put("Number", b.number.toString()) })
             }
-            _state.update { it.copy(archiveLoading = false, archiveHits = hits, archiveLabel = src.label, archiveSource = src, archiveVisible = true, solarBodies = bodies, message = msg) }
+            _state.update { it.copy(archiveLoading = false, archiveHits = hits, archiveLabel = src.label, archiveSource = src, archiveVisible = true, solarBodies = bodies, message = msg, catalogRows = emptyList(), activeCatalogId = null) }
             clearMessageLater(msg)
         }
     }

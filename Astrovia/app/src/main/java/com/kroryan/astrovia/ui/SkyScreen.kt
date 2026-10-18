@@ -301,6 +301,7 @@ fun SkyScreen(vm: SkyViewModel) {
                     catalogVisible = state.layersVisible,
                     onToggleCatalog = { vm.toggleCatalogVisibility() },
                     onReloadCatalog = if (activeCatId != null || state.archiveSource != null) ({ vm.reloadOverlay(maxRowsInput.toIntOrNull() ?: 500) }) else null,
+                    onClearCatalogs = if (state.catalogRows.isNotEmpty() || state.archiveHits.isNotEmpty()) ({ vm.clearOverlays() }) else null,
                     onClearMarkers = if (state.markers.isNotEmpty()) ({ vm.clearMarkers() }) else null,
                     onClearMeasurements = if (state.measurements.isNotEmpty()) ({ vm.clearMeasurements() }) else null,
                     onOpenFile = { openFileLauncher.launch(arrayOf("*/*")) },

@@ -120,6 +120,7 @@ fun skyDialActions(
     catalogVisible: Boolean,
     onToggleCatalog: () -> Unit,
     onReloadCatalog: (() -> Unit)?,
+    onClearCatalogs: (() -> Unit)? = null,
     onClearMarkers: (() -> Unit)?,
     onClearMeasurements: (() -> Unit)?,
     onOpenFile: (() -> Unit)? = null,
@@ -138,6 +139,7 @@ fun skyDialActions(
         ),
     )
     onReloadCatalog?.let { add(DialAction(Icons.Filled.Refresh, "Reload catalogue", onClick = it)) }
+    onClearCatalogs?.let { add(DialAction(Icons.Filled.Delete, "Remove catalogues", onClick = it)) }
     onClearMarkers?.let { add(DialAction(Icons.Filled.Delete, "Clear markers", onClick = it)) }
     onClearMeasurements?.let { add(DialAction(Icons.Filled.Clear, "Clear measurements", onClick = it)) }
 }
