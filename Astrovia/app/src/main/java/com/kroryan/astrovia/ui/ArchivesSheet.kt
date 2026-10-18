@@ -346,7 +346,7 @@ private fun TargetsTool(vm: SkyViewModel, state: SkyUiState) {
 
 @Composable
 private fun PublicationsTool(vm: SkyViewModel, state: SkyUiState, ctx: Context) {
-    var name by remember { mutableStateOf(state.selected?.mainId ?: state.selectedHit?.title ?: "") }
+    var name by remember { mutableStateOf(state.publicationsFor ?: state.selected?.mainId ?: state.selectedHit?.title ?: "") }
     OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true, modifier = Modifier.fillMaxWidth(),
         label = { Text("SIMBAD object, e.g. M 42") })
     Button(onClick = { vm.loadPublications(name) }, enabled = name.isNotBlank() && !state.archiveLoading, modifier = Modifier.padding(vertical = 4.dp)) { Text("Find publications") }

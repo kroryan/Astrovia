@@ -418,7 +418,7 @@ fun SkyScreen(vm: SkyViewModel) {
                     vm.clearSelected()
                 },
                 onPapers = { vm.loadPublications(selected.mainId); vm.clearSelected(); archivesTab = 3; archivesSection = 3; showArchives = true },
-                onObservations = { vm.recenter(selected.position); vm.clearSelected(); vm.scanField(false); archivesTab = 1; showArchives = true },
+                onObservations = { vm.recenter(selected.position); vm.clearSelected(); vm.scanField(false); archivesTab = 0; showArchives = true },
             )
         }
     }
