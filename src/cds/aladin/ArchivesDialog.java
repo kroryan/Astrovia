@@ -664,6 +664,9 @@ public class ArchivesDialog extends JDialog {
       if( cds.astrovia.sky.Adql.VIZIER.equals(s.tap) ) {   // no cheap count in VizieR: up to 1000 rows are read and counted
          return cds.astrovia.sky.VotableReader.parse(new String(fetch(cds.astrovia.sky.Adql.vizierCone(s.table, ra, dec, rad, 1000), 45000), "UTF-8")).size();
       }
+      if( cds.astrovia.sky.Adql.countsByRows(s.tap) ) {   // SIMBAD: the first 1000 rows are counted, a full COUNT takes minutes
+         return tap(s.tap, cds.astrovia.sky.Adql.countRows(s.table, s.ra, s.dec, ra, dec, rad, s.where, 1000), 100000).size();
+      }
       String q = cds.astrovia.sky.Adql.count(s.table, s.ra, s.dec, ra, dec, rad, s.where);
       List<Map<String, String>> r = tap(s.tap, q, 45000);   // a slow archive is skipped, it must not block the scan
       if (r.isEmpty() || r.get(0).isEmpty()) return 0;

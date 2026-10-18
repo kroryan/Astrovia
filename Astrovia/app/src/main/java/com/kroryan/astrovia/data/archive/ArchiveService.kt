@@ -47,7 +47,7 @@ data class SolarSystemBody(
  * IVOA protocols (TAP/ADQL, CSV).
  */
 class ArchiveService(context: Context) {
-    private val client = HttpClient.client
+    private val client = HttpClient.client.newBuilder().readTimeout(90, java.util.concurrent.TimeUnit.SECONDS).callTimeout(150, java.util.concurrent.TimeUnit.SECONDS).build()   // SIMBAD can take half a minute
     /** Counts of the field overview must answer quickly: a slow archive is skipped instead of blocking the scan. */
     private val quick = HttpClient.client.newBuilder().callTimeout(45, java.util.concurrent.TimeUnit.SECONDS).readTimeout(45, java.util.concurrent.TimeUnit.SECONDS).build()
 
@@ -104,6 +104,10 @@ class ArchiveService(context: Context) {
                 r.body?.string().orEmpty()
             }
             return@withContext VotableTable.parse(text).size
+        }
+        if (Adql.countsByRows(src.tapUrl)) {
+            // SIMBAD: a full COUNT takes minutes, so the first 1000 rows are counted ("1000" = 1000 or more)
+            return@withContext tapRows(src.tapUrl, Adql.countRows(src.table, src.raCol, src.decCol, raDeg, decDeg, radiusDeg, src.where, 1000), src.format).size
         }
         val adql = Adql.count(src.table, src.raCol, src.decCol, raDeg, decDeg, radiusDeg, src.where)
         tapRows(src.tapUrl, adql, src.format, fast = true).firstOrNull()?.values?.firstOrNull()?.toDoubleOrNull()?.toInt() ?: 0
