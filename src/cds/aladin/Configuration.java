@@ -295,7 +295,7 @@ implements Runnable, ActionListener, ItemListener, ChangeListener  {
 
    static private Langue lang[];                  // La liste des langues installées
    private Vector remoteLang = null;              // Lal iste des langues connues mais non installées
-   private int previousPlanet=1;                  // Indice de l'activation du mode Planet
+   private int previousPlanet=0;                  // Indice de l'activation du mode Planet
    private int previousTheme=0;                   // Indice du thème au démarrage
    private int previousUiScale=0;                   // Indice du facteur d'échelle au démarrage
    private JCheckBox hideTapSchema = null;			//Hide tapschema tables on tap clients or not.
@@ -2094,7 +2094,7 @@ implements Runnable, ActionListener, ItemListener, ChangeListener  {
       if( s!=null && s.equals(ACTIVATED) ) remove(FILTERHDU);
 
       s = get(PLANET);
-      if( s!=null && s.equals(NOTACTIVATED) ) remove(PLANET);
+      // Astrovia: NOTACTIVATED must be kept, planetary data are on by default
 
       s = get(LOOKANDFEEL);
       if( s!=null && s.equals(JAVA) ) remove(LOOKANDFEEL);
@@ -2373,7 +2373,7 @@ implements Runnable, ActionListener, ItemListener, ChangeListener  {
          if( key.equals(TRANSOLD) ) key=TRANS;      // Pour compatiblité
          if( key.equals(LOOKANDFEELTHEME) && !value.equals("dark") ) previousTheme=1;
          if( key.equals(PLANET) 
-               && !(value.equals(ACTIVATED) || value.equals(ACTIVATEDNOTEST)) ) previousPlanet=1;
+               && !value.equals(ACTIVATED) ) previousPlanet=value.equals(NOTACTIVATED)?1:2;
          aladin.trace(6, "Configuration.load() [" + key + "] = [" + value + "]");
          
          if( Aladin.TREEWIDTH!=null && key.equals(HWIDTH) ) value=Aladin.TREEWIDTH;
@@ -2527,8 +2527,7 @@ implements Runnable, ActionListener, ItemListener, ChangeListener  {
       // Pour le filtrage des données planétaires
       if( planetChoice!=null ) {
          int t = planetChoice.getSelectedIndex();
-         if( t==0 || t==2 ) set(PLANET,(String)planetChoice.getSelectedItem());
-         else remove(PLANET);
+         set(PLANET,(String)planetChoice.getSelectedItem());
          if( t!=previousPlanet ) Aladin.info(this,RESTART);
       }
 
