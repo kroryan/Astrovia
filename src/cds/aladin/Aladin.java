@@ -7304,7 +7304,7 @@ DropTargetListener, DragSourceListener, DragGestureListener
    protected void uncompatibleFrameWarning(String body1, String body2) {
       String error = calque.select.getMessage();
       if( error!=null ) return;
-      if( Plot.PROJBODY.equalsIgnoreCase(body1) || Plot.PROJBODY.equalsIgnoreCase(body1)) return;
+      if( Plot.PROJBODY.equalsIgnoreCase(body1) || Plot.PROJBODY.equalsIgnoreCase(body2)) return;
       if( body1==null && body2==null ) return;
       if( body1==null ) body1="?";
       if( body2==null ) body2="?";

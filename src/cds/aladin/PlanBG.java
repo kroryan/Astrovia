@@ -507,7 +507,7 @@ public class PlanBG extends PlanImage {
 
          // Frame
          int frame=-1;
-         String strFrame = prop.getProperty(Constante.KEY_HIPS_FRAME,"X");
+         String strFrame = prop.getProperty(Constante.KEY_HIPS_FRAME,"X").trim();
          if( strFrame.equals("equatorial") || isPlanet(strFrame) )  frame=Localisation.ICRS;
          else if( strFrame.equals("galactic"))  frame=Localisation.GAL;
          else if( strFrame.equals("ecliptic"))  frame=Localisation.ECLIPTIC;
@@ -1123,7 +1123,11 @@ public class PlanBG extends PlanImage {
    }
       
    protected boolean isPlanet(String frame) {
-      return frame!=null && Util.indexInArrayOf(frame, SKYFRAME, true)<0;
+      // Astrovia: a missing or unknown-vocabulary frame ("X") is sky, not a planetary body
+      if( frame==null ) return false;
+      frame = frame.trim();
+      if( frame.length()==0 || frame.equalsIgnoreCase("X") ) return false;
+      return Util.indexInArrayOf(frame, SKYFRAME, true)<0;
    }
 
    /** Retourne le système de référence dela Planète, ou null sinon */
