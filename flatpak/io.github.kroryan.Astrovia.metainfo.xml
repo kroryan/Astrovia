@@ -69,6 +69,13 @@
     <binary>astrovia</binary>
   </provides>
   <releases>
+    <release version="0.7.0" date="2026-10-18">
+      <description>
+        <ul>
+          <li>Planetary data and everything else available by default; sky tools work on archive results (Android); partial-sky surveys open on their own view; no false frame warnings</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.6.65" date="2026-10-18">
       <description>
         <ul>
