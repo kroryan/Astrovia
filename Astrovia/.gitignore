@@ -7,3 +7,12 @@ local.properties
 *.apk
 *.aab
 captures/
+# Secrets and signing material: never commit
+client_secret*.json
+*.jks
+*.keystore
+*.p12
+*.pfx
+keystore.properties
+service-account*.json
+.env
